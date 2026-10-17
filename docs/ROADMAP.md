@@ -1,0 +1,140 @@
+# Cursed GIT — Technical Roadmap
+
+A learn-by-building path. Each phase ends with something you can **verify against real git** and **show on camera**. The phases are ordered so that each one only uses things built in earlier phases.
+
+**The golden testing trick:** do the same operation with `git` in one temp dir and with `cg` in another, using fixed dates (`GIT_AUTHOR_DATE`, `GIT_COMMITTER_DATE`). The hashes must be **identical**. Automate this with Go tests using `t.TempDir()`.
+
+**Never test `cg` inside this project's own folder.** Use a scratch repo like `/tmp/playground`, or you'll corrupt the repo that holds your code (Phase 0 explains how that already happened).
+
+---
+
+## Phase 0: Fix the foundation ✅ *(Episode 1: "She broke my repo before I even wrote her")*
+
+What's wrong right now:
+
+1. **It doesn't compile.** `main.go` imports `cursedgit.com/core`, but there are no `.go` files in `core/`. They're in `core/commands/` and `core/util/`, and both declare `package core`. **In Go, one directory is one package**, and the import path is the directory path. Suggested layout:
+   ```
+   main.go                       // just calls cli.Run(os.Args[1:])
+   internal/cli/                 // command dispatch + passthrough
+   internal/repo/                // find .git, paths, config
+   internal/object/              // blob/tree/commit read+write, hashing
+   internal/index/               // .git/index read+write
+   internal/refs/                // HEAD, branches, packed-refs
+   internal/commands/            // init, add, commit, status, log…
+   internal/curses/              // state, triggers, punishments, lines
+   ```
+   Then imports look like `cursedgit.com/internal/object`.
+2. **`hashObjects.go` / `catFile.go`** have no return statements, and `hex` is imported but unused. Both are compile errors.
+3. **`add` destroys the index.** It writes the raw file contents into `.git/index`. That's why this repo's real `git` says `index file corrupt`: `.git/index` is literally a copy of `main.go`. To fix this repo, delete `.git/index` (you have no commits, so nothing is lost), then run `git status`.
+4. `IndexEntry.StatData [62]byte` is wrong. The stat data is 40 bytes, see GIT.md §4.
+5. `github.com/gorilla/mux` is an HTTP router you don't use. Run `go mod tidy`.
+6. Build the binary as `cg` (`go build -o cg .`). The old name `gc` clashed with Graphviz and with `git gc`, so `main.go`'s `<gc help>` messages should say `cg` too.
+7. `init`: real git re-running `init` is harmless ("Reinitialized…"). Keep your insult, but maybe also add `refs/heads` checks and `cursed/` creation there.
+
+✅ **Done when:** `go build` works, and `cg init` in `/tmp/playground` followed by `git status` shows no errors.
+
+**Status (2026-10-17): done.** `internal/cli` + `internal/commands`, `go vet` clean, tests compare against real git (`go test ./...`). Lessons are in `DEVNOTE.md`.
+
+---
+
+## Phase 1: Objects ✅ *(Ep. 2: "Everything in git is a hash")*
+- `hash-object [-w]`: header + SHA-1 + zlib + write to `objects/xx/…`
+- `cat-file -t|-s|-p`: read + zlib decompress + parse the header
+- **Verify:** `cg hash-object -w f && git cat-file -p <hash>` works, and the hash matches `git hash-object f`.
+- **Learn:** `crypto/sha1`, `compress/zlib`, `io.Reader`, `[]byte` vs `string`.
+
+**Status (2026-10-17): done.** `internal/object` (hash, write, read, short names, trees) and `internal/repo.Find`. Tests check the git-internals demo hashes and read/write both ways with real git. Packed objects aren't read yet (Phase 5 fallback).
+
+## Phase 2: The index ✅ *(Ep. 3: "Reverse-engineering a binary file")*
+- Parse `.git/index` (create one with real git first and study it with `xxd`)
+- Write it back: `DIRC` header, sorted entries, padding, SHA-1 trailer, `index.lock` + rename
+- `cg add <paths>` (files + directories, recursive) and `cg ls-files --stage`
+- **Verify:** `cg add` then `git ls-files --stage` shows correct entries, and `git status` agrees.
+- **Learn:** `encoding/binary`, `bytes.Buffer`, `os.Lstat` + `syscall.Stat_t`, `filepath.WalkDir`.
+
+**Status (2026-10-17): done.** `internal/index` (v2/v3 read, v2 write, extensions skipped, `index.lock`), `internal/ignore` (`.gitignore` + `.git/info/exclude`), `cg add` and `cg ls-files`. Re-encoding a git-made index is byte-identical, and `cg add .` on a copy of this project stages exactly what `git add .` stages. Next up: Phase 3, and then cg starts tracking itself.
+
+## Phase 3: Trees and commits ✅ *(Ep. 4: "My first commit that real git can read")*
+- `write-tree`: group index entries by directory, build **bottom-up**, sort names git's way
+- `commit-tree`, reading user name/email from config
+- Refs: resolve `HEAD` (symbolic, detached, unborn), `update-ref` with a lock file
+- `cg commit -m "…"` = write-tree + commit-tree + move the branch
+- Also append to `.git/logs/HEAD` if you want `git reflog` to see it
+- **Verify:** `cg commit` then `git log --stat` and `git fsck` are clean. With fixed dates, the commit hash matches git's.
+
+**Status (2026-10-17): done.** `write-tree`, `commit-tree`, `update-ref`, `symbolic-ref`, `rev-parse` and `commit -m`, with ref locking, `packed-refs` and reflogs. cg reproduces the exact commit hashes from `git-internals.html` (`fe16bf5`, `dd70c3f`), and git and cg can take turns committing on the same branch. **From here on, cg tracks itself.**
+
+## Phase 4: Reading history *(Ep. 5)*
+- `cg log`: follow `parent` from HEAD, formatted like git
+- `rev-parse`: `HEAD`, `HEAD~2`, branch names, short hashes
+- `packed-refs` support
+
+## Phase 5: Status + passthrough *(Ep. 6: "Git does the hard parts for me")*
+- `status`: HEAD tree ↔ index ↔ working tree, stat-data shortcut, basic `.gitignore`
+- **Passthrough** for every unknown command (GIT.md §5), with the exit code propagated
+- The pack fallback: if a loose object is missing, ask `git cat-file`
+- **Verify:** `cg pull` / `cg push` work via git, and `cg log` still works after a pull.
+
+## Phase 6: Curses v1 *(Ep. 7: "I gave my git trust issues")*
+Do this now instead of at the end. It's the fun part, and it keeps the project going.
+- `.git/cursed/state.json` load/save, `cg mood`, `cg breakup`
+- A hook system in the CLI: `beforeCommand(cmd)` / `afterCommand(cmd, result)` that every command (including passthrough) goes through
+- **Graveyard first**: snapshot the working tree into objects + `refs/cursed/graveyard/<ts>`, and `cg beg` to restore. Build the safety net *before* the knife.
+- **The tier engine** (CURSES.md §2): `live = clamp(base + temper + grudge, floor, maxTier)`, the temper events and cooldown, the presets (default `psycho`: start at 3, cap at 4), and `cg mood`. Write table tests for the formula first; it's pure math and the easiest part to get right.
+- Every curse declares its minimum tier, so the cap works as the safety protocol automatically
+- Curses, Tier 0–2: toxic partner, commit message judge, AI will replace you, grudges, random rejection, arbitrary refusal, stupid rules, repeated mistakes, silent treatment, jealousy, commit deadline (warn + hide one file)
+- Tier 3, first one: **code decay**. It only needs the working tree and HEAD, so it doesn't have to wait for merges.
+- **Anti-cheat basics** (CURSES.md §6): the event log with a hash chain plus `refs/cursed/heart`, the ledger of what she did, comparing the ledger with refs and the reflog on every command, and the command policy in the passthrough
+- Install the `reference-transaction` hook from `cg init` to protect `refs/cursed/*` and log every ref change. **Verify:** `git update-ref -d refs/cursed/heart` is refused, and a plain `git commit` is detected on the next `cg` command.
+- Inject the clock and the RNG (`type Clock interface{ Now() time.Time }`, `rand.New(seed)`) so curses are **testable**. You don't want to wait 30 minutes in a unit test.
+
+## Phase 7: Branches and checkout *(Ep. 8)*
+- `branch`, `switch`/`checkout`: write the target tree to the working dir, rebuild the index, and refuse if there are uncommitted changes that would be lost
+- `restore`, `reset` (soft/mixed/hard)
+- `diff`: implement the **Myers diff algorithm**, which is a great episode by itself
+
+## Phase 8: Merge and the boss fight *(Ep. 9–10: "Boss fight: merge conflicts")*
+- `merge-base`: BFS over the parents of both commits, find the common ancestor
+- Fast-forward merges (easy win first)
+- Three-way merge per file: the diff3 algorithm, conflict markers written to the working tree, **stages 1/2/3 in the index**
+- `MERGE_HEAD`, `MERGE_MSG`, and a merge commit with two parents
+- **Verify:** start a merge with `cg`, finish it with `git`, and vice versa.
+- Then the **boss fight**: timer, HP bar, taunts, win/lose tables, random pulls that trigger it
+- **Commit sacrifice**: drop an unpushed commit and replay the rest. This is the same machinery as a 3-way merge, so build it here.
+
+## Phase 9: The breakup endgame *(Ep. 11: "I tried to break up with my git")*
+- XP, levels and the toxicity score (CURSES.md §5.1–5.2), shown in `cg mood`
+- XP paid per unique blob, with `xpMaturity` (CURSES.md §6.2). **Verify:** commit → revert → re-commit earns XP only once.
+- Line counting from commit diffs, reusing the Phase 7 diff
+- `cg breakup` with the three endings, plus `--dry-run`
+- Ending A: the desktop letter (`xdg-user-dir`), the countdown, OS-specific shutdown behind a `Machine` interface, and the fake-shutdown fallback
+- Ending B: `archive/tar` + `compress/gzip`, verify the archive, *then* delete; `cg closure` restores
+- Ending C: the dialogue state machine (denial → bargaining → crying → acceptance) and the credits
+- `cg restraining-order`, the no-questions-asked emergency off switch
+- **Verify:** fake `Machine` in tests; run ending B on a throwaway repo and restore it with `cg closure`, then run `git fsck` on the result.
+- **Learn:** `archive/tar`, `runtime.GOOS`, `os/exec`, and writing terminal animations with ANSI escape codes.
+
+## Phase 10: Launch *(final episode)*
+- Commit the animations (`cursed-git-video/`, `code-animations-kit-v2/`) by removing them from `.gitignore`
+- A proper README: a GIF hero from `cg-montage.html`, the tier ladder, the install steps, and links to the episodes
+- Render the animation set and embed the clips in the README and the docs
+
+## Phase 11: Stretch goals
+- Packfile reader (idx v2, deltas): no more git fallback for reads
+- `cg haunt` daemon (fsnotify) for real-time curses
+- TUI for boss fights (Bubble Tea: `github.com/charmbracelet/bubbletea`)
+- Personality packs, difficulty levels, trophies
+- Your own `fetch` over smart HTTP (then *she* brings the other guys home herself)
+
+---
+
+## Recommended references
+- *Pro Git*, chapter 10 "Git Internals": free at git-scm.com/book
+- `Documentation/gitformat-index.txt` in the git source tree: the exact index spec
+- "Write yourself a Git!" (wyag.thb.lt): the same journey in Python, useful for comparison
+- James Coglan, *Building Git*: the deepest treatment, including Myers diff and merges
+
+## Video tips
+- Record the **failures**: wrong hashes, the corrupted index, git refusing your trees. Those are the most relatable moments.
+- End each episode with a real-git verification on screen (`git fsck` passing is a great payoff shot).
+- Keep a `DEVLOG.md` with dates, bugs and "aha" moments. It becomes your script.

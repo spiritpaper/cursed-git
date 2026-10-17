@@ -1,0 +1,13 @@
+# build output
+/cg
+/cg.exe
+
+# Node (animation tooling)
+node_modules/
+check-output/
+dist/
+*.mp4
+
+# Animations are committed at the end of the project (see docs/ROADMAP.md)
+/cursed-git-video/
+/code-animations-kit-v2/
