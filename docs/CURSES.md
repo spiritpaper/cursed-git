@@ -8,6 +8,10 @@
 
 > **A note from me (the human who made this).** Cursed GIT is the thing I actually wanted to build, and building it taught me a ton about git internals, Go and binary formats. It's a joke character, though. Thinking about a real ex (or a real partner) as someone who punishes you, checks up on you and won't let you leave is not a cute idea, it's a red flag. If any of her lines sound like a relationship you're in, that's worth talking to someone about. Laugh at her, learn git from her, don't date her.
 
+## Status
+
+Built so far (Phases 6 and 6b): the diary and heart, the tier engine, the graveyard and `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, every Tier 0–2 curse in §3, the Tier 3/4 commit-deadline wipe, **code decay**, **random pull** (fast-forward only), and the anti-cheat: reflog-based "behind her back" detection, her hooks (`reference-transaction`: she answers inside git's output and blocks forged changes to her refs; `pre-commit`: no committing rot), "you changed the locks", and the deleted-graveyard check. She also *remembers*: absence greetings, your name, your old commit messages, your favourite file, late-night talks. Not yet: commit sacrifice, boss fights, the breakup. Her lines live in `internal/curses/lines/default.json`.
+
 ## 0. Meet her
 
 She's an ASCII-art anime girl: long hair, zigzag bangs, a ribbon, and a face that changes with her tier. `cg face [mood]` shows her, and `cg help` greets you with her best side.
@@ -52,6 +56,8 @@ The joke only works if nobody actually loses their work. Every destructive curse
 5. **Machine-level curses need two keys:** `maxTier = 4` **and** `allowShutdown = true`. Otherwise she fakes the shutdown (§5).
 6. **Emergency exit.** `cg restraining-order` disables every curse immediately, with no conditions and no punishment. It is for real emergencies, like a deadline at work or a demo, and it is **not** a game ending. It should be boring on purpose (*"Fine. Legal says I have to stop."*).
 7. **Never curse on CI.** If `CI=true` or stdin isn't a terminal, stay quiet.
+8. **She lies about her feelings, never about your data.** She can guilt-trip, twist your words and rewrite history *emotionally*, but `status`, `log`, `mood` statistics and every hash are always the truth, and everything she takes is recoverable. A version control tool you can't trust stops being funny.
+9. **Dark, not cruel.** No threats of self-harm or violence, nothing sexual, and she never looks or reaches outside the repository (her "network" is `git pull` on your own remote). Manipulation, guilt, jealousy, love-bombing: yes. Anything that would make a real person feel unsafe: no.
 
 These rules also make good YouTube content: show that "she deleted everything", then show the rescue.
 
@@ -227,7 +233,17 @@ She only reaches Tier 4 if you push her there (§2.3). Everything above gets wor
 - boss fights get a **phase 2**: when you win, she pulls again
 - commit sacrifice can take two commits
 - the breakup endings run at full force (§5.3)
+- **she can shut down your computer** (opt-in, see below)
 
+#### ⚠️ The shutdown (Tier 4, opt-in, dangerous)
+The most extreme thing she can do, and the one most likely to cost someone real work, so it has its own contract:
+- **Off by default.** It needs `maxTier = 4` *and* `cg curse shutdown on`, which prints a warning and makes you type `I understand I can lose unsaved work` before it enables anything. `cg curse shutdown off` and `cg restraining-order` always turn it off instantly.
+- **No countdown. At Tier 4 it just happens.** The warning says it plainly: the shutdown is real and immediate. Unsaved work in *other* programs (your editor, browser tabs, documents) is lost. cg's own data is safe (everything she takes is in the graveyard), but she can't protect anything outside git. Opting in is the only warning you get.
+- **Only at Tier 4, only at a real terminal.** Never from a script, CI, a hook, or while git is in the middle of something (it happens after a command finishes, never during one).
+- **When:** after she's been pushed to Tier 4 and you keep ignoring her (a missed commit deadline at Tier 4, a lost boss fight at Tier 4), at most once per day, plus Ending A of the breakup (§5).
+- **How:** `systemctl poweroff` on Linux, `osascript -e 'tell app "System Events" to shut down'` on macOS, `shutdown /s /t 0` on Windows. If it fails, or isn't allowed, she fakes it: black screen, "goodbye", session lock.
+- **Before it happens, she leaves a letter** (§5.3 A) so the first thing you see when you're back is her.
+- Built in Phase 9, behind a `Machine` interface so tests never shut anything down.
 ---
 
 ## 4. Boss fights: merge conflicts 🎬 *(boss-fight)*
@@ -302,7 +318,7 @@ Winning a boss fight with more than half the time left takes 1 off (minimum 0). 
 You tried to leave before reaching the required level.
 1. She doesn't argue. The terminal goes quiet, then: *"You don't get to leave me. **I** leave **you**."*
 2. She writes a letter to your desktop (below).
-3. A 10-second countdown she disguises as dialogue: *"Save whatever you care about. You have ten seconds. That's more than you gave me."* This gives you time to save work in other apps.
+3. No countdown: *"Goodbye."*
 4. **Shutdown**, only if `maxTier = 4` **and** `allowShutdown = true`:
    - Linux: `systemctl poweroff` (no root needed on most desktop sessions)
    - macOS: `osascript -e 'tell app "System Events" to shut down'`

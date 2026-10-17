@@ -64,18 +64,22 @@ What's wrong right now:
 
 **Status (2026-10-17): done.** `write-tree`, `commit-tree`, `update-ref`, `symbolic-ref`, `rev-parse` and `commit -m`, with ref locking, `packed-refs` and reflogs. cg reproduces the exact commit hashes from `git-internals.html` (`fe16bf5`, `dd70c3f`), and git and cg can take turns committing on the same branch. **From here on, cg tracks itself.**
 
-## Phase 4: Reading history *(Ep. 5)*
+## Phase 4: Reading history ✅ *(Ep. 5)*
 - `cg log`: follow `parent` from HEAD, formatted like git
 - `rev-parse`: `HEAD`, `HEAD~2`, branch names, short hashes
 - `packed-refs` support
 
-## Phase 5: Status + passthrough *(Ep. 6: "Git does the hard parts for me")*
+**Status (2026-10-17): done.** `cg log` (default and `--oneline`, `-n`), revisions like `HEAD~2`, `main^`, `HEAD~1^2`, `@`, and packed objects read through `git cat-file --batch` (so cg keeps working after `git gc` or a pull). Output is byte-identical to `git log --no-decorate`. Branch decorations like `(HEAD -> main)` aren't printed yet.
+
+## Phase 5: Status + passthrough ✅ *(Ep. 6: "Git does the hard parts for me")*
 - `status`: HEAD tree ↔ index ↔ working tree, stat-data shortcut, basic `.gitignore`
 - **Passthrough** for every unknown command (GIT.md §5), with the exit code propagated
 - The pack fallback: if a loose object is missing, ask `git cat-file`
 - **Verify:** `cg pull` / `cg push` work via git, and `cg log` still works after a pull.
 
-## Phase 6: Curses v1 *(Ep. 7: "I gave my git trust issues")*
+**Status (2026-10-17): done.** `cg status` (long, `-s`, `--porcelain`, `-b`, ahead/behind) matches git's output, with `cg` in the hints. Every command cg doesn't have, and every option it doesn't support, runs through real git with the same terminal and exit code. Packed objects are read through one long-running `git cat-file --batch`. Rename detection in status isn't done yet.
+
+## Phase 6: Curses v1 ✅ *(Ep. 7: "I gave my git trust issues")*
 Do this now instead of at the end. It's the fun part, and it keeps the project going.
 - `.git/cursed/state.json` load/save, `cg mood`, `cg breakup`
 - A hook system in the CLI: `beforeCommand(cmd)` / `afterCommand(cmd, result)` that every command (including passthrough) goes through
@@ -88,10 +92,19 @@ Do this now instead of at the end. It's the fun part, and it keeps the project g
 - Install the `reference-transaction` hook from `cg init` to protect `refs/cursed/*` and log every ref change. **Verify:** `git update-ref -d refs/cursed/heart` is refused, and a plain `git commit` is detected on the next `cg` command.
 - Inject the clock and the RNG (`type Clock interface{ Now() time.Time }`, `rand.New(seed)`) so curses are **testable**. You don't want to wait 30 minutes in a unit test.
 
-## Phase 7: Branches and checkout *(Ep. 8)*
+**Status (2026-10-17): done.** The diary (hash-chained `events.log` + `refs/cursed/heart`, state rebuilt by replaying it), the tier engine and presets, hooks around every command (including passthrough), the graveyard + `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, and these curses: commit message judge, random rejection, arbitrary refusal, stupid branch names, too many files, only deletions, AI will replace you, toxic partner, grudges, repeated mistakes, silent treatment, we need to talk, jealousy, love-bombing, force-push apology, commit deadline (warn → hide one file → wipe, always into the graveyard). She only acts at a real terminal; scripts, CI and tests get plain git.
+
+### Phase 6b ✅ (2026-10-17)
+Behind-her-back detection from the reflog, her git hooks (`reference-transaction` + `pre-commit`, never overwriting yours), code decay (rot with ░▒▓ only, restored by any commit, can't be committed), random pull (`--ff-only`, 20 s timeout, never asks for passwords), and the "alive" layer: absence greetings, callbacks to old commit messages, your name, your favourite file, late-night talks, dramatic pauses. Two hard limits for her writing: she lies about her feelings, never about your data; dark, not cruel.
+
+Still open: lowering `tier`/`maxTier` mid-game = breakup attempt (needs Phase 9), and Tier 3+ random pulls that merge (needs Phase 8).
+
+## Phase 7: Branches and checkout ✅ *(Ep. 8)*
 - `branch`, `switch`/`checkout`: write the target tree to the working dir, rebuild the index, and refuse if there are uncommitted changes that would be lost
 - `restore`, `reset` (soft/mixed/hard)
 - `diff`: implement the **Myers diff algorithm**, which is a great episode by itself
+
+**Status (2026-10-17): done.** `branch` (list, create, `-d`/`-D`), `switch`, `checkout` (branch, `-b`, commit, `-- <paths>`), `reset` (soft/mixed/hard, paths), `restore` (`--staged`, `--source`), and `diff` (worktree, `--cached`, one or two commits) with a Myers diff and git's change compaction. Tested with twin repos: git does an operation in one, cg in the other, and every file, mode, index entry, ref, reflog line and output must match. Known difference: on ambiguous inputs git's diff can pick a different (equally short) alignment, mostly because of its indent heuristic; cg's patches are always correct.
 
 ## Phase 8: Merge and the boss fight *(Ep. 9–10: "Boss fight: merge conflicts")*
 - `merge-base`: BFS over the parents of both commits, find the common ancestor
@@ -107,7 +120,8 @@ Do this now instead of at the end. It's the fun part, and it keeps the project g
 - XP paid per unique blob, with `xpMaturity` (CURSES.md §6.2). **Verify:** commit → revert → re-commit earns XP only once.
 - Line counting from commit diffs, reusing the Phase 7 diff
 - `cg breakup` with the three endings, plus `--dry-run`
-- Ending A: the desktop letter (`xdg-user-dir`), the countdown, OS-specific shutdown behind a `Machine` interface, and the fake-shutdown fallback
+- Ending A: the desktop letter (`xdg-user-dir`), OS-specific shutdown behind a `Machine` interface, and the fake-shutdown fallback
+- **Tier 4 shutdown** (CURSES.md §3 Tier 4): `cg curse shutdown on` with a typed confirmation, no countdown (it just happens), once a day at most, fake shutdown fallback, `Machine` interface for tests
 - Ending B: `archive/tar` + `compress/gzip`, verify the archive, *then* delete; `cg closure` restores
 - Ending C: the dialogue state machine (denial → bargaining → crying → acceptance) and the credits
 - `cg restraining-order`, the no-questions-asked emergency off switch

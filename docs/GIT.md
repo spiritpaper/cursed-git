@@ -179,13 +179,13 @@ Status legend: ✅ done · 🟡 started · ⬜ todo · ↪ passthrough to git
 | `init [-q] [dir]` | directories + HEAD/config/description | ✅ |
 | `add [-f] <paths>` | hash-object -w + update index; folders, deletions, `.gitignore` | ✅ |
 | `commit -m` | write-tree + commit-tree + update-ref HEAD | ✅ |
-| `status` | compare HEAD tree ↔ index ↔ working tree | ⬜ |
-| `log` | walk parents from HEAD | ⬜ |
-| `branch`, `switch`/`checkout` | refs + write tree to working dir + index | ⬜ |
-| `diff` | Myers diff over blobs | ⬜ |
-| `rm`, `restore`, `reset` | index/working tree manipulation | ⬜ |
+| `status [-s] [-b] [--porcelain]` | HEAD ↔ index ↔ working tree, untracked, ahead/behind | ✅ |
+| `log [--oneline] [-n N] [<rev>...]` | walk parents, newest first; same output as `git log` | ✅ |
+| `branch`, `switch`, `checkout` | refs + write tree to working dir + index; refuses to overwrite local work | ✅ |
+| `diff [--cached] [<a> [<b>]]` | Myers diff + git's compaction, unified format | ✅ |
+| `restore`, `reset --soft/--mixed/--hard` | index/working tree manipulation | ✅ (`rm` passes through to git) |
 | `merge` | merge-base + 3-way merge + conflict stages | ⬜ (needed for boss fights) |
-| `push`, `pull`, `fetch`, `clone`, `remote`, `rebase`, `stash`, … | ↪ `git` | ⬜ |
+| `push`, `pull`, `fetch`, `clone`, `remote`, `rebase`, `stash`, … | ↪ `git` | ✅ passthrough |
 
 ### How `status` works
 It compares three snapshots of the repo:

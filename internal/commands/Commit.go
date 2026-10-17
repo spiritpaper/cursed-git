@@ -184,18 +184,7 @@ func cleanMessage(parts []string) string {
 	return strings.Join(kept, "\n\n") + "\n"
 }
 
-// RevParse turns a name into an object id: HEAD, a branch or tag, a full ref name,
-// or a full/short hash. (HEAD~2 and friends come in Phase 4.)
-func RevParse(gitDir, name string) (string, error) {
-	if name == "HEAD" || strings.HasPrefix(name, "refs/") {
-		return refs.Resolve(gitDir, name)
-	}
-	if full, ok := refs.Expand(gitDir, name); ok {
-		return refs.Resolve(gitDir, full)
-	}
-	hash, err := object.Resolve(gitDir, name)
-	if err != nil {
-		return "", fmt.Errorf("ambiguous argument '%s': unknown revision or path", name)
-	}
-	return hash, nil
+// WriteTreeFrom writes trees for a list of entries (sorted by path) and returns the root tree.
+func WriteTreeFrom(gitDir string, entries []index.Entry) (string, error) {
+	return writeTreeLevel(gitDir, entries, "")
 }

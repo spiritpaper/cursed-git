@@ -18,11 +18,29 @@ const usage = `cg: Cursed GIT. Like git, but she has feelings.
 usage: cg <command> [args]
 
 commands:
-  init [-q] [dir]  create an empty repository (default: current folder)
+  init [-q] [--preset clingy|toxic|psycho] [--plain] [dir]
+                   create a repository (with her in it, unless --plain)
   add [-f] <path>...  stage files and folders (respects .gitignore; -f adds ignored files)
   ls-files [-s]    list staged files (-s with mode, hash and stage)
   commit -m <msg>  commit what's staged
+  status [-s] [-b] [--porcelain]  what changed
+  diff [--cached] [<commit> [<commit>]]  what changed, line by line
+  branch [-d|-D] [<name> [<start>]]      list, create or delete branches
+  switch [-c] <branch> | --detach <commit>
+  checkout [-b] <branch>|<commit>|<file>  the old all-in-one
+  reset [--soft|--mixed|--hard] [<commit>] | reset <file>
+  restore [--staged] [--source=<commit>] <file>
+  log [--oneline] [-n <N>] [<rev>...]   show history (HEAD~2, main^ and friends work)
+  mood             how she feels about you right now
+  beg              ask for the files she took back
+  graveyard        list what she took
+  curse on [--preset p] | off
+                   invite her back / ask her to leave
+  restraining-order  emergency off switch, no questions asked
   face [mood]  look at her (0–4, love, crying)
+
+everything else (push, pull, fetch, clone, branch, checkout, stash, ...)
+and any option cg doesn't know is handed to real git, unchanged.
 
 plumbing:
   hash-object [-w] [-t type] [--stdin] <file>...   object id of a file (-w stores it)
@@ -40,9 +58,8 @@ func printFace(w io.Writer, m curses.Mood) {
 	fmt.Fprintf(w, "%*s\n\n", 18+len(m.String())/2, m.String())
 }
 
-// Run executes one cg command and returns the process exit code.
-// It never calls os.Exit itself, so tests can call it directly.
-func Run(args []string, stdout, stderr io.Writer) int {
+// dispatch runs one command (she has already had her say in Run).
+func dispatch(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		printFace(stderr, curses.Unimpressed)
 		fmt.Fprint(stderr, usage)
@@ -53,15 +70,19 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	case "init":
 		// cg init        -> current folder
 		// cg init <dir>  -> that folder (created if missing)
-		target, quiet := ".", false
-		for _, a := range args[1:] {
-			switch {
+		target, quiet, plain, preset := ".", false, false, ""
+		for i := 1; i < len(args); i++ {
+			switch a := args[i]; {
 			case a == "-q" || a == "--quiet":
 				quiet = true
+			case a == "--plain":
+				plain = true // a normal repo: she stays out of it
+			case a == "--preset" && i+1 < len(args):
+				i++
+				preset = args[i]
 			case strings.HasPrefix(a, "-"):
 				// without this, `cg init -q` used to create a folder called "-q"
-				fmt.Fprintf(stderr, "cg init: unknown option %q\n", a)
-				return 1
+				return toGit(args, stdout, stderr) // --bare, -b <branch>, ...
 			default:
 				target = a
 			}
@@ -72,6 +93,16 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		}
 		if !quiet {
 			fmt.Fprintf(stdout, "Initialized empty Cursed GIT repository in %s\n", commands.GitDir(target))
+		}
+		if !plain {
+			her, err := curses.Enable(commands.GitDir(target), preset, curseEnv(stderr))
+			if err != nil {
+				fmt.Fprintf(stderr, "cg init: %v\n", err)
+				return 1
+			}
+			if !quiet {
+				her.Say("curse_on", nil)
+			}
 		}
 		return 0
 
@@ -112,8 +143,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 				o.Paths = append(o.Paths, args[i+1:]...)
 				i = len(args)
 			case strings.HasPrefix(a, "-"):
-				fmt.Fprintf(stderr, "cg hash-object: unknown option %q\n", a)
-				return 1
+				return toGit(args, stdout, stderr)
 			default:
 				o.Paths = append(o.Paths, a)
 			}
@@ -129,9 +159,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return 0
 
 	case "cat-file":
-		if len(args) != 3 {
-			fmt.Fprintln(stderr, "usage: cg cat-file (-t|-s|-p|-e|<type>) <object>")
-			return 1
+		if len(args) != 3 || (strings.HasPrefix(args[1], "-") && !strings.Contains("-t -s -p -e", args[1])) {
+			return toGit(args, stdout, stderr) // --batch, --batch-check, ...
 		}
 		if err := commands.CatFile(args[1], args[2], stdout); err != nil {
 			if errors.Is(err, commands.ErrMissing) {
@@ -150,8 +179,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 				force = true
 			case a == "--":
 			case strings.HasPrefix(a, "-"):
-				fmt.Fprintf(stderr, "cg add: unknown option %q\n", a)
-				return 1
+				return toGit(args, stdout, stderr) // -p, -A, -u, ...
 			default:
 				paths = append(paths, a)
 			}
@@ -170,8 +198,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		stage := false
 		for _, a := range args[1:] {
 			if a != "-s" && a != "--stage" {
-				fmt.Fprintf(stderr, "cg ls-files: unknown option %q\n", a)
-				return 1
+				return toGit(args, stdout, stderr)
 			}
 			stage = true
 		}
@@ -183,6 +210,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 
 	case "commit":
 		return commitCmd(args[1:], stdout, stderr)
+	case "log":
+		return logCmd(args[1:], stdout, stderr)
 	case "write-tree":
 		return writeTreeCmd(args[1:], stdout, stderr)
 	case "commit-tree":
@@ -195,11 +224,29 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return revParseCmd(args[1:], stdout, stderr)
 
 	case "status":
-		fmt.Fprintf(stderr, "cg %s: not implemented yet\n", args[0])
-		return 1
+		return statusCmd(args[1:], stdout, stderr)
+	case "branch":
+		return branchCmd(args[1:], stdout, stderr)
+	case "switch":
+		return switchCmd(args[1:], stdout, stderr)
+	case "checkout":
+		return checkoutCmd(args[1:], stdout, stderr)
+	case "reset":
+		return resetCmd(args[1:], stdout, stderr)
+	case "restore":
+		return restoreCmd(args[1:], stdout, stderr)
+	case "diff":
+		return diffCmd(args[1:], stdout, stderr)
+
+	case "mood", "beg", "graveyard", "curse", "restraining-order":
+		return herCmd(args, stdout, stderr)
+
+	case "version", "--version":
+		fmt.Fprintln(stdout, "cg version 0.5.0 (Cursed GIT; everything she doesn't do herself goes to git)")
+		return 0
 
 	default:
-		fmt.Fprintf(stderr, "cg: unknown command %q. See 'cg help'.\n", args[0])
-		return 1
+		// push, pull, fetch, clone, remote, branch, checkout, stash, rebase, ...: real git does it
+		return toGit(args, stdout, stderr)
 	}
 }

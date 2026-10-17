@@ -98,14 +98,30 @@ func Write(gitDir string, t Type, content []byte) (string, error) {
 	return hash, nil
 }
 
-// Resolve turns a full or abbreviated (4+ hex chars) object name into a full hash.
-// Only loose objects are searched; packed objects come in a later phase.
+// Resolve turns a full or abbreviated (4+ hex chars) object name into a full hash,
+// looking at loose objects first and then (through git) at packed ones.
 func Resolve(gitDir, name string) (string, error) {
-	name = strings.ToLower(name)
-	if len(name) < 4 || len(name) > 40 {
-		return "", fmt.Errorf("%q: %w", name, ErrNotFound)
+	hash, err := resolveLoose(gitDir, name)
+	if errors.Is(err, ErrNotFound) && Packed != nil && validName(name) {
+		full, _, _, perr := Packed(gitDir, strings.ToLower(name))
+		if perr == nil {
+			return full, nil
+		}
+		if errors.Is(perr, ErrAmbiguous) {
+			return "", perr
+		}
 	}
-	if strings.Trim(name, "0123456789abcdef") != "" {
+	return hash, err
+}
+
+func validName(name string) bool {
+	return len(name) >= 4 && len(name) <= 40 && strings.Trim(strings.ToLower(name), "0123456789abcdef") == ""
+}
+
+// resolveLoose only looks in .git/objects/xx/.
+func resolveLoose(gitDir, name string) (string, error) {
+	name = strings.ToLower(name)
+	if !validName(name) {
 		return "", fmt.Errorf("%q: %w", name, ErrNotFound)
 	}
 	if len(name) == 40 {
@@ -133,9 +149,19 @@ func Resolve(gitDir, name string) (string, error) {
 	return found, nil
 }
 
-// Read loads an object by full or abbreviated name.
+// Read loads an object by full or abbreviated name. Loose objects are read directly;
+// anything else is looked up in the packfiles through git (see packed.go).
 func Read(gitDir, name string) (Type, []byte, error) {
-	hash, err := Resolve(gitDir, name)
+	hash, err := resolveLoose(gitDir, name)
+	if errors.Is(err, ErrNotFound) && Packed != nil {
+		_, t, content, perr := Packed(gitDir, strings.ToLower(name))
+		if perr == nil {
+			return t, content, nil
+		}
+		if errors.Is(perr, ErrAmbiguous) {
+			return "", nil, perr
+		}
+	}
 	if err != nil {
 		return "", nil, err
 	}

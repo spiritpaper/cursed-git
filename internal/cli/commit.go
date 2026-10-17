@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"cursedgit.com/internal/commands"
@@ -24,13 +25,11 @@ func commitCmd(args []string, stdout, stderr io.Writer) int {
 		case strings.HasPrefix(a, "-m") && len(a) > 2:
 			msgs = append(msgs, a[2:])
 		default:
-			fmt.Fprintf(stderr, "cg commit: unknown option %q (only -m for now)\n", a)
-			return 1
+			return toGit(append([]string{"commit"}, args...), stdout, stderr) // -a, --amend, ...
 		}
 	}
 	if len(msgs) == 0 {
-		fmt.Fprintln(stderr, "cg commit: say something. Use -m \"message\" (there's no editor yet).")
-		return 1
+		return toGit(append([]string{"commit"}, args...), stdout, stderr) // git opens your editor
 	}
 	res, err := commands.Commit(msgs)
 	if errors.Is(err, commands.ErrNothingToCommit) {
@@ -135,9 +134,8 @@ func mustBe(gitDir, name string, want object.Type) (string, error) {
 
 // updateRefCmd: cg update-ref <ref> <new> [<old>]
 func updateRefCmd(args []string, stdout, stderr io.Writer) int {
-	if len(args) < 2 || len(args) > 3 {
-		fmt.Fprintln(stderr, "usage: cg update-ref <ref> <new-value> [<old-value>]")
-		return 1
+	if len(args) < 2 || len(args) > 3 || hasOption(args) {
+		return toGit(append([]string{"update-ref"}, args...), stdout, stderr) // -d, -m, --stdin, ...
 	}
 	fail := func(err error) int { fmt.Fprintf(stderr, "cg update-ref: %v\n", err); return 1 }
 	gitDir, err := repo.Find(".")
@@ -168,9 +166,8 @@ func updateRefCmd(args []string, stdout, stderr io.Writer) int {
 
 // symbolicRefCmd: cg symbolic-ref HEAD [<ref>]
 func symbolicRefCmd(args []string, stdout, stderr io.Writer) int {
-	if len(args) < 1 || len(args) > 2 {
-		fmt.Fprintln(stderr, "usage: cg symbolic-ref <name> [<ref>]")
-		return 1
+	if len(args) < 1 || len(args) > 2 || hasOption(args) {
+		return toGit(append([]string{"symbolic-ref"}, args...), stdout, stderr) // --short, -q, ...
 	}
 	gitDir, err := repo.Find(".")
 	if err != nil {
@@ -195,9 +192,8 @@ func symbolicRefCmd(args []string, stdout, stderr io.Writer) int {
 
 // revParseCmd: cg rev-parse <name>...
 func revParseCmd(args []string, stdout, stderr io.Writer) int {
-	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: cg rev-parse <name>...")
-		return 1
+	if len(args) == 0 || hasOption(args) {
+		return toGit(append([]string{"rev-parse"}, args...), stdout, stderr) // --abbrev-ref, --show-toplevel, ...
 	}
 	gitDir, err := repo.Find(".")
 	if err != nil {
@@ -213,4 +209,50 @@ func revParseCmd(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, hash)
 	}
 	return 0
+}
+
+// logCmd: cg log [--oneline] [-n <N> | -<N> | --max-count=<N>] [<rev>...]
+func logCmd(args []string, stdout, stderr io.Writer) int {
+	o := commands.LogOptions{Max: -1}
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		num := ""
+		switch {
+		case a == "--oneline":
+			o.Oneline = true
+			continue
+		case a == "-n" && i+1 < len(args):
+			i++
+			num = args[i]
+		case strings.HasPrefix(a, "--max-count="):
+			num = strings.TrimPrefix(a, "--max-count=")
+		case len(a) > 1 && a[0] == '-' && strings.Trim(a[1:], "0123456789") == "":
+			num = a[1:]
+		case strings.HasPrefix(a, "-"):
+			return toGit(append([]string{"log"}, args...), stdout, stderr) // --graph, -p, --stat, ...
+		default:
+			o.Starts = append(o.Starts, a)
+			continue
+		}
+		n, err := strconv.Atoi(num)
+		if err != nil || n < 0 {
+			fmt.Fprintf(stderr, "cg log: %q is not a number\n", num)
+			return 1
+		}
+		o.Max = n
+	}
+	if err := commands.Log(o, stdout); err != nil {
+		fmt.Fprintf(stderr, "cg log: %v\n", err)
+		return 1
+	}
+	return 0
+}
+
+func hasOption(args []string) bool {
+	for _, a := range args {
+		if strings.HasPrefix(a, "-") {
+			return true
+		}
+	}
+	return false
 }

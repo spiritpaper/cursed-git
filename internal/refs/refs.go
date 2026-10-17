@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -206,6 +207,141 @@ func SetSymbolic(gitDir, name, target string) error {
 		return err
 	}
 	_, werr := lock.WriteString("ref: " + target + "\n")
+	if cerr := lock.Close(); werr == nil {
+		werr = cerr
+	}
+	if werr != nil {
+		os.Remove(lock.Name())
+		return werr
+	}
+	return os.Rename(lock.Name(), path)
+}
+
+// Delete removes a ref: the loose file, its line in packed-refs, and its reflog.
+// If old is not "", the ref must currently be that value.
+func Delete(gitDir, name, old string) error {
+	current, sym, err := Read(gitDir, name)
+	if err != nil {
+		return err
+	}
+	if sym {
+		return fmt.Errorf("%s is a symbolic ref; refusing to delete it", name)
+	}
+	if old != "" && old != current {
+		return fmt.Errorf("%s is at %s, expected %s: %w", name, current[:7], old[:min(7, len(old))], ErrStale)
+	}
+	path := filepath.Join(gitDir, filepath.FromSlash(name))
+	lock, err := os.OpenFile(path+".lock", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if errors.Is(err, fs.ErrExist) {
+		return fmt.Errorf("%s: %w", name, ErrLocked)
+	}
+	if err != nil {
+		return err
+	}
+	lock.Close()
+	defer os.Remove(path + ".lock")
+
+	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	if err := removePacked(gitDir, name); err != nil {
+		return err
+	}
+	os.Remove(filepath.Join(gitDir, "logs", filepath.FromSlash(name)))
+	// tidy up empty folders like refs/heads/feature/ after deleting refs/heads/feature/x
+	for dir := filepath.Dir(path); dir != filepath.Join(gitDir, "refs") && strings.HasPrefix(dir, gitDir); dir = filepath.Dir(dir) {
+		if os.Remove(dir) != nil {
+			break
+		}
+	}
+	return nil
+}
+
+// removePacked rewrites packed-refs without one ref (and its "^peeled" line), through packed-refs.lock.
+func removePacked(gitDir, name string) error {
+	p := filepath.Join(gitDir, "packed-refs")
+	data, err := os.ReadFile(p)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	var out []string
+	skipPeeled := false
+	for _, line := range strings.Split(strings.TrimRight(string(data), "\n"), "\n") {
+		if strings.HasPrefix(line, "^") && skipPeeled {
+			continue
+		}
+		skipPeeled = false
+		if _, ref, ok := strings.Cut(line, " "); ok && ref == name && !strings.HasPrefix(line, "#") {
+			skipPeeled = true
+			continue
+		}
+		out = append(out, line)
+	}
+	lock, err := os.OpenFile(p+".lock", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if err != nil {
+		return err
+	}
+	_, werr := lock.WriteString(strings.Join(out, "\n") + "\n")
+	if cerr := lock.Close(); werr == nil {
+		werr = cerr
+	}
+	if werr != nil {
+		os.Remove(lock.Name())
+		return werr
+	}
+	return os.Rename(lock.Name(), p)
+}
+
+// LogHEAD appends a line to HEAD's reflog, for moves that don't go through Update
+// (switching branches changes what HEAD points at, not a branch's value).
+func LogHEAD(gitDir, old, new string, who Who, msg string) {
+	if old == "" {
+		old = Zero
+	}
+	appendLog(gitDir, "HEAD", fmt.Sprintf("%s %s %s\t%s\n", old, new, who, msg))
+}
+
+// Branches lists local branch names (loose and packed), sorted.
+func Branches(gitDir string) []string {
+	seen := map[string]bool{}
+	root := filepath.Join(gitDir, "refs", "heads")
+	filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && !strings.HasSuffix(p, ".lock") {
+			rel, _ := filepath.Rel(root, p)
+			seen[filepath.ToSlash(rel)] = true
+		}
+		return nil
+	})
+	for name := range packed(gitDir) {
+		if b, ok := strings.CutPrefix(name, "refs/heads/"); ok {
+			seen[b] = true
+		}
+	}
+	var out []string
+	for b := range seen {
+		out = append(out, b)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// SetDetached points HEAD straight at a commit (a "detached HEAD").
+func SetDetached(gitDir, hash string) error {
+	if !isHash(hash) {
+		return fmt.Errorf("%q is not an object id", hash)
+	}
+	path := filepath.Join(gitDir, "HEAD")
+	lock, err := os.OpenFile(path+".lock", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if errors.Is(err, fs.ErrExist) {
+		return fmt.Errorf("HEAD: %w", ErrLocked)
+	}
+	if err != nil {
+		return err
+	}
+	_, werr := lock.WriteString(hash + "\n")
 	if cerr := lock.Close(); werr == nil {
 		werr = cerr
 	}

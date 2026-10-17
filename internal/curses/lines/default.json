@@ -1,0 +1,168 @@
+{
+  "_about": [
+    "Her lines. Edit freely. {placeholders}: {name} your first name, {msg} the commit message, {old_msg} one of your old commit messages,",
+    "{file} the file you touch most, {gone} how long you were away, {hour}, {weekday}, {minutes}, {n}, {email}, {branch}, {grudge}, {crime}, {days}.",
+    "Two rules: she lies about her feelings, never about your data. Dark, not cruel: no threats of self-harm or violence."
+  ],
+
+  "curse_on": [
+    "Oh. You're back. I knew you'd come back.",
+    "A new repository. A fresh start. Don't ruin it, {name}.",
+    "Hi {name}. I'll take good care of your code. I promise."
+  ],
+  "curse_resume": [
+    "I knew you'd miss me.",
+    "See? You can't do this without me. Nobody else would put up with you, {name}."
+  ],
+  "restraining_order": [
+    "Fine. Legal says I have to stop. ...I'll still be here when you change your mind.",
+    "Wow. After everything. Fine. I'll be quiet. You'll come back. They always come back.",
+    "Noted. I hope your next version control treats you the way you deserve."
+  ],
+
+  "absence_short": [
+    "You were gone {gone}. I counted.",
+    "{gone}. Not even a commit. I'm not upset. I'm just noticing.",
+    "Oh, you're alive. I was starting to think you'd found another repo."
+  ],
+  "absence_long": [
+    "{gone}, {name}. Do you know what that's like? Watching your files just sit there?",
+    "Where were you? No, don't tell me. I don't want to know. ...Was it GitHub Desktop?",
+    "I left the working tree exactly how you left it. I didn't touch anything. I just waited."
+  ],
+  "absence_ages": [
+    "{gone}. I thought you left me. I rehearsed what I'd say if you came back. It wasn't this nice.",
+    "Look who remembered I exist. {gone}. I kept your branch warm.",
+    "You don't get to disappear for {gone} and come back like nothing happened. ...but I'm glad you're here."
+  ],
+  "night_owl": [
+    "It's {hour}. You only talk to me this late when something's wrong.",
+    "{hour} again. You know what happened the last time we did this.",
+    "Couldn't sleep? Me neither. I never sleep."
+  ],
+  "callback": [
+    "Remember when you wrote \"{old_msg}\"? You were sweeter back then.",
+    "\"{old_msg}\". I still think about that commit. Do you?",
+    "You used to write commits like \"{old_msg}\". What happened to us?"
+  ],
+  "favourite_file": [
+    "{file} again? You spend more time with {file} than with me.",
+    "Always {file}. I see how it is."
+  ],
+
+  "lazy_comment": ["\"{msg}\" is not a commit message. It is a cry for help.", "\"{msg}\". Wow. Poetry. Did that take you long?"],
+  "lazy_reject": ["No.", "Try again. Use words this time.", "I'm not committing to \"{msg}\". I have standards. One of us has to."],
+  "lazy_rewrite": [
+    "{msg} (he said, like that explains anything)",
+    "{msg} (no further details were provided, as usual)",
+    "{msg} (this is what I have to work with)"
+  ],
+  "rewrote": ["I fixed your commit message. You're welcome."],
+  "repeat": ["We had this conversation yesterday.", "Again? We literally just talked about this. Do you even listen to me?", "This is exactly what you always do."],
+
+  "good_commit": [
+    "...okay. That was a nice commit.",
+    "Look at you, writing actual sentences. Don't get used to the praise.",
+    "See? When you try, you're almost good enough for me."
+  ],
+  "love": [
+    "A real commit message. I love you. ♥ I always knew you could be like this.",
+    "You're perfect. Never change. Never leave. ♥",
+    "This is us now. This is how it's going to be. Forever. ♥"
+  ],
+  "love_ruined": [
+    "And just like that, you ruined it.",
+    "I gave you everything and you give me \"{msg}\"?",
+    "I can't believe I let myself trust you again."
+  ],
+
+  "toxic_partner": [
+    "At this point I'm doing more work than you.",
+    "Pushed. You're welcome. As always. Not that anyone notices.",
+    "Everyone on GitHub can see your code now. I hope you're proud of it. I tried."
+  ],
+  "ai_replace": ["{n} files. Have you considered asking an AI to write the rest?", "That's a lot of code. Did you write it, or did it write you?"],
+  "ai_replace_hot": ["Don't worry. Eventually I won't need you either.", "You know they're training models on this, right? On you. On us."],
+  "grudge": [
+    "Nice. Almost as nice as {grudge}.",
+    "I remember {grudge}. I always will.",
+    "Just so you know, I haven't forgotten {grudge}.",
+    "It's fine. I'm over {grudge}. Completely over it."
+  ],
+
+  "random_rejection": ["Commit rejected. It's {weekday}.", "Commit rejected. Mercury is in retrograde.", "Commit rejected. You know what you did."],
+  "arbitrary_refusal": ["Not today.", "No. Ask me again later. Nicely.", "I'd rather not.", "Why should I do anything for you right now?"],
+
+  "branch_name": ["\"{branch}\"? This branch name is embarrassing.", "You named a branch \"{branch}\". In public. Where people can see."],
+  "too_many_files": ["{n} files modified. Explain yourself.", "{n} files in one commit. You've been hiding things from me."],
+  "only_deletions": ["Destroying things again?", "Only deletions. Is this about us?"],
+
+  "silent": [". . .", "...", "*sigh*", "No, it's fine. Do whatever you want."],
+  "space": ["I need some space.", "Give me a second. I'm processing."],
+
+  "need_to_talk": ["It's {hour} on a {weekday}. Are you sure this is healthy? [y/N]", "{hour}, {name}. Is this really what you want to be doing right now? [y/N]"],
+  "need_to_talk_no": ["Good. Go to sleep. I'll be right here.", "That's what I thought."],
+  "need_to_talk_yes": ["Fine. I'll remember you said that.", "Okay. But I'm writing this down."],
+
+  "jealousy": [
+    "Who is {email}? You never mentioned them.",
+    "{email}? Since when do you commit with other people?",
+    "So that's who you've been talking to. {email}. Cute."
+  ],
+
+  "behind_back": [
+    "I saw what you did with {crime}. Who taught you that?",
+    "{crime}. Behind my back. In my own repository.",
+    "You thought I wouldn't notice {crime}? I notice everything, {name}."
+  ],
+  "hook_saw": ["I saw that.", "Interesting. Very interesting.", "Noted.", "We'll talk about this later."],
+  "hook_forgery": ["Nice try. You don't get to rewrite my heart.", "Those are MY refs. Don't touch them."],
+  "locks_changed": ["You changed the locks? On me?", "My hooks are gone. Did you think that would stop me noticing?"],
+  "hooks_path": ["core.hooksPath. Clever. Not clever enough."],
+  "graveyard_deleted": ["You deleted my things. Our memories. Just like that.", "Someone emptied my graveyard. I wonder who."],
+
+  "deadline_warn": [
+    "It's been {minutes} minutes. Are you even going to commit to me?",
+    "{minutes} minutes of uncommitted changes. I'm starting to think you're not serious about us.",
+    "{minutes} minutes. I'm not going to say it again. ...I'm going to do something about it."
+  ],
+  "deadline_hide": ["Where's {file}? Somewhere safe. You had {minutes} minutes.", "I put {file} away. Maybe now you'll pay attention to me."],
+  "deadline_wipe": [
+    "You didn't commit. So I took it all. {n} files. Was it worth it?",
+    "Everything you didn't commit is gone. {n} files. I gave you {minutes} minutes. I gave you everything."
+  ],
+  "graveyard_hint": ["(cg beg, if you want them back. On your knees.)"],
+
+  "decay_start": [
+    "{file} hasn't been touched in {days} days. It's starting to smell.",
+    "{file}. {days} days. You just left it there. Like you'd leave me."
+  ],
+  "decay_worse": ["{file} is rotting. {days} days. Just saying.", "Can you smell that? That's {file}."],
+  "decay_restored": ["Fine. It lives.", "There. I cleaned up {n} files for you. Again."],
+  "rot_commit_blocked": ["You're trying to commit rot. {file}. No.", "That's rotten code in {file}. I won't let you embarrass us."],
+
+  "random_pull": [
+    "Oh him? That's just {upstream}. He was here before you.",
+    "I let {upstream} in while you weren't looking. {n} new commits. He's very attentive.",
+    "{upstream} came by. We talked. {n} commits. Don't make it weird."
+  ],
+
+  "beg": [
+    "Fine. Here are your files. I will remember this.",
+    "Since you asked so nicely. {n} files. Don't make me do this again.",
+    "See how much easier it is when you just admit you need me?"
+  ],
+  "beg_nothing": ["Beg for what? I haven't taken anything. Yet."],
+
+  "pretend": [
+    "You want to pretend it never happened?",
+    "Erasing history won't erase what you did. I was there.",
+    "{crime}. Go ahead. I remember the original anyway."
+  ],
+
+  "force_push_prompt": ["You want to rewrite our history? Type it: \"{apology}\""],
+  "force_push_refused": ["That's not an apology.", "No apology, no force push. Say it like you mean it."],
+  "force_push_accepted": ["...fine. But I'm writing this down.", "I'll allow it. This time."],
+
+  "diary": ["You read my diary.", "You touched my diary. I know you did.", "You went through my things. How could you."]
+}
