@@ -53,4 +53,12 @@ func TestEventsRotFasterSoItCanHappen(t *testing.T) {
 	if c := clocksWith(t, "[cursed]\n  eventHours = 24\n  decay = 2h\n"); c.Decay(3) != 2*time.Hour {
 		t.Errorf("an explicit decay wins: %v", c.Decay(3))
 	}
+	for in, want := range map[string]time.Duration{"30d": 30 * 24 * time.Hour, "2d12h": 60 * time.Hour, "90m": 90 * time.Minute} {
+		if d, ok := parseDuration(in); !ok || d != want {
+			t.Errorf("parseDuration(%q) = %v %v", in, d, ok)
+		}
+	}
+	if _, ok := parseDuration("soon"); ok {
+		t.Error("nonsense isn't a duration")
+	}
 }

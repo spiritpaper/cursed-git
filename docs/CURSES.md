@@ -456,7 +456,7 @@ She keeps a **ledger**: every commit she created and every ref she moved.
     speed = 1                 ; every clock (deadlines, fight timers, decay) runs this many times faster
     deadline = 30m            ; or one clock, at its Tier 3 value (other tiers keep their proportions)
     fightTime = 3m
-    decay = 30d               ; (Go durations: write 720h for 30 days)
+    decay = 30d               ; durations: 90m, 8h, 30d, 2d12h
 
     ; endgame (§5)
     breakupLevel = 10

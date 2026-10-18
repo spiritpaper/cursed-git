@@ -17,6 +17,7 @@ package curses
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spiritpaper/cursed-git/internal/config"
@@ -43,7 +44,7 @@ func ClocksFor(gitDir string) Clocks {
 		c.speed = s
 	}
 	dur := func(key string) time.Duration {
-		if d, err := time.ParseDuration(cfg.Get("cursed." + key)); err == nil && d > 0 {
+		if d, ok := parseDuration(cfg.Get("cursed." + key)); ok && d > 0 {
 			return d
 		}
 		return 0
@@ -85,3 +86,21 @@ func (c Clocks) Decay(tier int) time.Duration {
 func (c Clocks) Every(d time.Duration) time.Duration { return time.Duration(float64(d) / c.speed) }
 
 func (e *Engine) clocks() Clocks { return ClocksFor(e.gitDir) }
+
+// parseDuration is Go's, plus days: "30d", "2d12h", "90m".
+func parseDuration(s string) (time.Duration, bool) {
+	s = strings.TrimSpace(s)
+	var days time.Duration
+	if i := strings.IndexByte(s, 'd'); i > 0 {
+		n, err := strconv.Atoi(s[:i])
+		if err != nil {
+			return 0, false
+		}
+		days, s = time.Duration(n)*24*time.Hour, s[i+1:]
+		if s == "" {
+			return days, true
+		}
+	}
+	d, err := time.ParseDuration(s)
+	return days + d, err == nil
+}
