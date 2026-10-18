@@ -151,13 +151,13 @@ cg is played at opt-in events (hackathons, conventions, coding challenges). Thes
 2. ✅ **The gentle mode: Juniper.** The partner who cherishes you: `--preset gentle`, Tier 0 forever, no punishments, nothing taken; XP, quests and achievements still count. `cg partner` to switch; after Miranda's good ending, the credits introduce her. *(Done 2026-10-18.)*
 3. **More characters.** A toxic ex-boyfriend and others: names from the author, then the steps in [CHARACTERS.md](CHARACTERS.md).
 4. ✅ **Release and real players.** Tagged releases with binaries for Linux, macOS and Windows, a support link, then testing with real people at an event. *(v0.1.0 released 2026-10-18, with one-line installers: `install.sh` and `install.ps1`, both run by CI against the latest release.)*
-5. **Launch (Phase 10).** Commit the animations, a GIF hero in the README, the rendered clips.
+5. ✅ **Organizer kit.** *(Done 2026-10-18: [EVENTS.md](EVENTS.md), the playbook; `cg event join <file or URL>` with a shared end time (`cursed.eventEnds`); `tools/event-example.ini`, `tools/rules-card.html`, the leaderboard's `?event=` title and Good endings board. An event file can never turn on Death March.)*
+6. **Launch (Phase 10).** Commit the animations, a GIF hero in the README, the rendered clips.
 
 *Out of the picture for now:* cg standing alone without git installed (packfile reader, its own fetch/push/merge). It stays passthrough.
 
 ## Backlog
 Ideas we want, in no particular order. Pick one, plan it, ship it.
-- **Organizer kit:** `docs/EVENTS.md`, a checklist for running a cg hackathon (presets, `--hours`, Death March rules, the leaderboard) and a printable rules card.
 - **Package managers:** a Homebrew tap and a Scoop bucket, so `brew install cg` / `scoop install cg` work.
 - **Launch polish (Phase 10):** the animations in the README, a boss-fight GIF on top.
 - **Juniper's portrait:** her own ASCII art for `cg face` and `cg mood` (she borrows a small face today).

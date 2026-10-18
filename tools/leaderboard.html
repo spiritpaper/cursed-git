@@ -59,7 +59,7 @@
 </head>
 <body>
 <header>
-  <h1>Cursed GIT <span>Leaderboard</span></h1>
+  <h1 id="title">Cursed GIT <span>Leaderboard</span></h1>
   <div class="sub">Who survived her best. Each team runs <code>cg card --json &gt; team.json</code> and hands it in.</div>
 </header>
 <main>
@@ -76,7 +76,13 @@
   <p class="note">Cards are self-reported (they come from each team's own machine). Sending a newer card from the same player and project replaces the old one. Nothing leaves this page: it keeps the cards in this browser only.</p>
 </main>
 <script>
-  const KEY = "cg-leaderboard";
+  // ?event=Cursed Hack 2026 puts the event's name on top (and keeps its cards separate)
+  const eventName = new URLSearchParams(location.search).get("event") || "";
+  if (eventName) {
+    document.getElementById("title").innerHTML = `${eventName.replace(/[&<>"]/g, "")} <span>Leaderboard</span>`;
+    document.title = eventName + " Leaderboard";
+  }
+  const KEY = "cg-leaderboard" + (eventName ? ":" + eventName : "");
   let teams = {};
   try { teams = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { teams = {}; }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(teams)); } catch (e) {} };
@@ -109,6 +115,7 @@
       board("Fastest boss kill", by((a, b) => a.fastest_fight_seconds - b.fastest_fight_seconds).filter(t => t.fastest_fight_seconds), t => clock(t.fastest_fight_seconds)),
       board("Achievements", by((a, b) => b.achievements.length - a.achievements.length), t => `🏆 ${t.achievements.length}`),
       board("Most toxic", by((a, b) => b.toxicity - a.toxicity).filter(t => t.toxicity > 0), t => `☣ ${t.toxicity}`),
+      board("Good endings", by((a, b) => b.level - a.level).filter(t => t.ending === "C"), t => "♥ free"),
     ].join("");
     const rows = by((a, b) => b.level - a.level || b.xp - a.xp).map(t => `<tr>
       <td>${name(t)}${t.death_march ? ' <span class="skull" title="Death March">☠</span>' : ""}</td>

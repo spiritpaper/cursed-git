@@ -7,6 +7,7 @@ package config
 
 import (
 	"bufio"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,14 +39,25 @@ func Load(gitDir string) Config {
 
 func (c Config) Get(key string) string { return c[strings.ToLower(key)] }
 
+// Parse reads config text in git's format (an event file, for example).
+func Parse(text string) Config {
+	c := Config{}
+	c.read(strings.NewReader(text))
+	return c
+}
+
 func (c Config) readFile(path string) {
 	f, err := os.Open(path)
 	if err != nil {
 		return
 	}
 	defer f.Close()
+	c.read(f)
+}
+
+func (c Config) read(r io.Reader) {
 	section := ""
-	sc := bufio.NewScanner(f)
+	sc := bufio.NewScanner(r)
 	for sc.Scan() {
 		line := strings.TrimSpace(sc.Text())
 		if line == "" || line[0] == '#' || line[0] == ';' {

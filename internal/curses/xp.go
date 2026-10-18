@@ -80,8 +80,23 @@ func EventHours(gitDir string) int {
 	return n
 }
 
-// EventLeft is how much of the event is left, counted from when she moved in.
+// EventEnds is the event's shared end time (cursed.eventEnds), if the organizer set one.
+func EventEnds(gitDir string) (time.Time, bool) {
+	v := strings.TrimSpace(config.Load(gitDir).Get("cursed.eventEnds"))
+	for _, layout := range []string{time.RFC3339, "2006-01-02 15:04", "2006-01-02T15:04"} {
+		if t, err := time.ParseInLocation(layout, v, time.Local); err == nil {
+			return t, true
+		}
+	}
+	return time.Time{}, false
+}
+
+// EventLeft is how much of the event is left: until the shared end time if there is one,
+// otherwise eventHours counted from when she moved in.
 func (e *Engine) EventLeft(now time.Time) (time.Duration, bool) {
+	if end, ok := EventEnds(e.gitDir); ok {
+		return end.Sub(now), true
+	}
 	h := EventHours(e.gitDir)
 	if h == 0 || e.st.OnSince == 0 {
 		return 0, false

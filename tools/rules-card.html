@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursed GIT Rules Card</title>
+<style>
+  :root { --ink: #1d1622; --dim: #6f6477; --accent: #d81b55; --line: #e4dce8; --bg: #ffffff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f2eef4; color: var(--ink); font: 13px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .sheet { max-width: 760px; margin: 16px auto; padding: 0 16px; }
+  .hint { color: var(--dim); text-align: center; margin: 8px 0 14px; }
+  .card { background: var(--bg); border: 2px solid var(--ink); border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; break-inside: avoid; }
+  h1 { margin: 0; font-size: 22px; } h1 span { color: var(--accent); }
+  .tag { color: var(--dim); margin: 2px 0 12px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .cols { grid-template-columns: 1fr; } }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 6px; color: var(--accent); }
+  ul { margin: 0 0 10px; padding-left: 16px; } li { margin: 2px 0; }
+  code { background: #f4eff6; padding: 0 3px; border-radius: 3px; white-space: nowrap; }
+  .safe { border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 8px; }
+  @media print {
+    body { background: none; } .hint { display: none; }
+    .sheet { max-width: none; margin: 0; padding: 0; }
+    .card { margin: 0 0 8mm; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <p class="hint">Print this page: two cards per sheet, one for every table.</p>
+  <!-- the same card twice, so one sheet serves two tables -->
+  <template id="card">
+    <section class="card">
+      <h1>Cursed GIT <span>· the rules</span></h1>
+      <div class="tag">You're dating Miranda. She lives in your repo. Use <code>cg</code> wherever you'd type <code>git</code>.</div>
+      <div class="cols">
+        <div>
+          <h2>Calms her</h2>
+          <ul>
+            <li>Real commit messages (what + why)</li>
+            <li>Committing often</li>
+            <li>Winning boss fights</li>
+          </ul>
+          <h2>Angers her</h2>
+          <ul>
+            <li>Lazy messages: <code>fix</code>, <code>wip</code>, <code>asdf</code></li>
+            <li>Not committing (she takes your files)</li>
+            <li>Force-pushing, <code>reset --hard</code></li>
+            <li>Plain <code>git</code> behind her back</li>
+          </ul>
+          <h2>Boss fights</h2>
+          <ul>
+            <li>A merge conflict = a fight on a clock</li>
+            <li>Fix the <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> blocks, <code>cg add</code>, <code>cg commit</code></li>
+            <li>You can't run (<code>--abort</code> is refused)</li>
+          </ul>
+        </div>
+        <div>
+          <h2>Useful</h2>
+          <ul>
+            <li><code>cg mood</code> how she feels, your XP</li>
+            <li><code>cg event</code> time left, your goals</li>
+            <li><code>cg quest</code> learn git, earn XP</li>
+            <li><code>cg card</code> your stats (screenshot it)</li>
+            <li><code>cg rivals</code> who she likes best</li>
+            <li><code>cg achievements</code> 24 to collect</li>
+          </ul>
+          <h2>The end</h2>
+          <ul>
+            <li>Earn enough XP and wins, then <code>cg breakup</code></li>
+            <li>How it ends depends on how you treated her</li>
+          </ul>
+          <div class="safe">
+            <h2>Safe words</h2>
+            <ul>
+              <li><code>cg beg</code> get back what she took (she keeps everything)</li>
+              <li><code>cg restraining-order</code> she stops, right now, no questions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </template>
+  <div id="cards"></div>
+</div>
+<script>
+  const t = document.getElementById("card");
+  const out = document.getElementById("cards");
+  for (let i = 0; i < 2; i++) out.appendChild(t.content.cloneNode(true));
+</script>
+</body>
+</html>

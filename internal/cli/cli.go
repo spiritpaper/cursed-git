@@ -38,6 +38,7 @@ commands:
   quest [skip]     a task that teaches you git, checked by her, paid in XP
   rivals           her scoreboard: everyone who commits here, and her favourite
   partner [name]   who's here, and who else you could be with (Miranda, Juniper, ...)
+  event [join <file|URL>]  join an organizer's event, or see yours (time left, goals)
   beg              ask for the files she took back
   graveyard        list what she took
   curse on [--preset p] [--hours N] | off
@@ -271,6 +272,8 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 
 	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget", "card", "achievements", "quest", "rivals", "partner":
 		return herCmd(args, stdout, stderr)
+	case "event":
+		return eventCmd(args[1:], stdout, stderr)
 	case "closure":
 		// works without a repository: after a toxic breakup there may be nothing left
 		if err := curses.Closure(".", stdout); err != nil {

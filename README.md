@@ -159,6 +159,10 @@ cg breakup               # the final boss
 - **Toxic** (you were as bad as her): she takes everything and leaves a receipt.
 - **Good**: denial, bargaining, tears. Then she's gone for good, and it's just git again.
 
+**Running an event?** [docs/EVENTS.md](docs/EVENTS.md) is the organizer's playbook: one event
+file, and every team joins with `cg event join <file or URL>`. Tracks, a kickoff script,
+awards, a printable rules card, troubleshooting.
+
 At an event, `cg init --preset hackathon --hours 24` scales the goals so an ending is reachable
 before it's over (level, fights, lines, and XP that pays after an hour instead of a day), and
 `cg mood` shows the time left. For the projector: each team runs `cg card --json > team.json`
