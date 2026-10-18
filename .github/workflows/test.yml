@@ -7,23 +7,40 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          cache: false # no dependencies, no go.sum
+      - run: git --version
       - run: go vet ./...
-      - run: go test ./...
+      - name: go test
+        shell: bash
+        run: go test ./... 2>&1 | tee test.log; exit ${PIPESTATUS[0]}
+      # failures as an annotation, so they're readable on the run page without opening the log
+      - name: report failures
+        if: failure()
+        shell: bash
+        run: |
+          msg=$(grep -B2 -A25 -- '--- FAIL' test.log | head -300)
+          msg="${msg//'%'/'%25'}"
+          msg="${msg//$'\r'/}"
+          msg="${msg//$'\n'/'%0A'}"
+          echo "::error title=go test failures (${{ matrix.os }})::$msg"
 
   # she doesn't play on Windows CI (no console), but cg must build there
   windows-build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          cache: false
+      - run: go vet ./...
       - run: go build ./...
