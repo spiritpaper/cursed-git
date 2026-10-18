@@ -452,6 +452,8 @@ She keeps a **ledger**: every commit she created and every ref she moved.
     randomPullChance = 0.03
     personality = default     ; swap line packs for different exes
 
+    eventHours = 24           ; set by --preset hackathon: scales the endgame goals below to the event
+
     ; endgame (§5)
     breakupLevel = 10
     minBossFightsWon = 3

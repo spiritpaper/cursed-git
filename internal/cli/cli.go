@@ -19,7 +19,7 @@ const usage = `cg: Cursed GIT. Like git, but she has feelings.
 usage: cg <command> [args]
 
 commands:
-  init [-q] [--preset clingy|toxic|psycho] [--plain] [dir]
+  init [-q] [--preset clingy|toxic|psycho|hackathon] [--hours N] [--plain] [dir]
                    create a repository (with her in it, unless --plain)
   add [-f] <path>...  stage files and folders (respects .gitignore; -f adds ignored files)
   ls-files [-s]    list staged files (-s with mode, hash and stage)
@@ -38,7 +38,7 @@ commands:
   quest [skip]     a task that teaches you git, checked by her, paid in XP
   beg              ask for the files she took back
   graveyard        list what she took
-  curse on [--preset p] | off
+  curse on [--preset p] [--hours N] | off
                    invite her back / ask her to leave
   breakup          try to leave her (you have to earn it: see cg mood)
   restraining-order  emergency off switch, no questions asked
@@ -84,7 +84,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 	case "init":
 		// cg init        -> current folder
 		// cg init <dir>  -> that folder (created if missing)
-		target, quiet, plain, preset := ".", false, false, ""
+		target, quiet, plain, preset, hours := ".", false, false, "", ""
 		for i := 1; i < len(args); i++ {
 			switch a := args[i]; {
 			case a == "-q" || a == "--quiet":
@@ -94,6 +94,9 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 			case a == "--preset" && i+1 < len(args):
 				i++
 				preset = args[i]
+			case a == "--hours" && i+1 < len(args):
+				i++
+				hours = args[i]
 			case strings.HasPrefix(a, "-"):
 				// without this, `cg init -q` used to create a folder called "-q"
 				return toGit(args, stdout, stderr) // --bare, -b <branch>, ...
@@ -109,6 +112,9 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintf(stdout, "Initialized empty Cursed GIT repository in %s\n", commands.GitDir(target))
 		}
 		if !plain {
+			if code := eventSetup(commands.GitDir(target), preset, hours, stdout, stderr); code != 0 {
+				return code
+			}
 			her, err := curses.Enable(commands.GitDir(target), preset, curseEnv(stderr))
 			if err != nil {
 				fmt.Fprintf(stderr, "cg init: %v\n", err)

@@ -7,6 +7,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -106,9 +107,17 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 		if args[1] == "off" {
 			args = []string{"restraining-order"}
 		} else {
-			preset := ""
-			if len(args) == 4 && args[2] == "--preset" {
-				preset = args[3]
+			preset, hours := "", ""
+			for i := 2; i+1 < len(args); i += 2 {
+				switch args[i] {
+				case "--preset":
+					preset = args[i+1]
+				case "--hours":
+					hours = args[i+1]
+				}
+			}
+			if code := eventSetup(gitDir, preset, hours, stdout, stderr); code != 0 {
+				return code
 			}
 			her, err := curses.Enable(gitDir, preset, env)
 			if err != nil {
@@ -262,6 +271,9 @@ func printMood(w io.Writer, her *curses.Engine, now time.Time) {
 		fmt.Fprintf(w, "She has %d of your things. (`cg beg`)\n", n)
 	}
 	fmt.Fprintln(w, her.ClosureLine())
+	if left, ok := her.EventLeft(now); ok {
+		fmt.Fprintf(w, "Event: %s\n", eventLeft(left))
+	}
 	if h := her.History(); h.Projects > 1 {
 		fmt.Fprintf(w, "Across %d projects together: %d fights won, %d lost, %s\n", h.Projects, h.Won, h.Lost, plural(h.Breakups, "breakup"))
 	}
@@ -295,4 +307,27 @@ func printHowToPlay(w io.Writer, her *curses.Engine) {
     learn git   cg quest    (tasks that teach git, for XP)
 
 `, st.Preset, st.Base, st.Max, her.Verdict().Rules.BreakupLevel)
+}
+
+func eventLeft(d time.Duration) string {
+	if d <= 0 {
+		return "over. Did you get your closure?"
+	}
+	return fmt.Sprintf("%dh %02dm left", int(d.Hours()), int(d.Minutes())%60)
+}
+
+// eventSetup records the event's length for the hackathon preset (--hours, default 24), using
+// git's own config command. Other presets ignore --hours unless it's given explicitly.
+func eventSetup(gitDir, preset, hours string, stdout, stderr io.Writer) int {
+	if hours == "" && preset == "hackathon" && curses.EventHours(gitDir) == 0 {
+		hours = "24"
+	}
+	if hours == "" {
+		return 0
+	}
+	if n, err := strconv.Atoi(hours); err != nil || n <= 0 {
+		fmt.Fprintf(stderr, "cg: --hours wants a number of hours, not %q\n", hours)
+		return 1
+	}
+	return toGit([]string{"--git-dir", gitDir, "config", "cursed.eventHours", hours}, stdout, stderr)
 }

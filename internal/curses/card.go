@@ -42,6 +42,13 @@ func (e *Engine) Card(now time.Time) []string {
 		fmt.Sprintf("Toxicity    %d/%d", st.Toxicity, rules(e.gitDir).ToxicThreshold),
 		fmt.Sprintf("Together    %s · %s", plural(days, "day"), plural(st.Commits, "commit")),
 	}
+	if left, ok := e.EventLeft(now); ok {
+		ev := "over"
+		if left > 0 {
+			ev = fmt.Sprintf("%dh %02dm left", int(left.Hours()), int(left.Minutes())%60)
+		}
+		rows = append(rows, "Event       "+ev)
+	}
 	got := e.Unlocked()
 	ach := fmt.Sprintf("Achievements %d/%d", len(got), len(Achievements))
 	var latest string

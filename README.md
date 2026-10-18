@@ -88,6 +88,7 @@ One dial: her **tier**. The preset decides where she starts and how high she can
 | `clingy` | 1 | 2 | safe for a real project |
 | `toxic` | 2 | 3 | |
 | `psycho` (default) | 3 | 4 | the full experience |
+| `hackathon` | 3 | 4 | psycho, with goals scaled to the event (`--hours 24`) |
 
 Treat her well (good commit messages, committing regularly) and she calms down. Ignore her
 warnings, force-push, or use plain `git` behind her back, and she gets worse.
@@ -125,7 +126,9 @@ cg breakup               # the final boss
 - **Toxic** (you were as bad as her): she takes everything and leaves a receipt.
 - **Good**: denial, bargaining, tears. Then she's gone for good, and it's just git again.
 
-Event organizers can tune the game in `.git/config`, under `[cursed]`: `breakupLevel`,
+At an event, `cg init --preset hackathon --hours 24` scales the goals so an ending is reachable
+before it's over (level, fights, lines, and XP that pays after an hour instead of a day), and
+`cg mood` shows the time left. Organizers can tune everything in `.git/config`, under `[cursed]`: `breakupLevel`,
 `minBossFightsWon`, `minLinesCommitted`, `toxicThreshold`, `xpMaturity` (see
 [docs/CURSES.md §7](docs/CURSES.md)).
 

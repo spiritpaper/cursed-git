@@ -54,12 +54,39 @@ func rules(gitDir string) Rules {
 		}
 		return def
 	}
-	r := Rules{num("breakupLevel", 10), num("minBossFightsWon", 3), num("minLinesCommitted", 2000),
-		num("toxicThreshold", ToxicThreshold), 24 * time.Hour}
+	level, wins, lines, maturity := 10, 3, 2000, 24*time.Hour
+	if hours := num("eventHours", 0); hours > 0 {
+		// an event (hackathon preset): goals you can reach before it ends
+		level, lines, maturity = clamp(hours/4, 3, 10), 50*hours, time.Hour
+		wins = 1
+		if hours > 12 {
+			wins = 2
+		}
+	}
+	r := Rules{num("breakupLevel", level), num("minBossFightsWon", wins), num("minLinesCommitted", lines),
+		num("toxicThreshold", ToxicThreshold), maturity}
 	if d, err := time.ParseDuration(cfg.Get("cursed.xpMaturity")); err == nil && d >= 0 {
 		r.Maturity = d
 	}
 	return r
+}
+
+// EventHours is the length of the event this repo is played at (0 = not an event).
+func EventHours(gitDir string) int {
+	n, err := strconv.Atoi(config.Load(gitDir).Get("cursed.eventHours"))
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
+}
+
+// EventLeft is how much of the event is left, counted from when she moved in.
+func (e *Engine) EventLeft(now time.Time) (time.Duration, bool) {
+	h := EventHours(e.gitDir)
+	if h == 0 || e.st.OnSince == 0 {
+		return 0, false
+	}
+	return time.Unix(e.st.OnSince, 0).Add(time.Duration(h) * time.Hour).Sub(now), true
 }
 
 // payForCommit records line XP for a commit you just made: new content only, pending.

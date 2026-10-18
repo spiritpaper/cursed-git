@@ -142,7 +142,7 @@ cg is played at opt-in events (hackathons, conventions, coding challenges). Thes
 
 1. ✅ **Achievements.** Unlocked from her diary, shown on `cg card` and in `cg achievements`: First Blood, Speedrun, Ghosted, Rebase Survivor, Serial Dater, and more. Pure replay of events, so they can't be faked without breaking the diary. *(Done 2026-10-18: 21 achievements, announced when they unlock, `internal/curses/achievements.go`.)*
 2. ✅ **Quests that teach git.** She sets a task ("make a branch and merge it back", "cherry-pick something", "resolve a conflict without `--abort`"), checks it against the real repository, and pays XP. The learning goal, as gameplay. *(Done 2026-10-18: 11 quests in `internal/curses/quests.go`, each ending with "What you learned", plus the Scholar and Professor achievements.)*
-3. **A `hackathon` preset.** Clocks and breakup thresholds scaled to an event's length (`cursed.eventHours`), so a 24h event can actually reach an ending.
+3. ✅ **A `hackathon` preset.** Clocks and breakup thresholds scaled to an event's length (`cursed.eventHours`), so a 24h event can actually reach an ending. *(Done 2026-10-18: level hours/4 (3–10), 1–2 fights, 50 lines/hour, XP matures in 1h; explicit settings still win; the event clock in `cg mood` and `cg card`.)*
 4. **Event leaderboard.** `cg card --json`, and a page organizers can put on a projector: every team's card, fastest boss kill, most toxic team.
 5. **Rivalry.** Two people committing to the same repo: she plays them against each other.
 

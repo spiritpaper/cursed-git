@@ -109,7 +109,7 @@ func Enable(gitDir, preset string, env Env) (*Engine, error) {
 	}
 	p, ok := Presets[preset]
 	if !ok {
-		return nil, fmt.Errorf("unknown preset %q (clingy, toxic or psycho)", preset)
+		return nil, fmt.Errorf("unknown preset %q (clingy, toxic, psycho or hackathon)", preset)
 	}
 	now := env.Now().Unix()
 	if err := d.Append(Event{T: now, Type: "on", Text: preset, Tier: p[0], Max: p[1]}); err != nil {
