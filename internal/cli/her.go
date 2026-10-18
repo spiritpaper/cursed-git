@@ -304,8 +304,8 @@ func printMood(w io.Writer, her *curses.Engine, now time.Time) {
 		last = "last commit " + now.Sub(time.Unix(her.HeadCommitAt(), 0)).Round(time.Minute).String() + " ago"
 	}
 	fmt.Fprintf(w, "You: toxicity %d/%d · %s · %s\n", st.Toxicity, curses.ToxicThreshold, plural(len(st.Grudges), "grudge"), last)
-	if limit := curses.Deadline(tier); limit > 0 {
-		fmt.Fprintf(w, "Commit deadline at this tier: %s\n", limit)
+	if limit := curses.ClocksFor(her.GitDir()).Deadline(tier); limit > 0 {
+		fmt.Fprintf(w, "Commit deadline at this tier: %s\n", short(limit))
 	}
 	if n := len(st.Grudges); n > 0 {
 		last := st.Grudges[max(0, n-3):]

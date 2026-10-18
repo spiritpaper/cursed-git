@@ -17,7 +17,7 @@ const charmEvery = 6 * time.Hour
 // charm: after a real win, sometimes, she's wonderful. (Gentle characters are wonderful
 // all the time and don't need this.)
 func (e *Engine) charm(now time.Time, why string) {
-	if e.Gentle() || e.st.Lovebombing(now) || now.Unix()-e.st.CharmAt < int64(charmEvery.Seconds()) || !e.chance(0.5) {
+	if e.Gentle() || e.st.Lovebombing(now) || now.Unix()-e.st.CharmAt < int64(e.clocks().Every(charmEvery).Seconds()) || !e.chance(0.5) {
 		return
 	}
 	e.pause()

@@ -138,6 +138,9 @@ func Enable(gitDir, preset string, env Env) (*Engine, error) {
 
 func (e *Engine) State() *State { return e.st }
 
+// GitDir is the repository she lives in.
+func (e *Engine) GitDir() string { return e.gitDir }
+
 func (e *Engine) log(ev Event) {
 	if e.gone {
 		return
@@ -643,7 +646,7 @@ func (e *Engine) HasCommits() bool {
 }
 
 func (e *Engine) commitDeadline(now time.Time, tier int) {
-	limit := Deadline(tier)
+	limit := e.clocks().Deadline(tier)
 	lastCommit := e.LastCommitAt()
 	if limit == 0 || now.Unix()-lastCommit < int64(limit.Seconds()) {
 		return

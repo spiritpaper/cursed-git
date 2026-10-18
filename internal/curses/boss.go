@@ -196,7 +196,7 @@ func (e *Engine) startFight(now time.Time, tier int) {
 	f.Remote = strings.HasPrefix(f.Boss, e.rival()+" from ")
 	f.Start = now.Unix()
 	f.HP = e.hpLeft(f)
-	f.Seconds = f.HP * int(HunkTime(tier).Seconds())
+	f.Seconds = f.HP * int(e.clocks().Fight(tier).Seconds())
 	if e.phase2 {
 		f.Phase = 2
 	}

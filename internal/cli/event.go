@@ -23,6 +23,7 @@ var eventKeys = []string{
 	"cursed.preset", "cursed.personality", "cursed.eventhours", "cursed.eventends",
 	"cursed.breakuplevel", "cursed.minbossfightswon", "cursed.minlinescommitted",
 	"cursed.toxicthreshold", "cursed.xpmaturity",
+	"cursed.speed", "cursed.deadline", "cursed.fighttime", "cursed.decay",
 }
 
 // eventCmd: cg event (what event am I in?) | cg event join <file or URL>
@@ -64,6 +65,14 @@ func printEvent(gitDir string, w io.Writer) {
 		r := her.Verdict().Rules
 		fmt.Fprintf(w, "    to earn your closure: level %d, %d boss fights won, %d lines committed\n", r.BreakupLevel, r.MinWins, r.MinLines)
 		fmt.Fprintf(w, "    playing with: %s (%s)\n", her.Name(), her.State().Preset)
+		c, tier := curses.ClocksFor(gitDir), her.State().Tier(env.Now())
+		if d := c.Deadline(tier); d > 0 {
+			fmt.Fprintf(w, "    clocks: commit within %s, %s per conflict block", short(d), short(c.Fight(max(tier, 3))))
+			if dec := c.Decay(max(tier, 3)); dec > 0 {
+				fmt.Fprintf(w, ", untouched files rot in %s", short(dec))
+			}
+			fmt.Fprintln(w)
+		}
 	}
 	if s := cfg.Get("event.submit"); s != "" {
 		fmt.Fprintf(w, "    hand in your card: cg card --json > team.json, then %s\n", s)
@@ -152,4 +161,19 @@ func contains(list []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// short prints a duration the way people say it: 30m, 1h30m, 8h, 2d.
+func short(d time.Duration) string {
+	switch {
+	case d >= 48*time.Hour && d%(24*time.Hour) == 0:
+		return fmt.Sprintf("%dd", d/(24*time.Hour))
+	case d%time.Hour == 0:
+		return fmt.Sprintf("%dh", d/time.Hour)
+	case d >= time.Hour:
+		return fmt.Sprintf("%dh%dm", d/time.Hour, (d%time.Hour)/time.Minute)
+	case d%time.Minute == 0:
+		return fmt.Sprintf("%dm", d/time.Minute)
+	}
+	return d.Round(time.Second).String()
 }

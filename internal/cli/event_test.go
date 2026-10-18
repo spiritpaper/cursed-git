@@ -86,3 +86,24 @@ func TestNotInAnEvent(t *testing.T) {
 		t.Errorf("only event settings are applied: exit %d %q", code, errs)
 	}
 }
+
+// A one-day weekend jam: everything faster.
+func TestWeekendJamClocks(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	pinIdentity(t)
+	dir := t.TempDir()
+	t.Chdir(dir)
+	mustRun(t, "init", "-q", "--plain")
+	file := filepath.Join(t.TempDir(), "jam.ini")
+	os.WriteFile(file, []byte("[event]\n  name = Weekend Jam\n[cursed]\n  preset = psycho\n  eventHours = 8\n  speed = 3\n  fightTime = 1m\n"), 0644)
+	_, out, _ := run("event", "join", file)
+	if !strings.Contains(out, "clocks: commit within 10m, 1m per conflict block, untouched files rot in 2h40m") {
+		t.Errorf("cg event should show the jam's clocks:\n%s", out)
+	}
+	commitFile(t, dir, "a.txt", "a\n", "a file to start with")
+	write(t, dir, map[string]string{"a.txt": "unsaved\n"})
+	h.wait(11 * time.Minute) // 30m / speed 3 = 10m
+	if _, _, errs := run("status"); !strings.Contains(errs, "minutes") {
+		t.Errorf("speed 3: the deadline warning comes after 10 minutes:\n%s", errs)
+	}
+}

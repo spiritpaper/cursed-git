@@ -26,6 +26,10 @@ Offer one or more. Tracks can run side by side; each team picks theirs.
 - [ ] Write your **event file** (start from [`tools/event-example.ini`](../tools/event-example.ini)): name, end
       time, preset, where to hand in cards, who to ask. Host it somewhere teams can reach (a gist,
       your event site) or hand it out as a file.
+- [ ] Pick the **pace**. The default clocks suit a long project: 30 minutes to commit at Tier 3,
+      3 minutes per conflict block. For a one-day weekend jam, set `speed = 2` (everything twice as
+      fast) in the event file, or one clock at a time (`deadline = 20m`, `fightTime = 2m`,
+      `decay = 6h`). `cg event` shows each team the clocks they're on.
 - [ ] Decide your **awards** (see below) and put them in the invite.
 - [ ] Put the **install line** in the invite, so teams arrive ready:
       ```bash

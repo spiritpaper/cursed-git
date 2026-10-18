@@ -103,7 +103,7 @@ func (e *Engine) hoover(now time.Time) {
 		return
 	}
 	h := loadHoover()
-	if len(h.Seen) >= len(costumes) || (h.LastAt != 0 && now.Unix()-h.LastAt < int64(hooverEvery.Seconds())) {
+	if len(h.Seen) >= len(costumes) || (h.LastAt != 0 && now.Unix()-h.LastAt < int64(e.clocks().Every(hooverEvery).Seconds())) {
 		return
 	}
 	if h.LastAt == 0 {

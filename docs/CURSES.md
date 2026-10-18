@@ -453,6 +453,10 @@ She keeps a **ledger**: every commit she created and every ref she moved.
     personality = default     ; swap line packs for different exes
 
     eventHours = 24           ; set by --preset hackathon: scales the endgame goals below to the event
+    speed = 1                 ; every clock (deadlines, fight timers, decay) runs this many times faster
+    deadline = 30m            ; or one clock, at its Tier 3 value (other tiers keep their proportions)
+    fightTime = 3m
+    decay = 30d               ; (Go durations: write 720h for 30 days)
 
     ; endgame (§5)
     breakupLevel = 10

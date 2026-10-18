@@ -36,7 +36,14 @@ On **Windows** (PowerShell):
 irm https://raw.githubusercontent.com/spiritpaper/cursed-git/main/install.ps1 | iex
 ```
 
-Both download the latest release, check it against the release's checksums, and install `cg`
+Or with a package manager:
+
+```bash
+brew install spiritpaper/tap/cg                                                    # macOS, Linux
+scoop bucket add spiritpaper https://github.com/spiritpaper/scoop-bucket; scoop install cg   # Windows
+```
+
+The one-line installers download the latest release, check it against the release's checksums, and install `cg`
 (to `~/.local/bin`, or `%LOCALAPPDATA%\cursed-git\bin` on Windows). Other ways:
 
 - **Download** `cg` yourself from the [latest release](https://github.com/spiritpaper/cursed-git/releases/latest),
@@ -168,7 +175,8 @@ before it's over (level, fights, lines, and XP that pays after an hour instead o
 `cg mood` shows the time left. For the projector: each team runs `cg card --json > team.json`
 and hands it in, and the organizer drops the files onto [tools/leaderboard.html](tools/leaderboard.html)
 (one offline page: closure, fastest boss kill, achievements, most toxic). Organizers can tune
-everything in `.git/config`, under `[cursed]`: `breakupLevel`,
+everything in `.git/config`, under `[cursed]`, including how fast the clocks run for a short
+jam (`speed = 2`, or `deadline = 20m`, `fightTime = 2m`, `decay = 6h`): `breakupLevel`,
 `minBossFightsWon`, `minLinesCommitted`, `toxicThreshold`, `xpMaturity` (see
 [docs/CURSES.md §7](docs/CURSES.md)).
 

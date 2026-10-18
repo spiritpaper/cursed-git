@@ -11,6 +11,10 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      # a token that can push to spiritpaper/homebrew-tap and spiritpaper/scoop-bucket
+      # (without it, the release still happens; only the package managers are skipped)
+      TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
@@ -44,3 +48,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" dist/* --title "Cursed GIT $GITHUB_REF_NAME" --generate-notes
+      - name: homebrew and scoop
+        if: env.TAP_TOKEN != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh tools/package-managers.sh "$GITHUB_REF_NAME" dist/checksums.txt pm
+          ruby -c pm/cg.rb
+          python3 -m json.tool pm/cg.json > /dev/null
+          publish() { # publish <repo> <folder> <file>
+            git clone -q "https://x-access-token:${TAP_TOKEN}@github.com/spiritpaper/$1.git" "pm/$1"
+            mkdir -p "pm/$1/$2"
+            cp "pm/$3" "pm/$1/$2/$3"
+            git -C "pm/$1" add -A
+            git -C "pm/$1" -c user.name=spiritpaper -c user.email=spiritpaper@users.noreply.github.com \
+              commit -qm "cg $GITHUB_REF_NAME" || { echo "$1: already up to date"; return 0; }
+            git -C "pm/$1" push -q
+          }
+          publish homebrew-tap Formula cg.rb
+          publish scoop-bucket bucket cg.json

@@ -136,7 +136,7 @@ func (e *Engine) lastChanged() map[string]int64 {
 
 // decay runs (at most once an hour) and rots the three most neglected clean files a bit more.
 func (e *Engine) decay(now time.Time, tier int, last seen) {
-	period := DecayPeriod(tier)
+	period := e.clocks().Decay(tier)
 	if period == 0 || now.Unix()-last.DecayAt < 3600 {
 		return
 	}
