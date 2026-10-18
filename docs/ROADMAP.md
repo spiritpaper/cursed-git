@@ -172,6 +172,7 @@ In order. Pick the top one, plan it, ship it.
 8. ✅ **Package managers:** a Homebrew tap and a Scoop bucket (`brew install spiritpaper/tap-cg/cg`, `scoop install cg`). *(Done 2026-10-18: `tools/package-managers.sh`, published by the release workflow once the TAP_TOKEN secret exists.)*
 8b. ✅ **Configurable clocks:** `cursed.speed`, `deadline`, `fightTime`, `decay` (and in event files), for one-day weekend jams. *(Done 2026-10-18: `internal/curses/clocks.go`.)*
 9. ✅ **Launch polish (Phase 10):** the animations in the README, a boss-fight GIF on top. *(Done 2026-10-18: `docs/media/` hero, boss fight and decay GIFs from the renders; the nine animations committed in `cursed-git-video/`, toolchain and renders ignored.)*
+9b. ✅ **More ways to install:** .deb and .rpm on every release (nfpm), a Nix flake, and a Docker image that doubles as a playground (`ghcr.io/spiritpaper/cursed-git`). *(Done 2026-10-18; CI installs each one for real.)*
 10. **Plain mode:** `NO_COLOR` and an ASCII-only fallback for terminals and projectors that mangle unicode.
 
 **More of the cast**

@@ -31,6 +31,8 @@ Offer one or more. Tracks can run side by side; each team picks theirs.
       fast) in the event file, or one clock at a time (`deadline = 20m`, `fightTime = 2m`,
       `decay = 6h`). `cg event` shows each team the clocks they're on.
 - [ ] Decide your **awards** (see below) and put them in the invite.
+- [ ] Let people **try her first**: `docker run -it --rm ghcr.io/spiritpaper/cursed-git` is a
+      playground with nothing to install but Docker (and nothing on their machine touched).
 - [ ] Put the **install line** in the invite, so teams arrive ready:
       ```bash
       curl -fsSL https://raw.githubusercontent.com/spiritpaper/cursed-git/main/install.sh | sh     # Linux, macOS

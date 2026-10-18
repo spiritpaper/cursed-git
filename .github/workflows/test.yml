@@ -54,3 +54,36 @@ jobs:
           $env:CG_INSTALL_DIR = "$env:RUNNER_TEMP\cgbin"
           ./install.ps1
           & "$env:RUNNER_TEMP\cgbin\cg.exe" version
+
+  # the packages people install: .deb on Ubuntu, .rpm on Fedora, the Docker image, the Nix flake
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: deb and rpm
+        shell: bash
+        run: |
+          set -euo pipefail
+          CGO_ENABLED=0 go build -o packaging/cg ./cmd/cg
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.0
+          mkdir -p dist
+          for fmt in deb rpm; do VERSION=0.0.0 ARCH=amd64 "$(go env GOPATH)/bin/nfpm" package -f packaging/nfpm.yaml -p $fmt -t dist/; done
+          docker run --rm -v "$PWD/dist:/pkg" ubuntu:24.04 sh -c 'apt-get update -qq && apt-get install -y -qq /pkg/*.deb >/dev/null && cg version'
+          docker run --rm -v "$PWD/dist:/pkg" fedora:41 sh -c 'dnf install -y -q /pkg/*.rpm >/dev/null && cg version'
+      - name: docker image
+        run: |
+          docker build -t cursed-git:ci .
+          docker run --rm cursed-git:ci version
+          printf 'cg merge his-version; cg status -s\nexit\n' | docker run -i --rm cursed-git:ci | grep -q "UU song.md"
+
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - run: nix build
+      - run: nix run . -- version

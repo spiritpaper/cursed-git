@@ -1,0 +1,35 @@
+# .deb and .rpm packages, built by the release workflow with nfpm (https://nfpm.goreleaser.com):
+#   cp <the linux binary> packaging/cg && VERSION=0.3.0 ARCH=amd64 nfpm package -f packaging/nfpm.yaml -p deb -t dist/
+name: cursed-git
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+section: devel
+priority: optional
+maintainer: spiritpaper <spiritpaper@users.noreply.github.com>
+description: |
+  Like git, but she has feelings.
+  A git-learning game you play on a real project: cg works like git, and Miranda,
+  the toxic ex who lives in your repository, judges your commits, turns merge
+  conflicts into boss fights, and teaches you git along the way.
+vendor: spiritpaper
+homepage: https://github.com/spiritpaper/cursed-git
+license: MIT
+depends:
+  - git
+# cgvg, an old source-browsing tool, also installs /usr/bin/cg
+conflicts:
+  - cgvg
+contents:
+  - src: packaging/cg
+    dst: /usr/bin/cg
+    file_info:
+      mode: 0755
+  - src: README.md
+    dst: /usr/share/doc/cursed-git/README.md
+    file_info:
+      mode: 0644
+  - src: LICENSE
+    dst: /usr/share/doc/cursed-git/copyright
+    file_info:
+      mode: 0644

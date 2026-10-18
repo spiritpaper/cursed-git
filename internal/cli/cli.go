@@ -65,8 +65,15 @@ made by spiritpaper · support: https://spiritpaper.github.io/#support
 bugs and playtest stories: https://github.com/spiritpaper/cursed-git/issues
 `
 
-// version is stamped by `go install ...@v1.2.3`; a local build says "dev".
+// Version can be set at build time (-ldflags "-X .../internal/cli.Version=v1.2.3"), for builds
+// without git history (Nix, distro packages). Otherwise it comes from the build info.
+var Version string
+
+// version is stamped by `go install ...@v1.2.3` (or Version); a local build says "dev".
 func version() string {
+	if Version != "" {
+		return Version
+	}
 	if bi, ok := debug.ReadBuildInfo(); ok && bi.Main.Version != "" && bi.Main.Version != "(devel)" {
 		return bi.Main.Version
 	}

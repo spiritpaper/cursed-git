@@ -45,6 +45,22 @@ brew install spiritpaper/tap-cg/cg                                              
 scoop bucket add spiritpaper https://github.com/spiritpaper/scoop-bucket-cg; scoop install cg   # Windows
 ```
 
+Linux packages, Nix and Docker:
+
+```bash
+sudo apt install ./cursed-git_*_amd64.deb      # Debian, Ubuntu (the .deb from the latest release)
+sudo dnf install ./cursed-git-*.x86_64.rpm     # Fedora, RHEL (the .rpm from the latest release)
+nix run github:spiritpaper/cursed-git          # Nix (or: nix profile install github:spiritpaper/cursed-git)
+```
+
+**Just want to try her?** The Docker image is a playground: a throwaway project with Miranda
+already in it, and a branch that's about to start a boss fight. Nothing touches your machine.
+
+```bash
+docker run -it --rm ghcr.io/spiritpaper/cursed-git                          # the playground
+docker run -it --rm -v "$PWD:/work" ghcr.io/spiritpaper/cursed-git status   # cg on your own project
+```
+
 The one-line installers download the latest release, check it against the release's checksums, and install `cg`
 (to `~/.local/bin`, or `%LOCALAPPDATA%\cursed-git\bin` on Windows). Other ways:
 

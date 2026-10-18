@@ -8,3 +8,6 @@ check-output/
 dist/
 *.mp4
 
+
+# the binary nfpm packages (copied in by the release workflow)
+/packaging/cg
