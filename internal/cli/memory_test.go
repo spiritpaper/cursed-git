@@ -87,7 +87,7 @@ func TestRelationshipCard(t *testing.T) {
 	dir := newRepo(t, "psycho")
 	commitFile(t, dir, "a.txt", "a\n", "fix")
 	card := mustRun(t, "card")
-	for _, want := range []string{"relationship card", "dev & her", "Tier 3 · Dangerous", "Toxicity    1/10", "1 commit", `"fix"`} {
+	for _, want := range []string{"relationship card", "dev & Miranda", "Tier 3 · Dangerous", "Toxicity    1/10", "1 commit", `"fix"`} {
 		if !strings.Contains(card, want) {
 			t.Errorf("card is missing %q:\n%s", want, card)
 		}
@@ -105,7 +105,7 @@ func TestHowToPlayWhenYouInviteHer(t *testing.T) {
 	withHer(t, tuesday, lucky)
 	t.Chdir(t.TempDir())
 	_, _, errs := run("init", "--preset", "toxic")
-	if !strings.Contains(errs, "How to play (preset toxic: she starts at Tier 2, never goes above 3)") || !strings.Contains(errs, "cg restraining-order") {
+	if !strings.Contains(errs, "How to play with Miranda (preset toxic: she starts at Tier 2, never goes above 3)") || !strings.Contains(errs, "cg restraining-order") {
 		t.Errorf("init should explain the game:\n%s", errs)
 	}
 }

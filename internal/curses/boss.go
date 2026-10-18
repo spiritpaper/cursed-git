@@ -40,8 +40,9 @@ type Fight struct {
 	Files   []string `json:"files"`  // conflicted files at the start
 	Head    string   `json:"head"`   // HEAD at the start: the fight is won by a new commit
 	Seconds int      `json:"seconds"`
-	Phase   int      `json:"phase,omitempty"` // 2 = the rematch at Tier 4 (no phase 3)
-	Start   int64    `json:"-"`               // the event's time
+	Phase   int      `json:"phase,omitempty"`  // 2 = the rematch at Tier 4 (no phase 3)
+	Remote  bool     `json:"remote,omitempty"` // he came from a remote (a pull)
+	Start   int64    `json:"-"`                // the event's time
 }
 
 func (f *Fight) deadline() int64 { return f.Start + int64(f.Seconds) }
@@ -129,7 +130,7 @@ func (e *Engine) hpLeft(f *Fight) int {
 
 var quoted = regexp.MustCompile(`'([^']+)'`)
 
-// opponent names the boss: Chad if it came from a remote, Past You if it's your own branch,
+// opponent names the boss: her rival (Chad, for Miranda) if it came from a remote, Past You if it's your own branch,
 // otherwise whoever wrote the commit you're merging.
 func (e *Engine) opponent() (boss, branch string) {
 	branch = "their side"
@@ -143,7 +144,7 @@ func (e *Engine) opponent() (boss, branch string) {
 	}
 	if strings.Contains(first, "remote-tracking") {
 		remote, _, _ := strings.Cut(branch, "/")
-		return "Chad from " + remote, branch
+		return e.rival() + " from " + remote, branch
 	}
 	if _, url, ok := strings.Cut(first, "' of "); ok {
 		// a pull: git names the URL, so find which remote that is
@@ -153,7 +154,7 @@ func (e *Engine) opponent() (boss, branch string) {
 				remote = strings.TrimSuffix(name, ".url")
 			}
 		}
-		return "Chad from " + remote, remote + "/" + branch
+		return e.rival() + " from " + remote, remote + "/" + branch
 	}
 	for _, f := range []string{"MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "REBASE_HEAD"} {
 		data, err := os.ReadFile(filepath.Join(e.gitDir, f))
@@ -172,7 +173,7 @@ func (e *Engine) opponent() (boss, branch string) {
 			return name[0], branch
 		}
 	}
-	return "Chad", branch
+	return e.rival(), branch
 }
 
 func clock(secs int64) string {
@@ -192,6 +193,7 @@ func (e *Engine) startFight(now time.Time, tier int) {
 	sort.Strings(f.Files)
 	f.Head, _ = refs.Resolve(e.gitDir, "HEAD")
 	f.Boss, f.Branch = e.opponent()
+	f.Remote = strings.HasPrefix(f.Boss, e.rival()+" from ")
 	f.Start = now.Unix()
 	f.HP = e.hpLeft(f)
 	f.Seconds = f.HP * int(HunkTime(tier).Seconds())

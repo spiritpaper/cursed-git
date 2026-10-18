@@ -35,7 +35,7 @@ func (e *Engine) Card(now time.Time) []string {
 	}
 	rows := []string{
 		"CURSED GIT · relationship card",
-		fmt.Sprintf("%s & her · %s", e.firstName(), filepath.Base(e.workTree)),
+		fmt.Sprintf("%s & %s · %s", e.firstName(), e.Name(), filepath.Base(e.workTree)),
 		"",
 		fmt.Sprintf("%-28s%s", status, face),
 		fmt.Sprintf("Closure     Lv %-3d %s  %d XP", lv, strings.Repeat("▓", full)+strings.Repeat("░", 10-full), st.XP),

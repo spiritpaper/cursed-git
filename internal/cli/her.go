@@ -322,7 +322,7 @@ func plural(n int, word string) string {
 func printHowToPlay(w io.Writer, her *curses.Engine) {
 	st := her.State()
 	fmt.Fprintf(w, `
-  How to play (preset %s: she starts at Tier %d, never goes above %d)
+  How to play with %s (preset %s: she starts at Tier %d, never goes above %d)
     calms her   good commit messages, committing often, winning boss fights
     angers her  lazy messages ("fix", "wip"), ignoring her deadlines, force-pushing,
                 using plain git behind her back
@@ -332,7 +332,7 @@ func printHowToPlay(w io.Writer, her *curses.Engine) {
     lost files  cg beg / cg graveyard   (she saves everything before she takes it)
     learn git   cg quest    (tasks that teach git, for XP)
 
-`, st.Preset, st.Base, st.Max, her.Verdict().Rules.BreakupLevel)
+`, her.Name(), st.Preset, st.Base, st.Max, her.Verdict().Rules.BreakupLevel)
 }
 
 func eventLeft(d time.Duration) string {

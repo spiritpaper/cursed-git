@@ -11,8 +11,7 @@ package curses
 
 import (
 	"bufio"
-	_ "embed"
-	"encoding/json"
+	"embed"
 	"errors"
 	"fmt"
 	"io"
@@ -26,8 +25,8 @@ import (
 	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
-//go:embed lines/default.json
-var defaultLines []byte
+//go:embed lines/*.json
+var packs embed.FS
 
 // Env is everything from the outside world, so tests can control time, luck and the terminal.
 type Env struct {
@@ -76,9 +75,7 @@ func Open(gitDir string, env Env) (*Engine, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal(defaultLines, &e.lines); err != nil {
-		e.lines = map[string][]string{} // a broken line pack makes her mute, it never breaks git
-	}
+	e.lines = loadLines(gitDir)
 	e.st = Replay(d.Events())
 	e.achBefore = e.Unlocked()
 	return e, nil

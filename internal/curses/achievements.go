@@ -24,7 +24,7 @@ var Achievements = []Achievement{
 	{"first_blood", "First Blood", "win your first boss fight"},
 	{"speedrun", "Speedrun", "win a boss fight in 30 seconds or less"},
 	{"untouchable", "Untouchable", "win 3 boss fights in a row"},
-	{"chad_slayer", "Chad Slayer", "beat Chad from a remote"},
+	{"chad_slayer", "Chad Slayer", "beat the rival who came from a remote (a pull)"},
 	{"therapy", "Therapy", "beat Past You (a conflict with your own branch)"},
 	{"rebase_survivor", "Rebase Survivor", "win a boss fight in the middle of a rebase"},
 	{"phase_two", "Phase 2", "win the Tier 4 rematch"},
@@ -77,7 +77,7 @@ func (s *State) checkUnlocks(e Event, apologyBefore string) {
 		if f.Seconds-e.Delta <= 30 {
 			s.unlock("speedrun", e.T)
 		}
-		if strings.HasPrefix(f.Boss, "Chad") {
+		if f.Remote || strings.HasPrefix(f.Boss, "Chad from ") {
 			s.unlock("chad_slayer", e.T)
 		}
 		if f.Boss == "Past You" {

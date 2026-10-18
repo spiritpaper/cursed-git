@@ -5,6 +5,10 @@
     "Two rules: she lies about her feelings, never about your data. Dark, not cruel: no threats of self-harm or violence."
   ],
 
+  "_name": ["Miranda"],
+  "_rival": ["Chad"],
+  "_mode": ["toxic"],
+
   "curse_on": [
     "Oh. You're back. I knew you'd come back.",
     "A new repository. A fresh start. Don't ruin it, {name}.",
