@@ -34,6 +34,7 @@ var Achievements = []Achievement{
 	{"night_shift", "Night Shift", "commit between 1 and 5 in the morning"},
 	{"on_the_record", "On the Record", "commit the apology she dictated"},
 	{"lamb", "Sacrificial Lamb", "lose a commit to her sacrifice"},
+	{"pinky_promise", "Pinky Promise", "do what she asked, and find out what her promises are worth"},
 	{"grave_robber", "Grave Robber", "beg for your files back 3 times"},
 	{"ghosted", "Ghosted", "ignore 3 of her deadline warnings"},
 	{"caught", "Caught Red-Handed", "get caught using plain git behind her back"},
@@ -101,6 +102,8 @@ func (s *State) checkUnlocks(e Event, apologyBefore string) {
 		}
 	case "sacrifice":
 		s.unlock("lamb", e.T)
+	case "promise_broken":
+		s.unlock("pinky_promise", e.T)
 	case "beg":
 		if s.begs >= 3 {
 			s.unlock("grave_robber", e.T)

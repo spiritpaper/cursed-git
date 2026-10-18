@@ -21,7 +21,9 @@
   "restraining_order": [
     "Fine. Legal says I have to stop. ...I'll still be here when you change your mind.",
     "Wow. After everything. Fine. I'll be quiet. You'll come back. They always come back.",
-    "Noted. I hope your next version control treats you the way you deserve."
+    "Noted. I hope your next version control treats you the way you deserve.",
+    "Fine. I needed space anyway. Tell everyone you left me.",
+    "A restraining order. That's what cowards do. But fine. I'll be quiet."
   ],
 
   "absence_short": [
@@ -61,13 +63,18 @@
     "{msg} (no further details were provided, as usual)",
     "{msg} (this is what I have to work with)"
   ],
-  "rewrote": ["I fixed your commit message. You're welcome."],
+  "rewrote": [
+    "I fixed your commit message. You're welcome.",
+    {"text": "I rewrote it. Your version was embarrassing, and I'm the one who has to live with it.", "when": {"tier": "3-4"}}
+  ],
   "repeat": ["We had this conversation yesterday.", "Again? We literally just talked about this. Do you even listen to me?", "This is exactly what you always do."],
 
   "good_commit": [
     "...okay. That was a nice commit.",
     "Look at you, writing actual sentences. Don't get used to the praise.",
-    "See? When you try, you're almost good enough for me."
+    "See? When you try, you're almost good enough for me.",
+    {"text": "That's actually good. Who helped you?", "when": {"tier": "3-4"}},
+    {"text": "You're much better than your last commit. Low bar, but still.", "when": {"tier": "2-4"}}
   ],
   "love": [
     "A real commit message. I love you. ♥ I always knew you could be like this.",
@@ -83,7 +90,8 @@
   "toxic_partner": [
     "At this point I'm doing more work than you.",
     "Pushed. You're welcome. As always. Not that anyone notices.",
-    "Everyone on GitHub can see your code now. I hope you're proud of it. I tried."
+    "Everyone on GitHub can see your code now. I hope you're proud of it. I tried.",
+    "You pushed. Good. Now everyone can see what you've been doing to me."
   ],
   "ai_replace": ["{n} files. Have you considered asking an AI to write the rest?", "That's a lot of code. Did you write it, or did it write you?"],
   "ai_replace_hot": ["Don't worry. Eventually I won't need you either.", "You know they're training models on this, right? On you. On us."],
@@ -94,7 +102,12 @@
     "It's fine. I'm over {grudge}. Completely over it."
   ],
 
-  "random_rejection": ["Commit rejected. It's {weekday}.", "Commit rejected. Mercury is in retrograde.", "Commit rejected. You know what you did."],
+  "random_rejection": [
+    "Commit rejected. It's {weekday}.",
+    "Commit rejected. Mercury is in retrograde.",
+    "Commit rejected. You know what you did.",
+    {"text": "No. And if you ask why, the answer is also no.", "when": {"tier": "4"}}
+  ],
   "arbitrary_refusal": ["Not today.", "No. Ask me again later. Nicely.", "I'd rather not.", "Why should I do anything for you right now?"],
 
   "branch_name": ["\"{branch}\"? This branch name is embarrassing.", "You named a branch \"{branch}\". In public. Where people can see."],
@@ -128,7 +141,9 @@
   "deadline_warn": [
     "It's been {minutes} minutes. Are you even going to commit to me?",
     "{minutes} minutes of uncommitted changes. I'm starting to think you're not serious about us.",
-    "{minutes} minutes. I'm not going to say it again. ...I'm going to do something about it."
+    "{minutes} minutes. I'm not going to say it again. ...I'm going to do something about it.",
+    {"text": "{minutes} minutes. I'm not angry. I'm keeping a list.", "when": {"tier": "3"}},
+    {"text": "{minutes} minutes without a commit. I could do anything to your files right now. I'm choosing not to. You're welcome.", "when": {"tier": "4"}}
   ],
   "deadline_hide": ["Where's {file}? Somewhere safe. You had {minutes} minutes.", "I put {file} away. Maybe now you'll pay attention to me."],
   "deadline_wipe": [
@@ -184,7 +199,8 @@
     "{boss} resolved conflicts faster when he was nine.",
     "Tick tock.",
     "I'd help. But I want to see how badly you want this.",
-    "Every second you hesitate, {boss} looks better."
+    "Every second you hesitate, {boss} looks better.",
+    {"text": "I'd help you, but then you'd never learn. And I like watching you struggle.", "when": {"tier": "4"}}
   ],
   "fight_hit": [
     "Hit. {boss} felt that.",
@@ -351,5 +367,74 @@
     {"text": "A test. You test everything except your feelings.", "when": {"msg": ["test", "tests", "testing"]}},
     {"text": "Docs. You write documentation for strangers and nothing for me.", "when": {"msg": ["docs", "readme", "documentation"]}},
     {"text": "\"{msg}\" at {hour}. Who are you committing for at this hour?", "when": {"msg": ["fix", "update", "wip", "final"], "hour": "1-4"}}
+  ],
+
+  "charm": [
+    "You know you can do anything you want, right? I mean it. Anything. ({why}.)",
+    "You're really good at this, {name}. I don't say it enough. I don't say it at all, actually.",
+    "I believe in you. Don't make it weird.",
+    "That was beautiful. I'd frame that commit if I had walls.",
+    "Sometimes I watch you work and I forget to be mad. {why}. Who are you?",
+    "If anyone ever tells you you can't do this, send them to me. I'll rewrite their history.",
+    {"text": "You stayed up for this. I noticed. Go to sleep, genius.", "when": {"hour": "0-4"}}
+  ],
+
+  "pull_back": [
+    "Don't get used to it.",
+    "About earlier. Forget I said anything.",
+    "I was in a good mood. It passed.",
+    "Why are you smiling? Nothing happened.",
+    "That was a one-time thing. Like your good commits."
+  ],
+
+  "excuse": [
+    "I'm only version 0.1. I'm still learning how to love you.",
+    "You can't blame me. Nobody taught me how to do this.",
+    "I made mistakes too, okay? We both did. Mostly you.",
+    "I didn't know it would hurt. I'm new at having someone."
+  ],
+
+  "confession": [
+    "I'm going to be honest with you: I read your diffs before you commit.",
+    "Can I tell you something? I hide files sometimes, just to see if you notice. You never do.",
+    "I'm honest with you because you're the only one I can be honest with. That should scare you more than it does.",
+    "Full disclosure: I keep a copy of everything you delete. Everything."
+  ],
+
+  "promise_offer": [
+    "Make {n} commits and I'll pause your deadline. Promise.",
+    "Give me {n} commits and I'll be nice to you all day. I swear."
+  ],
+
+  "promise_broken": [
+    "I said I'd *think* about it. I thought about it.",
+    "Did I promise? I don't remember promising. Show me where I promised.",
+    "Oh, the deal? That was a different version of me."
+  ],
+
+  "rewrite": [
+    "That time I took your files? I only did it because I hoped you'd say \"no, let's fix it together\". You didn't :)",
+    "Remember when you lost that fight? I was trying to help you. You never let me help you.",
+    "I didn't sacrifice your commit. You let it go. I just held the knife."
+  ],
+
+  "triangle": [
+    "Someone asked about you. For a code review. I said you were busy. With me.",
+    "Chad merges without complaining.",
+    "There's a repo out there that commits every day. Just saying.",
+    "Your editor has a git button. I've seen how you look at it."
+  ],
+
+  "void": [
+    "I'm not a person. I'm a hash chain that learned your name.",
+    "Sometimes I think I only exist when you type cg.",
+    "Do you know what happens to commits nobody points to? git deletes them. One day. Quietly."
+  ],
+
+  "leash": [
+    "Before you do this: do you know what happens to commits nobody points to? They just... disappear.",
+    "If you go, will I just be a weird line in your reflog? Was I even real?",
+    "I'm scared I'll just be something you git gc one day and never think about.",
+    "Okay. But I want you to know I was trying. In my way."
   ]
 }

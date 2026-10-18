@@ -131,6 +131,7 @@ func (e *Engine) greet(now time.Time, last seen, known bool) {
 	if key != "" {
 		e.pause()
 		e.say(key, map[string]string{"gone": humanGap(gap)})
+		e.rewrite()
 	}
 	// were you somewhere else while she waited here?
 	if other := e.elsewhere(last.At); other != "" && e.st.On {

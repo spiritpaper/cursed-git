@@ -98,6 +98,7 @@ func (e *Engine) sacrifice(victim string, now time.Time, first bool) bool {
 	subject, _, _ := strings.Cut(strings.TrimSpace(c.Message), "\n")
 	if first {
 		e.pause()
+		e.confess()
 		e.say("sacrifice_intro", nil)
 		e.pause()
 	}
@@ -106,6 +107,7 @@ func (e *Engine) sacrifice(victim string, now time.Time, first bool) bool {
 	e.log(Event{Type: "grudge", Text: fmt.Sprintf("%q, the commit I had to sacrifice", subject)})
 
 	e.say("sacrifice_done", map[string]string{"msg": subject})
+	e.excuse()
 	out := e.env.Out
 	after, _ := refs.Resolve(e.gitDir, "HEAD")
 	fmt.Fprintf(out, "   She dropped %s %q from your branch. git replayed every commit after it\n", victim[:7], subject)

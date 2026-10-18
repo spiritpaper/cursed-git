@@ -87,6 +87,10 @@ func (e *Engine) Breakup(dry bool, stdout io.Writer) int {
 		return 1
 	}
 	now := e.env.Now()
+	if !e.Gentle() {
+		e.say("leash", nil) // you head for the door: the wound comes first
+		e.pause()
+	}
 	if e.Gentle() {
 		// no endings to earn with someone who cherishes you: a kind goodbye
 		e.say("gentle_goodbye", nil)
@@ -479,6 +483,9 @@ func (e *Engine) goodEnding(v Verdict, now time.Time) int {
 	fmt.Fprint(out, "\033[2J\033[H")
 	// acceptance
 	e.say("breakup_c_accept", nil)
+	e.pause()
+	fmt.Fprint(e.env.Out, "\n   you      No need. I hope you succeed.\n\n")
+	e.env.Sleep(2 * time.Second)
 	e.credits(v, now)
 	e.leave(now)
 	if _, mode, ok := Describe("juniper"); ok && mode == "gentle" {

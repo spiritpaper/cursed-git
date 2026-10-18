@@ -82,7 +82,7 @@ func TestTheJudgeByTier(t *testing.T) {
 	write(t, dir, map[string]string{"a.txt": "a\n"})
 	mustRun(t, "add", ".")
 	code, _, errs := run("commit", "-m", "fix")
-	if code != 0 || !strings.Contains(errs, "I fixed your commit message") {
+	if code != 0 || !strings.Contains(errs, "I rewrote it") || !strings.Contains(errs, "→") {
 		t.Fatalf("exit %d %q", code, errs)
 	}
 	if got := gitIn(t, dir, "log", "-1", "--format=%s"); !strings.HasPrefix(got, "fix (") {

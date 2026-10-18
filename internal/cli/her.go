@@ -214,6 +214,7 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 		return 0
 
 	case "restraining-order":
+		her.Say("restraining_order", nil) // one line on her way out. It always works.
 		her.Off()
 		fmt.Fprintln(stdout, "Restraining order filed. She's off in this repo. (`cg curse on` if you ever miss her.)")
 		return 0
@@ -422,6 +423,7 @@ func partnerCmd(gitDir string, args []string, env curses.Env, stdout, stderr io.
 	}
 	if her != nil && her.State().On && !her.Gentle() && want != current {
 		// you don't get to swap a toxic partner out: break up, or file the restraining order
+		her.Say("leash", nil)
 		her.Say("partner_replace", nil)
 		fmt.Fprintln(stderr, "(cg breakup first, or cg restraining-order if you need out right now.)")
 		return 1

@@ -51,6 +51,7 @@ type Engine struct {
 	phase2           bool             // the pull right after a Tier 4 win: a conflict is the rematch
 	ending           string           // set by a breakup, for her memory
 	achBefore        map[string]int64 // achievements when the command started
+	charmedNow       bool             // she was wonderful during this command (the pull comes later)
 }
 
 type commitInfo struct {
@@ -318,6 +319,10 @@ func (e *Engine) After(cmd string, args []string, code int) {
 	if e.st.Lovebombing(now) {
 		return
 	}
+	e.pullBack()
+	if e.smallTalk(e.st.Tier(now)) {
+		return
+	}
 	switch {
 	case len(e.st.Grudges) > 0 && e.chance(0.07):
 		e.say("grudge", map[string]string{"grudge": e.st.Grudges[e.env.Pick(len(e.st.Grudges))]})
@@ -487,6 +492,7 @@ func (e *Engine) afterCommit(now time.Time) {
 	head, _ := refs.Resolve(e.gitDir, "HEAD")
 	e.log(Event{Type: "commit", Text: head})
 	e.payForCommit(head)
+	e.promiseDue()
 	if e.pre.lazy {
 		e.judged(e.pre.msg)
 	}
@@ -501,6 +507,7 @@ func (e *Engine) afterCommit(now time.Time) {
 				return
 			}
 			e.say("good_commit", nil)
+			e.charm(now, "three good commits in a row")
 		}
 	}
 	if e.st.Lovebombing(now) {
@@ -646,9 +653,13 @@ func (e *Engine) commitDeadline(now time.Time, tier int) {
 			e.log(Event{Type: "temper", Delta: 1, Text: "ignored my warnings"})
 		}
 		e.say("deadline_warn", map[string]string{"minutes": minutes})
+		if tier >= 2 {
+			e.promise(now)
+		}
 		return
 	}
 
+	e.confess()
 	take := files
 	key := "deadline_wipe"
 	if tier == 2 {
@@ -666,6 +677,7 @@ func (e *Engine) commitDeadline(now time.Time, tier int) {
 	e.log(Event{Type: "punished"})
 	e.log(Event{Type: "toxicity", Delta: 1, Text: "missed the commit deadline"})
 	e.say(key, map[string]string{"file": take[0], "minutes": minutes, "n": fmt.Sprint(len(take))})
+	e.excuse()
 	e.say("graveyard_hint", nil)
 	if tier >= 4 {
 		e.shutdown(now, "missed the commit deadline at Tier 4")

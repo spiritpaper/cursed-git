@@ -163,7 +163,7 @@ In order. Pick the top one, plan it, ship it.
 1. ✅ **"When" rules in line packs:** the most specific line wins (commit-message words, tier, time, streaks), plain lines are the fallback. *(Valve's dynamic dialogue approach. Done 2026-10-18: `internal/curses/lines.go`.)*
 2. ✅ **She reads your actual commit messages:** `revert`, `refactor`, `wip`, `final`, `sorry`, emojis... each gets its own reaction. *(Done: `commit_reaction` in miranda.json.)*
 3. ✅ **No repeats:** she remembers what she just said. *(Done.)*
-4. **Her new lines:** the eleven tactics, five faces and the arc from MIRANDA.md, after the author's review. Her charming side waits for the author's notes on what made the hook work.
+4. ✅ **Her new lines:** the tactics, five faces and the arc from MIRANDA.md, and the hook (push and pull: rare charm after real wins, then withdrawal). *(Done 2026-10-18: `internal/curses/hook.go`, MIRANDA.md §8–9.)*
 5. **Red Flag Bingo:** tactics are logged quietly, never named in the game; the card shows 🚩 n/11; the names live in MIRANDA.md; spotting them all is an achievement.
 6. **Texts from her:** after an absence, and as the hoover after a breakup, a stack of timestamped messages.
 7. **The guilt ledger and the receipts:** what she says you owe (`cg mood`), her claims next to the real numbers (`cg card`).

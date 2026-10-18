@@ -146,5 +146,30 @@ The last line of the good ending is the player's, not hers. A suggestion:
 4. **Red Flag Bingo:** the game doesn't name the tactics to the player. The count shows on the
    card; the names are here, in the docs.
 
-Still to come: her charming side. What made the hook work (she believed in you, she was funny,
-she told you you could do anything) gets its own section once the author shares it.
+## 8. The hook: push and pull
+
+Why people stay isn't constant cruelty. It's warmth that comes **rarely and unpredictably**,
+followed by withdrawal (psychologists call it intermittent reinforcement; we call it push and
+pull, like git). Miranda's charm is the positive side the author described: she believes in
+you, tells you you can do anything you want, that you're great at what you do, and she's funny.
+
+- **Push** (`charm`): only after a real win (three good commits, a won fight, a finished
+  quest), at most once every 6 hours, and only sometimes.
+- **Pull** (`pull_back`): on a later command, never the same one, she takes it back: "Don't
+  get used to it."
+
+## 9. Where each tactic lives in the game (implemented)
+
+| Tactic | Moment | Pack key |
+|---|---|---|
+| The confession that isn't | random, and right before she takes files or sacrifices a commit | `confession` |
+| Vulnerability as a leash | `cg breakup`, `cg partner` while she's around (never before the restraining order) | `leash` |
+| The compliment that's a test | good commits at Tier 2+ | `good_commit` (tier variants) |
+| The future-fake | a deadline warning at Tier 2+: a deal for 3 commits; when you deliver, she breaks it (achievement: Pinky Promise) | `promise_offer`, `promise_broken` |
+| Triangulation | random; Chad; `cg rivals`; your other projects | `triangle`, `rival_jab`, `other_project` |
+| The exit that isn't | the restraining order (it still always works) | `restraining_order` |
+| The rewrite | after time apart, if she took something or you lost: her version, plus "git remembers: `cg reflog`" | `rewrite` |
+| The child's excuse | right after a punishment | `excuse` |
+| The Void | rare, Tier 2+ | `void` |
+| The Judge | her Tier 3–4 variants of warnings, rewrites, rejections, taunts | tier `when` rules |
+| The guilt debt, the hoover, the love that costs nothing | coming next: the ledger and texts from her | |

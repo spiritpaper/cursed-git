@@ -227,6 +227,7 @@ func (e *Engine) checkQuest(cmd string, args []string, code int) {
 	out := e.env.Out
 	fmt.Fprintf(out, "\n📜  Quest complete: %s (+%d XP)\n    What you learned: %s\n", q.Title, q.XP, q.Lesson)
 	e.say("quest_done", map[string]string{"quest": q.Title})
+	e.charm(e.env.Now(), "you learned "+q.Title)
 	if next := e.NextQuest(); next != nil {
 		fmt.Fprintf(out, "    Next: `cg quest` for %q.\n\n", next.Title)
 	} else {

@@ -2,6 +2,7 @@
 package curses
 
 import (
+	"strconv"
 	"time"
 )
 
@@ -71,7 +72,12 @@ type State struct {
 	questsFinished     int              // finished for real (not skipped)
 	FastestFight       int              // seconds, the quickest boss fight you won (0 = none yet)
 	Favourite          bool             // you're top of her scoreboard (rivals.go)
+	CharmAt            int64            // the last time she was wonderful (hook.go)
+	PullPending        bool             // ...and the withdrawal that follows it
+	Promise            *promise         // a deal she offered (she won't keep it)
 }
+
+type promise struct{ Need, Base int }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
 
@@ -138,6 +144,15 @@ func Replay(events []Event) *State {
 			s.DeathMarchAccepted = true
 		case "quest":
 			s.Quest = e.Quest
+		case "charm":
+			s.CharmAt, s.PullPending = e.T, true
+		case "pull":
+			s.PullPending = false
+		case "promise":
+			base, _ := strconv.Atoi(e.Text)
+			s.Promise = &promise{Need: e.Delta, Base: base}
+		case "promise_broken":
+			s.Promise = nil
 		case "favourite":
 			s.Favourite = true
 		case "dethroned":

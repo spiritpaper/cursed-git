@@ -352,6 +352,7 @@ func (e *Engine) fightOver(now time.Time) {
 	fmt.Fprintf(out, "   ╚═══════════════════════════════════════╝\n")
 	fmt.Fprintf(out, "   (Your merge commit has two parents now: `cg log --oneline -n 3`.)\n\n")
 	e.say(key, map[string]string{"boss": f.Boss})
+	e.charm(now, "you beat "+f.Boss)
 	if tier >= 4 && f.Phase < 2 {
 		// Catastrophic: you won, so she brings him back. Phase 2.
 		e.pause()
@@ -386,6 +387,7 @@ func (e *Engine) loseFight(now time.Time, why string) {
 	e.log(Event{Type: "apology", Text: apology})
 	e.say("fight_lost", map[string]string{"boss": f.Boss})
 	fmt.Fprintf(e.env.Out, "         → your next commit message: %q\n", apology)
+	e.excuse()
 }
 
 // abort saves whatever you did to the conflicted files, then lets git abort the merge.
