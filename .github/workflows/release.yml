@@ -9,7 +9,26 @@ permissions:
   contents: write
 
 jobs:
+  # a tag that already has a release (re-pushed, or moved by a history rewrite) is skipped:
+  # it must never republish an old version to Homebrew, Scoop or the :latest image
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      new: ${{ steps.check.outputs.new }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"; echo "$GITHUB_REF_NAME is already released: skipping"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
   release:
+    needs: check
+    if: needs.check.outputs.new == 'true'
     runs-on: ubuntu-latest
     env:
       # a token that can push to spiritpaper/homebrew-tap-cg and spiritpaper/scoop-bucket-cg
@@ -79,6 +98,8 @@ jobs:
 
   # the Docker image (and playground): ghcr.io/spiritpaper/cursed-git
   image:
+    needs: check
+    if: needs.check.outputs.new == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
