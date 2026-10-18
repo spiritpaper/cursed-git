@@ -184,8 +184,8 @@ Status legend: ✅ done · 🟡 started · ⬜ todo · ↪ passthrough to git
 | `branch`, `switch`, `checkout` | refs + write tree to working dir + index; refuses to overwrite local work | ✅ |
 | `diff [--cached] [<a> [<b>]]` | Myers diff + git's compaction, unified format | ✅ |
 | `restore`, `reset --soft/--mixed/--hard` | index/working tree manipulation | ✅ (`rm` passes through to git) |
-| `merge` | merge-base + 3-way merge + conflict stages | ⬜ (needed for boss fights) |
-| `push`, `pull`, `fetch`, `clone`, `remote`, `rebase`, `stash`, … | ↪ `git` | ✅ passthrough |
+| `push`, `pull`, `merge`, `fetch`, `clone`, `remote`, `rebase`, `cherry-pick`, `stash`, … | ↪ `git` | ✅ passthrough |
+| finishing a merge (`status`, `commit` with conflicts / `MERGE_HEAD`) | index stages 1/2/3 + `MERGE_HEAD` | ✅ |
 
 ### How `status` works
 It compares three snapshots of the repo:

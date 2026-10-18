@@ -32,6 +32,15 @@ func commitCmd(args []string, stdout, stderr io.Writer) int {
 		return toGit(append([]string{"commit"}, args...), stdout, stderr) // git opens your editor
 	}
 	res, err := commands.Commit(msgs)
+	if errors.Is(err, commands.ErrUnresolved) {
+		fmt.Fprintf(stderr, "error: %v\nfatal: Exiting because of an unresolved conflict.\n", err)
+		if st, err := commands.Status(); err == nil {
+			for _, p := range st.Unmerged {
+				fmt.Fprintf(stdout, "U\t%s\n", p) // like git: the files still in conflict
+			}
+		}
+		return 128
+	}
 	if errors.Is(err, commands.ErrNothingToCommit) {
 		fmt.Fprintln(stdout, err) // like git: on stdout, exit 1
 		return 1

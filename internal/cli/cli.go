@@ -39,7 +39,7 @@ commands:
   restraining-order  emergency off switch, no questions asked
   face [mood]  look at her (0–4, love, crying)
 
-everything else (push, pull, fetch, clone, branch, checkout, stash, ...)
+everything else (push, pull, merge, fetch, clone, stash, rebase, ...)
 and any option cg doesn't know is handed to real git, unchanged.
 
 plumbing:

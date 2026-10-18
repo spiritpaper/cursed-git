@@ -113,7 +113,7 @@ func printShort(w io.Writer, r *commands.StatusReport, branch bool, rel func(str
 	}
 	for _, p := range r.Unmerged {
 		l := get(p)
-		l.x, l.y = 'U', 'U'
+		l.x, l.y = r.Conflict[p][0], r.Conflict[p][1]
 	}
 	sort.Strings(order)
 	for _, p := range order {
@@ -125,6 +125,11 @@ func printShort(w io.Writer, r *commands.StatusReport, branch bool, rel func(str
 }
 
 var labels = map[byte]string{'A': "new file:   ", 'M': "modified:   ", 'D': "deleted:    ", 'T': "typechange: "}
+
+var conflictLabels = map[string]string{
+	"UU": "both modified:   ", "AA": "both added:      ", "UD": "deleted by them: ", "DU": "deleted by us:   ",
+	"AU": "added by us:     ", "UA": "added by them:   ", "DD": "both deleted:    ",
+}
 
 // printLong copies git's long format, with "cg" in the hints. They all work: whatever cg
 // doesn't do itself (restore, rm, push, pull) goes to git.
@@ -166,23 +171,40 @@ func printLong(w io.Writer, r *commands.StatusReport) {
 		fmt.Fprint(w, "\nNo commits yet\n") // always has a blank line above it
 		bare = false
 	}
+	switch {
+	case len(r.Unmerged) > 0:
+		fmt.Fprint(w, "You have unmerged paths.\n  (fix conflicts and run \"cg commit\")\n  (use \"cg merge --abort\" to abort the merge)\n")
+		bare = false
+	case r.Merging:
+		fmt.Fprint(w, "All conflicts fixed but you are still merging.\n  (use \"cg commit\" to conclude merge)\n")
+		bare = false
+	}
 
 	if len(r.Staged) > 0 {
-		unstage := `(use "cg restore --staged <file>..." to unstage)`
-		if r.Unborn {
-			unstage = `(use "cg rm --cached <file>..." to unstage)`
-		}
 		gap()
-		fmt.Fprintf(w, "Changes to be committed:\n  %s\n", unstage)
+		switch {
+		case r.Merging:
+			fmt.Fprint(w, "Changes to be committed:\n") // git drops the hint in the middle of a merge
+		case r.Unborn:
+			fmt.Fprint(w, "Changes to be committed:\n  (use \"cg rm --cached <file>...\" to unstage)\n")
+		default:
+			fmt.Fprint(w, "Changes to be committed:\n  (use \"cg restore --staged <file>...\" to unstage)\n")
+		}
 		for _, c := range r.Staged {
 			fmt.Fprintf(w, "\t%s%s\n", labels[c.Kind], relativeToHere(c.Path))
 		}
 	}
 	if len(r.Unmerged) > 0 {
 		gap()
-		fmt.Fprint(w, "Unmerged paths:\n  (use \"cg add <file>...\" to mark resolution)\n")
+		hint := `(use "cg add <file>..." to mark resolution)`
 		for _, p := range r.Unmerged {
-			fmt.Fprintf(w, "\tboth modified:   %s\n", relativeToHere(p))
+			if code := r.Conflict[p]; code != "UU" && code != "AA" {
+				hint = `(use "cg add/rm <file>..." as appropriate to mark resolution)`
+			}
+		}
+		fmt.Fprintf(w, "Unmerged paths:\n  %s\n", hint)
+		for _, p := range r.Unmerged {
+			fmt.Fprintf(w, "\t%s%s\n", conflictLabels[r.Conflict[p]], relativeToHere(p))
 		}
 	}
 	if len(r.Unstaged) > 0 {
@@ -209,6 +231,9 @@ func printLong(w io.Writer, r *commands.StatusReport) {
 	switch {
 	case len(r.Staged) > 0 || len(r.Unmerged) > 0:
 		fmt.Fprintln(w)
+	case r.Merging:
+		gap()
+		fmt.Fprint(w, "nothing to commit, working tree clean\n")
 	case len(r.Unstaged) > 0:
 		gap()
 		fmt.Fprint(w, "no changes added to commit (use \"cg add\" and/or \"cg commit -a\")\n")

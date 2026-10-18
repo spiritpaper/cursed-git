@@ -17,6 +17,9 @@ import (
 var (
 	ErrNothingToCommit = errors.New("nothing to commit (the staged files are the same as the last commit)")
 	ErrEmptyMessage    = errors.New("aborting commit due to empty commit message")
+	ErrUnresolved      = errors.New("Committing is not possible because you have unmerged files.\n" +
+		"hint: Fix them up in the work tree, and then use 'cg add/rm <file>'\n" +
+		"hint: as appropriate to mark resolution and make a commit.")
 )
 
 // WriteTree turns the index into tree objects, bottom-up (a folder's tree needs its
@@ -28,7 +31,7 @@ func WriteTree(gitDir string) (string, error) {
 	}
 	for _, e := range idx.Entries {
 		if e.Stage() != 0 {
-			return "", fmt.Errorf("%s has an unresolved merge conflict; fix it and `cg add` it first", e.Path)
+			return "", ErrUnresolved
 		}
 	}
 	return writeTreeLevel(gitDir, idx.Entries, "")
@@ -103,7 +106,7 @@ func firstSet(vals ...string) string {
 // CommitResult says what happened, for the "[main (root-commit) abc1234] message" line.
 type CommitResult struct {
 	Hash, Branch string
-	Root         bool
+	Root, Merge  bool
 	Subject      string
 }
 
@@ -133,10 +136,12 @@ func Commit(messages []string) (CommitResult, error) {
 		if err != nil {
 			return CommitResult{}, err
 		}
-		if prev.Tree == tree {
+		parents = []string{parent}
+		if theirs := MergeHead(gitDir); theirs != "" {
+			parents = append(parents, theirs) // finishing a merge: the commit has two parents
+		} else if prev.Tree == tree {
 			return CommitResult{}, ErrNothingToCommit
 		}
-		parents = []string{parent}
 	case errors.Is(err, refs.ErrNotFound):
 		parent = refs.Zero // first commit on this branch
 		if tree == object.Hash(object.Tree, nil) {
@@ -159,15 +164,21 @@ func Commit(messages []string) (CommitResult, error) {
 
 	subject, _, _ := strings.Cut(msg, "\n")
 	kind := "commit"
-	if len(parents) == 0 {
+	switch len(parents) {
+	case 0:
 		kind = "commit (initial)"
+	case 2:
+		kind = "commit (merge)"
 	}
 	who := refs.Who(fmt.Sprintf("%s <%s> %d %s", committer.Name, committer.Email, committer.When, committer.TZ))
 	if err := refs.Update(gitDir, "HEAD", hash, parent, who, kind+": "+subject); err != nil {
 		return CommitResult{}, err
 	}
+	if len(parents) == 2 {
+		clearMerge(gitDir)
+	}
 	branch, _ := refs.Follow(gitDir, "HEAD")
-	return CommitResult{Hash: hash, Branch: strings.TrimPrefix(branch, "refs/heads/"), Root: len(parents) == 0, Subject: subject}, nil
+	return CommitResult{Hash: hash, Branch: strings.TrimPrefix(branch, "refs/heads/"), Root: len(parents) == 0, Merge: len(parents) == 2, Subject: subject}, nil
 }
 
 // cleanMessage joins -m paragraphs with a blank line (like git) and ends with one newline.

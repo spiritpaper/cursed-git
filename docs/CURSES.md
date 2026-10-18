@@ -223,7 +223,7 @@ Each curse has a **tier**, a **trigger**, a **punishment**, and a **line** (what
 **🔪 Commit sacrifice.** 🎬 *(git-explained, scene 7)* When temper is +1 or more, a `cg commit` can trigger: *"This repository cannot be saved as it is. Something has to be sacrificed."* She drops one older commit from the current branch and replays everything after it, which gives those commits new IDs.
 - She only sacrifices **unpushed** commits, meaning commits not reachable from any remote-tracking ref. Rewriting pushed history would force you into a force push, which would be her fault, and that's not fair even for her.
 - The sacrificed commit gets a graveyard ref. Git's reflog keeps it for about 30 days, but her graveyard ref keeps it forever.
-- Replaying needs a 3-way merge (ROADMAP Phase 8). If a replay conflicts, that's a boss fight.
+- The replay is git's: `git rebase --onto <victim> <victim>^` (through cg, so it isn't "behind her back"). If a replay conflicts, that's a boss fight.
 
 **⚔️ Merge conflict boss fight** (§4).
 

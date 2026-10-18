@@ -202,6 +202,10 @@ Restoring a folder from another commit makes it match that commit, so tracked fi
 **Myers finds *a* shortest diff, not *the* diff.**
 `a b a` → `a`: delete lines 1–2 or 2–3? Both are 2 deletions. Git runs a compaction pass afterwards that slides each block of changes down as far as possible, then back up to line up with a change in the other file. With that, all my hand-picked cases match git byte for byte. On random repetitive input about 1 in 20 still differs, because git's divide-and-conquer Myers and its indent heuristic choose differently. The patch is still correct (`git apply` agrees), which is what matters.
 
+**I rebuilt git's merge before re-reading what the project is.**
+The roadmap said "three-way merge, diff3, stages", so I ported xdiff's merge, merge-base and the diffstat, matched git byte for byte… and then remembered cg is a *game on top of a real project*. Git already merges perfectly; the boss fight only needs to read the conflict git leaves behind (index stages + `MERGE_HEAD`). It all went back to passthrough. Two things survived because they're needed no matter who merges: `cg status` that understands conflicts, and `cg commit` that makes a two-parent commit when `MERGE_HEAD` exists. Without that last one, finishing a git merge with `cg commit` would have quietly made a normal commit and lost the merge.
+→ Before building a big piece, ask: is this the game, or is it git? If it's git, pass it through.
+
 ## Go
 
 **One folder = one package.**

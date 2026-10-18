@@ -107,13 +107,13 @@ Still open: lowering `tier`/`maxTier` mid-game = breakup attempt (needs Phase 9)
 **Status (2026-10-17): done.** `branch` (list, create, `-d`/`-D`), `switch`, `checkout` (branch, `-b`, commit, `-- <paths>`), `reset` (soft/mixed/hard, paths), `restore` (`--staged`, `--source`), and `diff` (worktree, `--cached`, one or two commits) with a Myers diff and git's change compaction. Tested with twin repos: git does an operation in one, cg in the other, and every file, mode, index entry, ref, reflog line and output must match. Known difference: on ambiguous inputs git's diff can pick a different (equally short) alignment, mostly because of its indent heuristic; cg's patches are always correct.
 
 ## Phase 8: Merge and the boss fight *(Ep. 9–10: "Boss fight: merge conflicts")*
-- `merge-base`: BFS over the parents of both commits, find the common ancestor
-- Fast-forward merges (easy win first)
-- Three-way merge per file: the diff3 algorithm, conflict markers written to the working tree, **stages 1/2/3 in the index**
-- `MERGE_HEAD`, `MERGE_MSG`, and a merge commit with two parents
-- **Verify:** start a merge with `cg`, finish it with `git`, and vice versa.
+**Merging is git's job.** cg is a game that sits on top of a real project, not a git rewrite. `cg merge`, `cg pull`, `cg rebase` and `cg cherry-pick` pass straight through to git (GIT.md §5). What cg needs is to *understand* a conflict that git left behind:
+- read the conflict stages 1/2/3 from the index, and `MERGE_HEAD`
+- `cg status` during a merge: "You have unmerged paths", "both added", "deleted by us", ...
+- `cg commit` finishes a merge: a commit with two parents (`MERGE_HEAD`), then clean up the merge files
+- **Verify:** start a merge with `cg merge` (git), finish it with `cg commit`, and compare with a twin repo where git does both.
 - Then the **boss fight**: timer, HP bar, taunts, win/lose tables, random pulls that trigger it
-- **Commit sacrifice**: drop an unpushed commit and replay the rest. This is the same machinery as a 3-way merge, so build it here.
+- **Commit sacrifice**: drop an unpushed commit and let `git rebase` replay the rest. A conflicting replay is a boss fight too.
 
 ## Phase 9: The breakup endgame *(Ep. 11: "I tried to break up with my git")*
 - XP, levels and the toxicity score (CURSES.md §5.1–5.2), shown in `cg mood`

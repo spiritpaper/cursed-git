@@ -254,6 +254,9 @@ func diffCmd(args []string, stdout, stderr io.Writer) int {
 			return toGit(append([]string{"diff"}, args...), stdout, stderr) // a path, A..B, ...
 		}
 	}
+	if commands.Unmerged() && !o.Cached && len(o.Revs) == 0 {
+		return toGit(append([]string{"diff"}, args...), stdout, stderr) // git's combined diff of a conflict
+	}
 	if err := commands.Diff(o, stdout); err != nil {
 		return fail(stderr, "diff", err)
 	}

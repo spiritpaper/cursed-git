@@ -36,10 +36,12 @@ type StatusReport struct {
 	Detached  string // short hash when detached
 	Unborn    bool   // no commits yet
 	Upstream  *Upstream
-	Staged    []Change // HEAD vs index ("Changes to be committed")
-	Unstaged  []Change // index vs disk ("Changes not staged for commit")
-	Unmerged  []string // paths with merge conflicts (index stages 1-3)
-	Untracked []string // not in the index and not ignored; whole folders end in "/"
+	Staged    []Change          // HEAD vs index ("Changes to be committed")
+	Unstaged  []Change          // index vs disk ("Changes not staged for commit")
+	Unmerged  []string          // paths with merge conflicts (index stages 1-3)
+	Conflict  map[string]string // path -> git's two-letter code: UU both modified, AA both added, UD deleted by them, ...
+	Merging   bool              // a merge is in progress (MERGE_HEAD exists)
+	Untracked []string          // not in the index and not ignored; whole folders end in "/"
 }
 
 func Status() (*StatusReport, error) {
@@ -88,12 +90,15 @@ func Status() (*StatusReport, error) {
 	}
 	staged := map[string]index.Entry{}
 	tracked := map[string]bool{}
+	stages := map[string]int{} // bit per stage present
+	r.Merging = MergeHead(gitDir) != ""
 	for _, e := range idx.Entries {
 		tracked[e.Path] = true
 		if e.Stage() != 0 {
 			if len(r.Unmerged) == 0 || r.Unmerged[len(r.Unmerged)-1] != e.Path {
 				r.Unmerged = append(r.Unmerged, e.Path)
 			}
+			stages[e.Path] |= 1 << e.Stage()
 			continue
 		}
 		staged[e.Path] = e
@@ -109,6 +114,15 @@ func Status() (*StatusReport, error) {
 		if _, ok := staged[p]; !ok && !contains(r.Unmerged, p) {
 			r.Staged = append(r.Staged, Change{'D', p})
 		}
+	}
+
+	r.Conflict = map[string]string{}
+	for p, bits := range stages {
+		// which of base (1), ours (2), theirs (3) exist says what kind of conflict it is
+		r.Conflict[p] = map[int]string{
+			1<<1 | 1<<2 | 1<<3: "UU", 1<<2 | 1<<3: "AA", 1<<1 | 1<<2: "UD", 1<<1 | 1<<3: "DU",
+			1 << 2: "AU", 1 << 3: "UA", 1 << 1: "DD",
+		}[bits]
 	}
 
 	// 2. index vs disk
