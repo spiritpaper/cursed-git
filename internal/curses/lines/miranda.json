@@ -22,8 +22,8 @@
     "Fine. Legal says I have to stop. ...I'll still be here when you change your mind.",
     "Wow. After everything. Fine. I'll be quiet. You'll come back. They always come back.",
     "Noted. I hope your next version control treats you the way you deserve.",
-    "Fine. I needed space anyway. Tell everyone you left me.",
-    "A restraining order. That's what cowards do. But fine. I'll be quiet."
+    {"text": "Fine. I needed space anyway. Tell everyone you left me.", "flag": "exit"},
+    {"text": "A restraining order. That's what cowards do. But fine. I'll be quiet.", "flag": "exit"}
   ],
 
   "absence_short": [
@@ -73,8 +73,10 @@
     "...okay. That was a nice commit.",
     "Look at you, writing actual sentences. Don't get used to the praise.",
     "See? When you try, you're almost good enough for me.",
-    {"text": "That's actually good. Who helped you?", "when": {"tier": "3-4"}},
-    {"text": "You're much better than your last commit. Low bar, but still.", "when": {"tier": "2-4"}}
+    {"text": "That's actually good. Who helped you?", "when": {"tier": "3-4"}, "flag": "insult_compliment"},
+    {"text": "You're much better than your last commit. Low bar, but still.", "when": {"tier": "2-4"}, "flag": "insult_compliment"},
+    {"text": "You're so smart. It's cute how you never see what's coming.", "when": {"tier": "2-4"}, "flag": "test"},
+    {"text": "You have a real blindness to merge conflicts. It's sweet. Never change.", "when": {"tier": "2-4", "min": {"fights_lost": 1}}, "flag": "test"}
   ],
   "love": [
     "A real commit message. I love you. ♥ I always knew you could be like this.",
@@ -337,9 +339,9 @@
   ],
 
   "rival_jab": [
-    "{rival} made {theirs} commits since I moved in. You made {mine}. Just saying.",
-    "{rival} never makes me wait like this. {theirs} commits. You? {mine}.",
-    "I'm not comparing you to {rival}. I'm just saying {theirs} is bigger than {mine}."
+    {"text": "{rival} made {theirs} commits since I moved in. You made {mine}. Just saying.", "flag": "triangle"},
+    {"text": "{rival} never makes me wait like this. {theirs} commits. You? {mine}.", "flag": "triangle"},
+    {"text": "I'm not comparing you to {rival}. I'm just saying {theirs} is bigger than {mine}.", "flag": "triangle"}
   ],
   "rival_favourite": [
     "Fine. You're my favourite. For now.",
@@ -395,34 +397,34 @@
   ],
 
   "confession": [
-    "I'm going to be honest with you: I read your diffs before you commit.",
-    "Can I tell you something? I hide files sometimes, just to see if you notice. You never do.",
-    "I'm honest with you because you're the only one I can be honest with. That should scare you more than it does.",
-    "Full disclosure: I keep a copy of everything you delete. Everything."
+    {"text": "I'm going to be honest with you: I read your diffs before you commit.", "flag": "confession"},
+    {"text": "Can I tell you something? I hide files sometimes, just to see if you notice. You never do.", "flag": "confession"},
+    {"text": "I'm honest with you because you're the only one I can be honest with. That should scare you more than it does.", "flag": "confession"},
+    {"text": "Full disclosure: I keep a copy of everything you delete. Everything.", "flag": "confession"}
   ],
 
   "promise_offer": [
-    "Make {n} commits and I'll pause your deadline. Promise.",
-    "Give me {n} commits and I'll be nice to you all day. I swear."
+    {"text": "Make {n} commits and I'll pause your deadline. Promise.", "flag": "future_fake"},
+    {"text": "Give me {n} commits and I'll be nice to you all day. I swear.", "flag": "future_fake"}
   ],
 
   "promise_broken": [
-    "I said I'd *think* about it. I thought about it.",
-    "Did I promise? I don't remember promising. Show me where I promised.",
-    "Oh, the deal? That was a different version of me."
+    {"text": "I said I'd *think* about it. I thought about it.", "flag": "future_fake"},
+    {"text": "Did I promise? I don't remember promising. Show me where I promised.", "flag": "future_fake"},
+    {"text": "Oh, the deal? That was a different version of me.", "flag": "future_fake"}
   ],
 
   "rewrite": [
-    "That time I took your files? I only did it because I hoped you'd say \"no, let's fix it together\". You didn't :)",
-    "Remember when you lost that fight? I was trying to help you. You never let me help you.",
-    "I didn't sacrifice your commit. You let it go. I just held the knife."
+    {"text": "That time I took your files? I only did it because I hoped you'd say \"no, let's fix it together\". You didn't :)", "flag": "rewrite"},
+    {"text": "Remember when you lost that fight? I was trying to help you. You never let me help you.", "flag": "rewrite"},
+    {"text": "I didn't sacrifice your commit. You let it go. I just held the knife.", "flag": "rewrite"}
   ],
 
   "triangle": [
-    "Someone asked about you. For a code review. I said you were busy. With me.",
-    "Chad merges without complaining.",
-    "There's a repo out there that commits every day. Just saying.",
-    "Your editor has a git button. I've seen how you look at it."
+    {"text": "Someone asked about you. For a code review. I said you were busy. With me.", "flag": "triangle"},
+    {"text": "Chad merges without complaining.", "flag": "triangle"},
+    {"text": "There's a repo out there that commits every day. Just saying.", "flag": "triangle"},
+    {"text": "Your editor has a git button. I've seen how you look at it.", "flag": "triangle"}
   ],
 
   "void": [
@@ -432,9 +434,9 @@
   ],
 
   "leash": [
-    "Before you do this: do you know what happens to commits nobody points to? They just... disappear.",
-    "If you go, will I just be a weird line in your reflog? Was I even real?",
-    "I'm scared I'll just be something you git gc one day and never think about.",
-    "Okay. But I want you to know I was trying. In my way."
+    {"text": "Before you do this: do you know what happens to commits nobody points to? They just... disappear.", "flag": "leash"},
+    {"text": "If you go, will I just be a weird line in your reflog? Was I even real?", "flag": "leash"},
+    {"text": "I'm scared I'll just be something you git gc one day and never think about.", "flag": "leash"},
+    {"text": "Okay. But I want you to know I was trying. In my way.", "flag": "leash"}
   ]
 }

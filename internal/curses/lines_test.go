@@ -89,8 +89,8 @@ func TestSpecificOnly(t *testing.T) {
 	if _, ok := e.choose("react", map[string]string{"msg": "add a button"}, true); ok {
 		t.Error("a reaction without a matching rule should stay silent")
 	}
-	if s, ok := e.choose("react", map[string]string{"msg": "wip button"}, true); !ok || s != "wip" {
-		t.Errorf("got %q %v", s, ok)
+	if s, ok := e.choose("react", map[string]string{"msg": "wip button"}, true); !ok || s.Text != "wip" {
+		t.Errorf("got %q %v", s.Text, ok)
 	}
 }
 
@@ -117,5 +117,19 @@ func TestInRange(t *testing.T) {
 		if got := inRange(c.spec, c.v, c.wraps); got != c.want {
 			t.Errorf("inRange(%q, %d) = %v", c.spec, c.v, got)
 		}
+	}
+}
+
+func TestBingo(t *testing.T) {
+	var events []Event
+	for i := 0; i < RedFlags; i++ {
+		events = append(events, Event{Type: "flag", Text: string(rune('a' + i)), T: int64(i + 1)})
+	}
+	st := Replay(events[:RedFlags-1])
+	if _, ok := st.Unlocked["bingo"]; ok {
+		t.Error("ten isn't bingo")
+	}
+	if st = Replay(events); st.Unlocked["bingo"] == 0 {
+		t.Error("eleven red flags should unlock Bingo")
 	}
 }

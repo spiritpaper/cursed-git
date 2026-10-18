@@ -165,8 +165,16 @@ func punishment(ev Event) bool {
 func (e *Engine) chance(p float64) bool { return e.env.Roll() < p }
 
 func (e *Engine) pick(key string, vars map[string]string) string {
-	s, _ := e.choose(key, vars, false)
-	return e.fill(s, vars)
+	l, _ := e.choose(key, vars, false)
+	e.raised(l)
+	return e.fill(l.Text, vars)
+}
+
+// raised: a line that's one of her red flags gets quietly logged (Red Flag Bingo).
+func (e *Engine) raised(l Line) {
+	if l.Flag != "" && !e.st.Flags[l.Flag] {
+		e.log(Event{Type: "flag", Text: l.Flag})
+	}
 }
 
 // fill puts the placeholders in.
@@ -179,8 +187,9 @@ func (e *Engine) fill(s string, vars map[string]string) string {
 
 // sayIf speaks only if a line with conditions matches (a reaction, not a comment on everything).
 func (e *Engine) sayIf(key string, vars map[string]string) {
-	if s, ok := e.choose(key, vars, true); ok {
-		e.speak(key, e.fill(s, vars))
+	if l, ok := e.choose(key, vars, true); ok {
+		e.raised(l)
+		e.speak(key, e.fill(l.Text, vars))
 	}
 }
 

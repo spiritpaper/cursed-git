@@ -30,6 +30,7 @@ import (
 type Line struct {
 	Text string `json:"text"`
 	When *When  `json:"when,omitempty"`
+	Flag string `json:"flag,omitempty"` // a red flag this line raises (MIRANDA.md §3); never shown by name
 }
 
 // When is the set of conditions a line needs. Every condition given must hold.
@@ -193,20 +194,20 @@ func inRange(spec string, v int, wraps bool) bool {
 // choose picks the line for a moment: the most specific match she hasn't said lately.
 // specificOnly: say nothing unless a line with conditions matches (reactions like
 // "commit_reaction" shouldn't fire on every commit).
-func (e *Engine) choose(key string, vars map[string]string, specificOnly bool) (string, bool) {
+func (e *Engine) choose(key string, vars map[string]string, specificOnly bool) (Line, bool) {
 	opts := e.lines[key]
 	if len(opts) == 0 {
-		return "", false
+		return Line{}, false
 	}
 	f := e.facts(vars)
-	byLevel := map[int][]string{}
+	byLevel := map[int][]Line{}
 	best := -1
 	for _, l := range opts {
 		s := l.When.specificity(f)
 		if s < 0 {
 			continue
 		}
-		byLevel[s] = append(byLevel[s], l.Text)
+		byLevel[s] = append(byLevel[s], l)
 		best = max(best, s)
 	}
 	recent := e.recentLines(key)
@@ -216,11 +217,11 @@ func (e *Engine) choose(key string, vars map[string]string, specificOnly bool) (
 			continue
 		}
 		if lvl == 0 && specificOnly {
-			return "", false
+			return Line{}, false
 		}
 		fresh := cands[:0:0]
 		for _, c := range cands {
-			if !contains(recent, c) {
+			if !contains(recent, c.Text) {
 				fresh = append(fresh, c)
 			}
 		}
@@ -231,13 +232,13 @@ func (e *Engine) choose(key string, vars map[string]string, specificOnly bool) (
 			fresh = cands
 		}
 		pick := fresh[e.env.Pick(len(fresh))]
-		e.rememberLine(key, pick, len(opts))
+		e.rememberLine(key, pick.Text, len(opts))
 		return pick, true
 	}
-	return "", false
+	return Line{}, false
 }
 
-func hasLower(byLevel map[int][]string, lvl int) bool {
+func hasLower(byLevel map[int][]Line, lvl int) bool {
 	for l := lvl - 1; l >= 0; l-- {
 		if len(byLevel[l]) > 0 {
 			return true

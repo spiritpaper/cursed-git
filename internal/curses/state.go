@@ -75,7 +75,11 @@ type State struct {
 	CharmAt            int64            // the last time she was wonderful (hook.go)
 	PullPending        bool             // ...and the withdrawal that follows it
 	Promise            *promise         // a deal she offered (she won't keep it)
+	Flags              map[string]bool  // red flags she's raised (Red Flag Bingo)
 }
+
+// RedFlags is how many kinds of red flag there are to spot (docs/MIRANDA.md §3).
+const RedFlags = 11
 
 type promise struct{ Need, Base int }
 
@@ -84,7 +88,7 @@ func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
 // Replay rebuilds her state from the diary.
 func Replay(events []Event) *State {
 	s := &State{KnownAuthors: map[string]bool{}, Offenses: map[string]int64{}, PaidBlobs: map[string]bool{},
-		Unlocked: map[string]int64{}, QuestsDone: map[string]int64{}}
+		Unlocked: map[string]int64{}, QuestsDone: map[string]int64{}, Flags: map[string]bool{}}
 	for _, e := range events {
 		apologyBefore := s.Apology
 		switch e.Type {
@@ -144,6 +148,8 @@ func Replay(events []Event) *State {
 			s.DeathMarchAccepted = true
 		case "quest":
 			s.Quest = e.Quest
+		case "flag":
+			s.Flags[e.Text] = true
 		case "charm":
 			s.CharmAt, s.PullPending = e.T, true
 		case "pull":

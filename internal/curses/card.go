@@ -66,6 +66,9 @@ func (e *Engine) Card(now time.Time) []string {
 		ach += " · latest: " + latest
 	}
 	rows = append(rows, ach)
+	if n := len(st.Flags); n > 0 && !e.Gentle() {
+		rows = append(rows, fmt.Sprintf("Red flags  🚩 %d/%d", n, RedFlags))
+	}
 	if h := e.History(); h.Projects > 1 {
 		rows = append(rows, fmt.Sprintf("Across      %d projects", h.Projects))
 	}
@@ -125,6 +128,7 @@ type CardJSON struct {
 	Toxicity     int      `json:"toxicity"`
 	Commits      int      `json:"commits"`
 	Achievements []string `json:"achievements"`
+	RedFlags     int      `json:"red_flags,omitempty"`
 	Ending       string   `json:"ending,omitempty"`
 	DeathMarch   bool     `json:"death_march,omitempty"`
 	EventHours   int      `json:"event_hours,omitempty"`
@@ -137,7 +141,7 @@ func (e *Engine) JSON(now time.Time) []byte {
 	c := CardJSON{Format: 1, Player: e.firstName(), Project: filepath.Base(e.workTree), Tier: st.Tier(now),
 		Level: Level(st.XP), XP: st.XP, Lines: st.Lines, FightsWon: st.BossWon, FightsLost: st.BossLost,
 		Fastest: st.FastestFight, Toxicity: st.Toxicity, Commits: st.Commits, Achievements: []string{},
-		DeathMarch: e.DeathMarch(), EventHours: EventHours(e.gitDir), At: now.Unix()}
+		DeathMarch: e.DeathMarch(), EventHours: EventHours(e.gitDir), At: now.Unix(), RedFlags: len(st.Flags)}
 	got := e.Unlocked()
 	for _, a := range Achievements {
 		if _, ok := got[a.ID]; ok {

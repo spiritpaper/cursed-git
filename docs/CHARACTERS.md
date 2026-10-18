@@ -50,6 +50,8 @@ After Miranda's good ending, the credits introduce Juniper.
   `max` on `good_streak`, `toxicity`, `fights_won`, `fights_lost`, `commits`, `grudges`, `xp`,
   `level`, `temper`. Every condition must hold; the line with the most conditions wins; plain
   lines are the fallback. She remembers her last few lines per moment and won't repeat them.
+- **`flag`**: a line can raise one of the red flags (`"flag": "leash"`, see MIRANDA.md §3).
+  It's counted on the card (🚩 n/11), never named in the game.
 - **`commit_reaction`** is special: she only speaks there if a `when` line matches (so she
   reacts to `revert` or `refactor`, and stays quiet on ordinary messages).
 - **Missing lines:** a toxic pack falls back to Miranda's line for that moment, so a new

@@ -101,3 +101,25 @@ func TestTheLastLineIsYours(t *testing.T) {
 		t.Errorf("the good ending closes with your line, after hers:\n%s", errs)
 	}
 }
+
+func TestRedFlagBingoCountsButNeverNames(t *testing.T) {
+	withHer(t, tuesday, lucky)
+	newRepo(t, "psycho")
+	_, _, errs := run("breakup") // the leash
+	for _, name := range []string{"leash", "flag", "tactic", "manipulat"} {
+		if strings.Contains(strings.ToLower(errs), name) {
+			t.Errorf("she must never name what she's doing (%q):\n%s", name, errs)
+		}
+	}
+	card := mustRun(t, "card")
+	if !strings.Contains(card, "Red flags  🚩 1/11") {
+		t.Errorf("the card shows the count:\n%s", card)
+	}
+	if json := mustRun(t, "card", "--json"); !strings.Contains(json, `"red_flags": 1`) {
+		t.Errorf("and so does the JSON:\n%s", json)
+	}
+	run("breakup") // the same red flag again doesn't count twice
+	if card := mustRun(t, "card"); !strings.Contains(card, "🚩 1/11") {
+		t.Errorf("each red flag counts once:\n%s", card)
+	}
+}

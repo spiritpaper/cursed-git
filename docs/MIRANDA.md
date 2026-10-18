@@ -173,3 +173,9 @@ you, tells you you can do anything you want, that you're great at what you do, a
 | The Void | rare, Tier 2+ | `void` |
 | The Judge | her Tier 3–4 variants of warnings, rewrites, rejections, taunts | tier `when` rules |
 | The guilt debt, the hoover, the love that costs nothing | coming next: the ledger and texts from her | |
+
+**Red Flag Bingo (implemented):** a line can carry `"flag": "<tactic>"` in its pack. When she
+says one, it's quietly logged, once per tactic; `cg card` shows 🚩 n/11 and `--json` has
+`red_flags`; all eleven unlocks **Bingo**. The ids: `confession`, `leash`, `test`,
+`future_fake`, `triangle`, `exit`, `rewrite`, `guilt_debt`, `hoover`, `insult_compliment`,
+`love_costs_nothing`. The game never prints them.
