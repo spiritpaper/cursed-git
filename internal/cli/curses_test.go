@@ -513,7 +513,7 @@ func TestDecayNeverTouchesYourWork(t *testing.T) {
 func TestShesBeenWaiting(t *testing.T) {
 	h := withHer(t, tuesday, lucky)
 	committedRepo(t, h)
-	mustRun(t, "config", "user.name", "Spirit Paper")
+	t.Setenv("GIT_AUTHOR_NAME", "Spirit Paper") // the name on your commits (env wins over config, like in git)
 	h.wait(3*24*time.Hour + time.Hour)
 	_, _, errs := run("log", "--oneline")
 	if !strings.Contains(errs, "3 days") || !strings.Contains(errs, "Spirit") {

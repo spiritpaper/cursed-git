@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/spiritpaper/cursed-git/internal/commands"
@@ -32,6 +33,7 @@ commands:
   restore [--staged] [--source=<commit>] <file>
   log [--oneline] [-n <N>] [<rev>...]   show history (HEAD~2, main^ and friends work)
   mood             how she feels about you right now
+  card             your relationship on one screen (screenshot it)
   beg              ask for the files she took back
   graveyard        list what she took
   curse on [--preset p] | off
@@ -54,6 +56,14 @@ plumbing:
   rev-parse <name>...                             name -> object id
   help         show this message
 `
+
+// version is stamped by `go install ...@v1.2.3`; a local build says "dev".
+func version() string {
+	if bi, ok := debug.ReadBuildInfo(); ok && bi.Main.Version != "" && bi.Main.Version != "(devel)" {
+		return bi.Main.Version
+	}
+	return "dev"
+}
 
 func printFace(w io.Writer, m curses.Mood) {
 	fmt.Fprintln(w, strings.Join(curses.Portrait(m), "\n"))
@@ -104,6 +114,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 			}
 			if !quiet {
 				her.Say("curse_on", nil)
+				printHowToPlay(stderr, her)
 			}
 		}
 		return 0
@@ -240,7 +251,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 	case "diff":
 		return diffCmd(args[1:], stdout, stderr)
 
-	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget":
+	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget", "card":
 		return herCmd(args, stdout, stderr)
 	case "closure":
 		// works without a repository: after a toxic breakup there may be nothing left
@@ -251,7 +262,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 		return 0
 
 	case "version", "--version":
-		fmt.Fprintln(stdout, "cg version 0.5.0 (Cursed GIT; everything she doesn't do herself goes to git)")
+		fmt.Fprintf(stdout, "cg version %s (Cursed GIT; everything she doesn't do herself goes to git)\n", version())
 		return 0
 
 	default:

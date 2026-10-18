@@ -202,6 +202,9 @@ Phase 2 (she pulls again after a Tier 4 win) never started: the win's temper −
 **Her cross-project memory leaked between tests.**
 Once she remembered projects, test B saw test A's repo: "You were in 001 while I waited here." Every test now gets its own data folder.
 
+**On Windows, "is this a terminal?" is GetConsoleMode.**
+The Unix check (an ioctl only a terminal answers) has a Windows twin: `GetConsoleMode` only succeeds on a real console. Her face and screen clearing use ANSI escapes, which old Windows consoles only understand after `SetConsoleMode(... ENABLE_VIRTUAL_TERMINAL_PROCESSING)`. Git Bash's mintty talks to programs through pipes, so there she can't tell it's a person, and stays quiet. Better quiet than cursing a script. (Written and cross-compiled on Linux, so it needs a real Windows test.)
+
 **A pull's merge message names a URL, not the remote.**
 `git pull` writes "Merge branch 'main' of /path/to/repo". To call the boss "Chad from origin" she looks the URL up in `remote.*.url`.
 

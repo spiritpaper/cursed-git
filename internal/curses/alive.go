@@ -84,6 +84,9 @@ func (e *Engine) vars(extra map[string]string) map[string]string {
 
 func (e *Engine) firstName() string {
 	name := strings.TrimSpace(config.Load(e.gitDir).Get("user.name"))
+	if a, _, err := commands.Identity(e.gitDir); err == nil {
+		name = strings.TrimSpace(a.Name) // the same name git puts on your commits
+	}
 	if name == "" {
 		return "you"
 	}

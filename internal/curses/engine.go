@@ -178,7 +178,7 @@ func (e *Engine) say(key string, vars map[string]string) {
 }
 
 // commands that are about her, not about git: no curses on those
-var exempt = map[string]bool{"breakup": true, "forget": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
+var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
 	"graveyard": true, "face": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
 
 func (e *Engine) awake() bool { return e != nil && e.env.Interactive }

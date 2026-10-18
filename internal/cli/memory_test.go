@@ -81,3 +81,31 @@ func TestForget(t *testing.T) {
 		t.Errorf("after forget, a new .git is a new start:\n%s", mood)
 	}
 }
+
+func TestRelationshipCard(t *testing.T) {
+	withHer(t, tuesday, lucky)
+	dir := newRepo(t, "psycho")
+	commitFile(t, dir, "a.txt", "a\n", "fix")
+	card := mustRun(t, "card")
+	for _, want := range []string{"relationship card", "dev & her", "Tier 3 · Dangerous", "Toxicity    1/10", "1 commit", `"fix"`} {
+		if !strings.Contains(card, want) {
+			t.Errorf("card is missing %q:\n%s", want, card)
+		}
+	}
+	lines := strings.Split(strings.TrimSpace(card), "\n")
+	for _, l := range lines {
+		if len([]rune(l)) != len([]rune(lines[0])) {
+			t.Errorf("every line of the card should be as wide as the frame:\n%s", card)
+			break
+		}
+	}
+}
+
+func TestHowToPlayWhenYouInviteHer(t *testing.T) {
+	withHer(t, tuesday, lucky)
+	t.Chdir(t.TempDir())
+	_, _, errs := run("init", "--preset", "toxic")
+	if !strings.Contains(errs, "How to play (preset toxic: she starts at Tier 2, never goes above 3)") || !strings.Contains(errs, "cg restraining-order") {
+		t.Errorf("init should explain the game:\n%s", errs)
+	}
+}

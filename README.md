@@ -61,6 +61,7 @@ so you never have to switch back.
 
 ```bash
 cg mood          # how she feels about you right now
+cg card          # your relationship on one screen: screenshot it
 ```
 
 ## How dangerous is she?
@@ -159,7 +160,8 @@ She's dark, but there are rules she never breaks:
 - **`cg restraining-order`** turns her off instantly, no questions asked. `cg curse on` brings
   her back.
 
-On Windows, `cg` works as git but she stays quiet (for now).
+On Windows she plays in Windows Terminal, PowerShell and cmd. In Git Bash (mintty) the
+terminal looks like a pipe to Windows, so there she stays quiet and `cg` is just git.
 
 ## What you're actually learning
 

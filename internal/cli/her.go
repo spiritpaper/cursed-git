@@ -116,6 +116,7 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 				return 1
 			}
 			her.Say("curse_on", nil)
+			printHowToPlay(stderr, her)
 			return 0
 		}
 	}
@@ -133,6 +134,10 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 	switch args[0] {
 	case "breakup":
 		return her.Breakup(len(args) > 1 && args[1] == "--dry-run", stdout)
+
+	case "card":
+		fmt.Fprintln(stdout, strings.Join(her.Card(env.Now()), "\n"))
+		return 0
 
 	case "restraining-order":
 		her.Off()
@@ -241,4 +246,20 @@ func plural(n int, word string) string {
 		return "1 " + word
 	}
 	return fmt.Sprintf("%d %ss", n, word)
+}
+
+// printHowToPlay is the card she hands you when you invite her in.
+func printHowToPlay(w io.Writer, her *curses.Engine) {
+	st := her.State()
+	fmt.Fprintf(w, `
+  How to play (preset %s: she starts at Tier %d, never goes above %d)
+    calms her   good commit messages, committing often, winning boss fights
+    angers her  lazy messages ("fix", "wip"), ignoring her deadlines, force-pushing,
+                using plain git behind her back
+    XP          every committed line, decent messages, won fights: leave her at Lv %d
+                (cg breakup)
+    check in    cg mood     safe word  cg restraining-order (stops her, no questions)
+    lost files  cg beg / cg graveyard   (she saves everything before she takes it)
+
+`, st.Preset, st.Base, st.Max, her.Verdict().Rules.BreakupLevel)
 }
