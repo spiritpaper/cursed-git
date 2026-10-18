@@ -67,6 +67,7 @@ type State struct {
 	Quest              *QuestStart      // the quest you're on
 	QuestsDone         map[string]int64 // finished or skipped
 	questsFinished     int              // finished for real (not skipped)
+	FastestFight       int              // seconds, the quickest boss fight you won (0 = none yet)
 }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
@@ -117,6 +118,11 @@ func Replay(events []Event) *State {
 			s.LastFight, s.Fight = s.Fight, nil
 			s.BossWon++
 			s.winStreak++
+			if f := s.LastFight; f != nil {
+				if took := max(0, f.Seconds-e.Delta); s.FastestFight == 0 || took < s.FastestFight {
+					s.FastestFight = max(1, took)
+				}
+			}
 		case "fight_lost":
 			s.LastFight, s.Fight = s.Fight, nil
 			s.BossLost++

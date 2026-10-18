@@ -128,7 +128,10 @@ cg breakup               # the final boss
 
 At an event, `cg init --preset hackathon --hours 24` scales the goals so an ending is reachable
 before it's over (level, fights, lines, and XP that pays after an hour instead of a day), and
-`cg mood` shows the time left. Organizers can tune everything in `.git/config`, under `[cursed]`: `breakupLevel`,
+`cg mood` shows the time left. For the projector: each team runs `cg card --json > team.json`
+and hands it in, and the organizer drops the files onto [tools/leaderboard.html](tools/leaderboard.html)
+(one offline page: closure, fastest boss kill, achievements, most toxic). Organizers can tune
+everything in `.git/config`, under `[cursed]`: `breakupLevel`,
 `minBossFightsWon`, `minLinesCommitted`, `toxicThreshold`, `xpMaturity` (see
 [docs/CURSES.md §7](docs/CURSES.md)).
 

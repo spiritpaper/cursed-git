@@ -146,6 +146,10 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 		return her.Breakup(len(args) > 1 && args[1] == "--dry-run", stdout)
 
 	case "card":
+		if len(args) > 1 && args[1] == "--json" {
+			fmt.Fprintf(stdout, "%s\n", her.JSON(env.Now()))
+			return 0
+		}
 		fmt.Fprintln(stdout, strings.Join(her.Card(env.Now()), "\n"))
 		return 0
 

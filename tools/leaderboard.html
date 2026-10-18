@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursed GIT Leaderboard</title>
+<style>
+  :root {
+    --bg: #0d0b10; --panel: #17131c; --line: #2c2433; --text: #ece6f0; --dim: #9a8fa3;
+    --accent: #ff4f7b; --gold: #ffcc4d; --good: #7ee0a1;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #faf7fb; --panel: #ffffff; --line: #e4dce8; --text: #1d1622; --dim: #6f6477;
+      --accent: #d81b55; --gold: #b07d00; --good: #187a43;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  header { padding: 20px 16px 8px; max-width: 1200px; margin: 0 auto; }
+  h1 { margin: 0; font-size: clamp(22px, 4vw, 40px); letter-spacing: 0.02em; }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--dim); margin-top: 4px; }
+  main { max-width: 1200px; margin: 0 auto; padding: 8px 16px 40px; }
+  .drop {
+    border: 2px dashed var(--line); border-radius: 10px; padding: 16px; margin: 12px 0 20px;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center; color: var(--dim);
+  }
+  .drop.over { border-color: var(--accent); color: var(--text); }
+  .drop textarea {
+    flex: 1 1 260px; min-height: 44px; background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px; font: inherit; font-size: 13px;
+  }
+  button, label.btn {
+    background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 12px; font: inherit; cursor: pointer;
+  }
+  button:hover, label.btn:hover { border-color: var(--accent); }
+  .boards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .board { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .board h2 { margin: 0 0 10px; font-size: 15px; color: var(--dim); font-weight: normal; text-transform: uppercase; letter-spacing: 0.08em; }
+  .board ol { margin: 0; padding: 0; list-style: none; }
+  .board li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .board li:first-child { border-top: 0; font-size: 1.15em; color: var(--gold); }
+  .board .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .board .num { flex: none; }
+  .empty { color: var(--dim); font-style: italic; }
+  table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 14px; }
+  .scroll { overflow-x: auto; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--dim); font-weight: normal; }
+  td.ending-C { color: var(--good); } td.ending-B { color: var(--accent); }
+  .note { color: var(--dim); font-size: 13px; margin-top: 18px; }
+  .skull { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Cursed GIT <span>Leaderboard</span></h1>
+  <div class="sub">Who survived her best. Each team runs <code>cg card --json &gt; team.json</code> and hands it in.</div>
+</header>
+<main>
+  <div class="drop" id="drop">
+    <span>Drop team cards here, or</span>
+    <label class="btn">choose files<input id="files" type="file" accept=".json,application/json" multiple hidden></label>
+    <textarea id="paste" placeholder="…or paste a card's JSON and press Add"></textarea>
+    <button id="add">Add</button>
+    <button id="clear" title="Remove every card">Clear</button>
+  </div>
+
+  <div class="boards" id="boards"></div>
+  <div class="scroll"><table id="table"></table></div>
+  <p class="note">Cards are self-reported (they come from each team's own machine). Sending a newer card from the same player and project replaces the old one. Nothing leaves this page: it keeps the cards in this browser only.</p>
+</main>
+<script>
+  const KEY = "cg-leaderboard";
+  let teams = {};
+  try { teams = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { teams = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(teams)); } catch (e) {} };
+
+  function add(card) {
+    if (!card || card.cg_card !== 1 || !card.player) throw new Error("not a cg card");
+    const id = card.player + " · " + card.project;
+    if (!teams[id] || (teams[id].at || 0) <= (card.at || 0)) teams[id] = card;
+  }
+  function addText(text) {
+    let n = 0;
+    const data = JSON.parse(text);
+    for (const c of Array.isArray(data) ? data : [data]) { add(c); n++; }
+    return n;
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  const clock = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  const name = t => esc(t.player) + " <span style='color:var(--dim)'>· " + esc(t.project) + "</span>";
+
+  function board(title, rows, value) {
+    const items = rows.slice(0, 8).map(t => `<li><span class="who">${name(t)}</span><span class="num">${value(t)}</span></li>`).join("");
+    return `<section class="board"><h2>${title}</h2>${items ? `<ol>${items}</ol>` : `<div class="empty">no cards yet</div>`}</section>`;
+  }
+
+  function render() {
+    const all = Object.values(teams);
+    const by = (f) => [...all].sort(f);
+    document.getElementById("boards").innerHTML = [
+      board("Closure", by((a, b) => b.level - a.level || b.xp - a.xp), t => `Lv ${t.level}`),
+      board("Fastest boss kill", by((a, b) => a.fastest_fight_seconds - b.fastest_fight_seconds).filter(t => t.fastest_fight_seconds), t => clock(t.fastest_fight_seconds)),
+      board("Achievements", by((a, b) => b.achievements.length - a.achievements.length), t => `🏆 ${t.achievements.length}`),
+      board("Most toxic", by((a, b) => b.toxicity - a.toxicity).filter(t => t.toxicity > 0), t => `☣ ${t.toxicity}`),
+    ].join("");
+    const rows = by((a, b) => b.level - a.level || b.xp - a.xp).map(t => `<tr>
+      <td>${name(t)}${t.death_march ? ' <span class="skull" title="Death March">☠</span>' : ""}</td>
+      <td>Lv ${t.level}</td><td>${t.xp}</td><td>${t.lines}</td><td>${t.fights_won}–${t.fights_lost}</td>
+      <td>${t.fastest_fight_seconds ? clock(t.fastest_fight_seconds) : "–"}</td><td>${t.toxicity}</td>
+      <td>${t.achievements.length}</td><td class="ending-${esc(t.ending || "")}">${{ A: "too soon", B: "toxic", C: "good" }[t.ending] || "–"}</td></tr>`).join("");
+    document.getElementById("table").innerHTML = all.length ? `<tr><th>Team</th><th>Level</th><th>XP</th><th>Lines</th><th>Fights</th><th>Best</th><th>Toxicity</th><th>🏆</th><th>Ending</th></tr>${rows}` : "";
+  }
+
+  async function readFiles(files) {
+    for (const f of files) {
+      try { addText(await f.text()); } catch (e) { alert(f.name + ": " + e.message); }
+    }
+    save(); render();
+  }
+  const drop = document.getElementById("drop");
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+  drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); readFiles(e.dataTransfer.files); });
+  document.getElementById("files").addEventListener("change", e => readFiles(e.target.files));
+  document.getElementById("add").addEventListener("click", () => {
+    const box = document.getElementById("paste");
+    try { addText(box.value); box.value = ""; save(); render(); } catch (e) { alert(e.message); }
+  });
+  document.getElementById("clear").addEventListener("click", () => {
+    if (confirm("Remove every card from this leaderboard?")) { teams = {}; save(); render(); }
+  });
+  render();
+</script>
+</body>
+</html>

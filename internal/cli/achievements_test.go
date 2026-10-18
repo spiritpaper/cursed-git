@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -68,5 +69,29 @@ func TestSerialDaterAcrossProjects(t *testing.T) {
 	}
 	if !strings.Contains(errs, "Serial Dater") {
 		t.Errorf("the fifth project should unlock Serial Dater:\n%s", errs)
+	}
+}
+
+// The card as JSON, for tools/leaderboard.html.
+func TestCardJSON(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	dir := arena(t, h, "psycho")
+	run("merge", "feature")
+	h.wait(40 * time.Second)
+	resolve(t, dir)
+	mustRun(t, "add", "song.txt", "notes.txt")
+	mustRun(t, "commit", "-m", "settled the song")
+	var card struct {
+		Format       int      `json:"cg_card"`
+		Player       string   `json:"player"`
+		FightsWon    int      `json:"fights_won"`
+		Fastest      int      `json:"fastest_fight_seconds"`
+		Achievements []string `json:"achievements"`
+	}
+	if err := json.Unmarshal([]byte(mustRun(t, "card", "--json")), &card); err != nil {
+		t.Fatal(err)
+	}
+	if card.Format != 1 || card.Player != "dev" || card.FightsWon != 1 || card.Fastest != 40 || len(card.Achievements) < 2 {
+		t.Errorf("card --json: %+v", card)
 	}
 }

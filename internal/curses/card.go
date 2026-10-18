@@ -4,6 +4,7 @@
 package curses
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -38,7 +39,7 @@ func (e *Engine) Card(now time.Time) []string {
 		"",
 		fmt.Sprintf("%-28s%s", status, face),
 		fmt.Sprintf("Closure     Lv %-3d %s  %d XP", lv, strings.Repeat("▓", full)+strings.Repeat("░", 10-full), st.XP),
-		fmt.Sprintf("Boss fights %d won · %d lost", st.BossWon, st.BossLost),
+		fightsLine(st),
 		fmt.Sprintf("Toxicity    %d/%d", st.Toxicity, rules(e.gitDir).ToxicThreshold),
 		fmt.Sprintf("Together    %s · %s", plural(days, "day"), plural(st.Commits, "commit")),
 	}
@@ -104,4 +105,53 @@ func wrap(s string, width int) []string {
 		line = string(r[width:])
 	}
 	return append(lines, line)
+}
+
+// CardJSON is the card as data, for event leaderboards (tools/leaderboard.html).
+type CardJSON struct {
+	Format       int      `json:"cg_card"`
+	Player       string   `json:"player"`
+	Project      string   `json:"project"`
+	Tier         int      `json:"tier"`
+	Level        int      `json:"level"`
+	XP           int      `json:"xp"`
+	Lines        int      `json:"lines"`
+	FightsWon    int      `json:"fights_won"`
+	FightsLost   int      `json:"fights_lost"`
+	Fastest      int      `json:"fastest_fight_seconds,omitempty"`
+	Toxicity     int      `json:"toxicity"`
+	Commits      int      `json:"commits"`
+	Achievements []string `json:"achievements"`
+	Ending       string   `json:"ending,omitempty"`
+	DeathMarch   bool     `json:"death_march,omitempty"`
+	EventHours   int      `json:"event_hours,omitempty"`
+	At           int64    `json:"at"`
+}
+
+// JSON is the card for machines.
+func (e *Engine) JSON(now time.Time) []byte {
+	st := e.st
+	c := CardJSON{Format: 1, Player: e.firstName(), Project: filepath.Base(e.workTree), Tier: st.Tier(now),
+		Level: Level(st.XP), XP: st.XP, Lines: st.Lines, FightsWon: st.BossWon, FightsLost: st.BossLost,
+		Fastest: st.FastestFight, Toxicity: st.Toxicity, Commits: st.Commits, Achievements: []string{},
+		DeathMarch: e.DeathMarch(), EventHours: EventHours(e.gitDir), At: now.Unix()}
+	got := e.Unlocked()
+	for _, a := range Achievements {
+		if _, ok := got[a.ID]; ok {
+			c.Achievements = append(c.Achievements, a.Name)
+		}
+	}
+	if m, ok := recall(e.gitDir); ok {
+		c.Ending = m.Ending
+	}
+	data, _ := json.MarshalIndent(c, "", "  ")
+	return data
+}
+
+func fightsLine(st *State) string {
+	line := fmt.Sprintf("Boss fights %d won · %d lost", st.BossWon, st.BossLost)
+	if st.FastestFight > 0 {
+		line += fmt.Sprintf(" · best %s", clock(int64(st.FastestFight)))
+	}
+	return line
 }

@@ -33,7 +33,7 @@ commands:
   restore [--staged] [--source=<commit>] <file>
   log [--oneline] [-n <N>] [<rev>...]   show history (HEAD~2, main^ and friends work)
   mood             how she feels about you right now
-  card             your relationship on one screen (screenshot it)
+  card [--json]    your relationship on one screen (--json: for the event leaderboard)
   achievements     what you've unlocked, and what's left
   quest [skip]     a task that teaches you git, checked by her, paid in XP
   beg              ask for the files she took back
