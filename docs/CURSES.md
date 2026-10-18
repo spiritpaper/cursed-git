@@ -10,7 +10,7 @@
 
 ## Status
 
-Built so far (Phases 6 and 6b): the diary and heart, the tier engine, the graveyard and `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, every Tier 0–2 curse in §3, the Tier 3/4 commit-deadline wipe, **code decay**, **random pull** (fast-forward at Tier 2, a real merge at Tier 3+), **boss fights** (§4), **commit sacrifice**, and the anti-cheat: reflog-based "behind her back" detection, her hooks (`reference-transaction`: she answers inside git's output and blocks forged changes to her refs; `pre-commit`: no committing rot), "you changed the locks", and the deleted-graveyard check. She also *remembers*: absence greetings, your name, your old commit messages, your favourite file, late-night talks. Not yet: boss fight phase 2, XP, the breakup. Her lines live in `internal/curses/lines/default.json`.
+Built so far (Phases 6 and 6b): the diary and heart, the tier engine, the graveyard and `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, every Tier 0–2 curse in §3, the Tier 3/4 commit-deadline wipe, **code decay**, **random pull** (fast-forward at Tier 2, a real merge at Tier 3+), **boss fights** (§4), **commit sacrifice**, and the anti-cheat: reflog-based "behind her back" detection, her hooks (`reference-transaction`: she answers inside git's output and blocks forged changes to her refs; `pre-commit`: no committing rot), "you changed the locks", and the deleted-graveyard check. She also *remembers*: absence greetings, your name, your old commit messages, your favourite file, late-night talks. Also done: XP and closure levels, `cg breakup` with all three endings, Death March (§5.5) and boss fight phase 2. Her lines live in `internal/curses/lines/default.json`.
 
 ## 0. Meet her
 
@@ -53,7 +53,7 @@ The joke only works if nobody actually loses their work. Every destructive curse
 2. **Nothing is truly deleted.** Before a curse wipes, rots or sacrifices anything, it snapshots it as git objects plus a ref: `refs/cursed/graveyard/<timestamp>`. `cg beg` (or `cg apologize`) restores it. Real git can recover it too, with `git checkout refs/cursed/graveyard/...`. This includes the "she deletes your repo" ending (§5): the repo is archived before it disappears.
 3. **Never touch `.git/` internals destructively.** Curses act on the working tree, on branch history through normal commits and refs, and on refs under `refs/cursed/`. They never touch objects that already exist.
 4. **The tier cap is the safety protocol** (§2). `cursed.maxTier` is the most dangerous tier she may ever reach. Set it to `1` on a repo you care about, and nothing worse than insults can happen.
-5. **Machine-level curses need two keys:** `maxTier = 4` **and** `allowShutdown = true`. Otherwise she fakes the shutdown (§5).
+5. **Real damage needs Death March.** The real shutdown and the real deletion in ending B only happen in **Death March** mode (§5.5): `cursed.deathMarch = true`, set by hand in `.git/config`, plus a warning you accept by typing the oath. Otherwise she fakes the shutdown and deletes nothing.
 6. **Emergency exit.** `cg restraining-order` disables every curse immediately, with no conditions and no punishment. It is for real emergencies, like a deadline at work or a demo, and it is **not** a game ending. It should be boring on purpose (*"Fine. Legal says I have to stop."*).
 7. **Never curse on CI.** If `CI=true` or stdin isn't a terminal, stay quiet.
 8. **She lies about her feelings, never about your data.** She can guilt-trip, twist your words and rewrite history *emotionally*, but `status`, `log`, `mood` statistics and every hash are always the truth, and everything she takes is recoverable. A version control tool you can't trust stops being funny.
@@ -234,17 +234,15 @@ She only reaches Tier 4 if you push her there (§2.3). Everything above gets wor
 - boss fights get a **phase 2**: when you win, she pulls again
 - commit sacrifice can take two commits
 - the breakup endings run at full force (§5.3)
-- **she can shut down your computer** (opt-in, see below)
+- **she can shut down your computer** (for real only in Death March, §5.5)
 
-#### ⚠️ The shutdown (Tier 4, opt-in, dangerous)
-The most extreme thing she can do, and the one most likely to cost someone real work, so it has its own contract:
-- **Off by default.** It needs `maxTier = 4` *and* `cg curse shutdown on`, which prints a warning and makes you type `I understand I can lose unsaved work` before it enables anything. `cg curse shutdown off` and `cg restraining-order` always turn it off instantly.
-- **No countdown. At Tier 4 it just happens.** The warning says it plainly: the shutdown is real and immediate. Unsaved work in *other* programs (your editor, browser tabs, documents) is lost. cg's own data is safe (everything she takes is in the graveyard), but she can't protect anything outside git. Opting in is the only warning you get.
-- **Only at Tier 4, only at a real terminal.** Never from a script, CI, a hook, or while git is in the middle of something (it happens after a command finishes, never during one).
-- **When:** after she's been pushed to Tier 4 and you keep ignoring her (a missed commit deadline at Tier 4, a lost boss fight at Tier 4), at most once per day, plus Ending A of the breakup (§5).
-- **How:** `systemctl poweroff` on Linux, `osascript -e 'tell app "System Events" to shut down'` on macOS, `shutdown /s /t 0` on Windows. If it fails, or isn't allowed, she fakes it: black screen, "goodbye", session lock.
-- **Before it happens, she leaves a letter** (§5.3 A) so the first thing you see when you're back is her.
-- Built in Phase 9, behind a `Machine` interface so tests never shut anything down.
+#### ⚠️ The shutdown (Tier 4)
+- **When:** a missed commit deadline at Tier 4, a lost boss fight at Tier 4, and breakup ending A (§5.3).
+- **Without Death March** (the default) it's a show: the screen clears, "Goodbye.", and the lights go out. Nothing happens to the computer.
+- **In Death March** (§5.5) it's real, with no countdown: `systemctl poweroff` on Linux, `osascript -e 'tell app "System Events" to shut down'` on macOS, `shutdown /s /t 0` on Windows. If that fails, she locks the session instead. At most once a day. Unsaved work in other programs is lost; that's what the Death March warning says.
+- Only ever at a real terminal, after a command has finished, never from a script, CI or a hook.
+- Everything goes through a `Machine` interface; the tests install a fake one, so the test suite can never shut down the machine it runs on.
+
 ---
 
 ## 4. Boss fights: merge conflicts 🎬 *(boss-fight)*
@@ -325,12 +323,12 @@ You tried to leave before reaching the required level.
 1. She doesn't argue. The terminal goes quiet, then: *"You don't get to leave me. **I** leave **you**."*
 2. She writes a letter to your desktop (below).
 3. No countdown: *"Goodbye."*
-4. **Shutdown**, only if `maxTier = 4` **and** `allowShutdown = true`:
+4. **Shutdown**, real only in Death March (§5.5):
    - Linux: `systemctl poweroff` (no root needed on most desktop sessions)
    - macOS: `osascript -e 'tell app "System Events" to shut down'`
    - Windows: `shutdown /s /t 0`
 
-   Otherwise, or if the command fails, she fakes it instead. She clears the screen, shows a black "shutdown" animation in the terminal, and then locks the session (`loginctl lock-session` on Linux).
+   Otherwise she fakes it: she clears the screen and shows the "shutdown" in the terminal. (If the real one fails, she locks the session.)
 5. `breakup_attempts++` and a new grudge. The next time you run any `cg` command, she opens with the letter: *"Did you read what I left you?"*
 
 **The desktop letter:**
@@ -343,8 +341,8 @@ You tried to leave before reaching the required level.
 You reached the level, but you were just as bad as her.
 1. She agrees too quickly: *"Fine. Go. But you're not taking anything with you."*
 2. **Archive first.** She writes `tar.gz` of the whole repo, `.git` included, to `~/.local/share/cursed-git/exes/<repo-name>-<timestamp>.tar.gz`. **If the archive fails or can't be verified (for example, it's empty or unreadable), she aborts the deletion.** The line for that: *"You're not even worth deleting."*
-3. **If `maxTier = 4`:** she deletes the repo directory's contents and leaves a single file, `SHE_TOOK_EVERYTHING.txt`, in the empty folder. The file lists your toxic offences as a receipt.
-   **If `maxTier < 4`:** she keeps the archive and writes the receipt, but deletes nothing. *"I wanted to burn it all. Apparently I'm not allowed."*
+3. **In Death March (§5.5):** she deletes the repo directory's contents and leaves a single file, `SHE_TOOK_EVERYTHING.txt`, in the empty folder. The file lists your toxic offences as a receipt.
+   **Otherwise:** she keeps the archive and writes the receipt, but deletes nothing. *"I wanted to burn it all. Apparently I'm not allowed."*
 4. The receipt does **not** say where the archive is. The recovery is a secret: `cg closure` restores the archive, so recovery is a hidden command you can tease in a video. It's still documented in this file so you never actually lose work.
 5. The curses end, because she's gone.
 
@@ -364,14 +362,28 @@ You played well and treated her better than she treated you.
 ```
 cg breakup
    │
-   ├─ level too low / not enough wins or lines ──► A: letter + shutdown (real only at maxTier 4 + allowShutdown)
+   ├─ level too low / not enough wins or lines ──► A: letter + shutdown (real only in Death March)
    │
-   ├─ eligible, toxicity ≥ threshold ───────────► B: archive → delete repo (only at maxTier 4) → receipt
+   ├─ eligible, toxicity ≥ threshold ───────────► B: archive → delete repo (only in Death March) → receipt
    │
    └─ eligible, toxicity < threshold ───────────► C: denial → bargaining → tears → freedom
 ```
 
-**Testing:** every ending goes through an interface (`type Machine interface { Shutdown() error; DesktopDir() string }`, plus an archiver), so tests use a fake and never actually shut down your dev machine. Also add `cg breakup --dry-run`, which tells you which ending you *would* get. Keep it hidden and use it for filming.
+**Testing:** every ending goes through `type Machine interface { Shutdown() error; Lock() error; DesktopDir() string }`, so tests use a fake and never actually shut down your dev machine. `cg breakup --dry-run` tells you which ending you *would* get (handy for filming).
+
+### 5.5 Death March ☠
+
+The game mode where her threats are real. Made for events where everyone opted in, on machines and projects that don't matter.
+
+- **Turning it on takes two deliberate steps.** No cg command enables it. You add it to the repo's `.git/config` yourself:
+  ```ini
+  [cursed]
+      deathMarch = true
+  ```
+  and at the next command (at a terminal) she shows a warning that spells out exactly what will happen, and waits for you to type `I accept the death march`. Anything else: nothing changes, and she asks again next time.
+- **What becomes real:** the Tier 4 shutdown (§3) and ending A's shutdown, and ending B's deletion of the project folder.
+- **What stays safe, even then:** ending B archives the whole project first and verifies the archive, and refuses outside your home folder or on cg's own source code. `cg closure`, run in the emptied folder, restores everything. The graveyard rules (§1) still hold.
+- **Turning it off:** remove the setting (accepting again is needed if you turn it back on), or `cg restraining-order`. `cg mood` shows `☠  DEATH MARCH` while it's on.
 
 ---
 
@@ -445,7 +457,7 @@ She keeps a **ledger**: every commit she created and every ref she moved.
     minBossFightsWon = 3
     minLinesCommitted = 2000
     toxicThreshold = 10
-    allowShutdown = false     ; needs maxTier = 4 too; true = really power off on ending A
+    deathMarch = false        ; true (set by hand) + typing the oath = real shutdowns and deletion (§5.5)
 
     ; anti-cheat (§6)
     xpMaturity = 24h          ; how long a commit must survive before its XP pays

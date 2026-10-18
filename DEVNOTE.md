@@ -186,6 +186,16 @@ After a loss the conflict is still there, so the very next check saw "conflict, 
 **A frozen clock buried two things in the same grave.**
 Graveyard refs are named after the time in nanoseconds. In a test the clock doesn't move, so losing a fight and then `cg beg` (which saves what's on disk first) both wanted the same ref. Real clocks would almost never collide, but "almost" isn't how you keep someone's work. `Bury` now takes the next free name.
 
+**She left before checking whether she was allowed to burn the house down.**
+Ending B logged "she's gone" and *then* asked "is Death March on?". Being gone turns Death March off, so she never deleted anything, even when she should have. The test caught it on the first run. Decide first, then act.
+→ When an action changes the state its own rules depend on, read the rules before the action.
+
+**The test suite must not be able to shut down my laptop.**
+The shutdown goes through a `Machine` interface, and `TestMain` installs a fake one for every test, not just the shutdown tests. Same for her data folder: archives and trophies go to a temp dir. A forgotten fake in one test would otherwise mean a real `systemctl poweroff` in the middle of `go test`.
+
+**Winning calmed her down too early.**
+Phase 2 (she pulls again after a Tier 4 win) never started: the win's temper −1 had already put her back at Tier 3 when she checked. Capture "the tier she fought at" before recording the win.
+
 **A pull's merge message names a URL, not the remote.**
 `git pull` writes "Merge branch 'main' of /path/to/repo". To call the boss "Chad from origin" she looks the URL up in `remote.*.url`.
 

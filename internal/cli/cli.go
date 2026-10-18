@@ -36,6 +36,7 @@ commands:
   graveyard        list what she took
   curse on [--preset p] | off
                    invite her back / ask her to leave
+  breakup          try to leave her (you have to earn it: see cg mood)
   restraining-order  emergency off switch, no questions asked
   face [mood]  look at her (0–4, love, crying)
 
@@ -238,8 +239,15 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 	case "diff":
 		return diffCmd(args[1:], stdout, stderr)
 
-	case "mood", "beg", "graveyard", "curse", "restraining-order":
+	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup":
 		return herCmd(args, stdout, stderr)
+	case "closure":
+		// works without a repository: after a toxic breakup there may be nothing left
+		if err := curses.Closure(".", stdout); err != nil {
+			fmt.Fprintf(stderr, "cg closure: %v\n", err)
+			return 1
+		}
+		return 0
 
 	case "version", "--version":
 		fmt.Fprintln(stdout, "cg version 0.5.0 (Cursed GIT; everything she doesn't do herself goes to git)")

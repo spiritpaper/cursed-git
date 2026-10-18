@@ -214,3 +214,37 @@ func TestRandomPullStartsAFightWithChad(t *testing.T) {
 		t.Error("the pull should have left a real git merge in progress")
 	}
 }
+
+// Tier 4: winning a fight makes her pull right away. If upstream conflicts: phase 2, against Chad.
+func TestTier4WinStartsPhase2(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	remote := t.TempDir()
+	gitIn(t, remote, "init", "-q", "--bare", "-b", "main")
+	dir := arena(t, h, "psycho")
+	mustRun(t, "remote", "add", "origin", remote)
+	mustRun(t, "push", "-q", "-u", "origin", "main")
+	other := t.TempDir() // upstream changes the same line of notes.txt as we will
+	plainGit(t, other, "clone", "-q", remote, ".")
+	os.WriteFile(other+"/notes.txt", []byte("chad's notes\n"), 0644)
+	plainGit(t, other, "add", ".")
+	if out, err := exec.Command("git", "-C", other, "-c", "user.name=Chad", "-c", "user.email=chad@gym.io", "commit", "-q", "-m", "mine").CombinedOutput(); err != nil {
+		t.Fatalf("%v %s", err, out)
+	}
+	plainGit(t, other, "push", "-q")
+	mustRun(t, "reset", "--hard") // +1 temper: Tier 4
+
+	run("merge", "feature")
+	resolve(t, dir)
+	write(t, dir, map[string]string{"notes.txt": "my notes, final\n"})
+	mustRun(t, "add", "song.txt", "notes.txt")
+	_, _, errs := run("commit", "-m", "won round one")
+	if !strings.Contains(errs, "K.O.") || !strings.Contains(errs, "Phase 2") || !strings.Contains(errs, "BOSS FIGHT: Chad from origin") {
+		t.Fatalf("a Tier 4 win should bring phase 2:\n%s", errs)
+	}
+	write(t, dir, map[string]string{"notes.txt": "our notes\n"})
+	mustRun(t, "add", "notes.txt")
+	_, _, errs = run("commit", "-m", "won round two")
+	if !strings.Contains(errs, "K.O.") || strings.Contains(errs, "Phase 2") {
+		t.Errorf("winning phase 2 ends it (no phase 3):\n%s", errs)
+	}
+}

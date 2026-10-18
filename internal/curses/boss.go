@@ -40,7 +40,8 @@ type Fight struct {
 	Files   []string `json:"files"`  // conflicted files at the start
 	Head    string   `json:"head"`   // HEAD at the start: the fight is won by a new commit
 	Seconds int      `json:"seconds"`
-	Start   int64    `json:"-"` // the event's time
+	Phase   int      `json:"phase,omitempty"` // 2 = the rematch at Tier 4 (no phase 3)
+	Start   int64    `json:"-"`               // the event's time
 }
 
 func (f *Fight) deadline() int64 { return f.Start + int64(f.Seconds) }
@@ -194,6 +195,9 @@ func (e *Engine) startFight(now time.Time, tier int) {
 	f.Start = now.Unix()
 	f.HP = e.hpLeft(f)
 	f.Seconds = f.HP * int(HunkTime(tier).Seconds())
+	if e.phase2 {
+		f.Phase = 2
+	}
 	e.log(Event{Type: "fight", Text: f.Boss, Fight: f})
 
 	e.pause()
@@ -330,6 +334,7 @@ func (e *Engine) fightOver(now time.Time) {
 		return
 	}
 	left := f.deadline() - now.Unix()
+	tier := e.st.Tier(now) // the tier she fought at (winning calms her down)
 	e.log(Event{Type: "fight_won", Text: f.Boss, Delta: int(left)})
 	e.log(Event{Type: "xp", Delta: 250 + int(max(0, left))/10, Text: "beat " + f.Boss})
 	e.log(Event{Type: "temper", Delta: -1, Text: "beat " + f.Boss})
@@ -345,6 +350,14 @@ func (e *Engine) fightOver(now time.Time) {
 	fmt.Fprintf(out, "   ╚═══════════════════════════════════════╝\n")
 	fmt.Fprintf(out, "   (Your merge commit has two parents now: `cg log --oneline -n 3`.)\n\n")
 	e.say(key, map[string]string{"boss": f.Boss})
+	if tier >= 4 && f.Phase < 2 {
+		// Catastrophic: you won, so she brings him back. Phase 2.
+		e.pause()
+		e.say("fight_phase2", map[string]string{"boss": f.Boss})
+		e.phase2 = true
+		e.pull(tier)
+		e.phase2 = false
+	}
 }
 
 // loseFight: ran out of time, or ran away. Tier 3: she dictates your next commit message.

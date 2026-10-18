@@ -119,6 +119,9 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 	}
 
 	switch args[0] {
+	case "breakup":
+		return her.Breakup(len(args) > 1 && args[1] == "--dry-run", stdout)
+
 	case "restraining-order":
 		her.Off()
 		fmt.Fprintln(stdout, "Restraining order filed. She's off in this repo. (`cg curse on` if you ever miss her.)")

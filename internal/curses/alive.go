@@ -57,7 +57,7 @@ func (e *Engine) reflogLines() []string {
 // Touch is called at the end of every cg command: she remembers when she last saw you and
 // what the repository looked like, so next time she can tell what happened without her.
 func (e *Engine) Touch() {
-	if e == nil {
+	if e == nil || e.gone {
 		return
 	}
 	s, _ := e.loadSeen()

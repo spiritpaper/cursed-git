@@ -102,6 +102,43 @@ fight:
 Every conflict block is 1 HP. Fix the lines, `cg add` the file, and `cg commit` before the
 clock runs out. `cg status` shows his health. You can't run: `cg merge --abort` is refused.
 
+## Breaking up
+
+You can't just leave her. You earn **closure XP** with real work: every committed line (paid
+once per unique content, and only if it's still on a branch a day later, so reverts can't farm
+it), decent commit messages, and boss fights won. `cg mood` shows your level.
+
+```bash
+cg breakup --dry-run     # which ending you'd get
+cg breakup               # the final boss
+```
+
+- **Too soon** (level too low): she leaves *you*. A letter on your desktop, and the lights go out.
+- **Toxic** (you were as bad as her): she takes everything and leaves a receipt.
+- **Good**: denial, bargaining, tears. Then she's gone for good, and it's just git again.
+
+Event organizers can tune the game in `.git/config`, under `[cursed]`: `breakupLevel`,
+`minBossFightsWon`, `minLinesCommitted`, `toxicThreshold`, `xpMaturity` (see
+[docs/CURSES.md §7](docs/CURSES.md)).
+
+## ☠ Death March
+
+For events where everyone opted in, on machines and projects that don't matter: the mode where
+her threats are real. A Tier 4 punishment or "too soon" **shuts the computer down**, and the
+toxic ending **deletes the project folder**.
+
+It takes two deliberate steps. Add this to the repository's `.git/config` by hand:
+
+```ini
+[cursed]
+    deathMarch = true
+```
+
+then accept the warning she shows by typing the oath. Even then: the folder is archived and
+verified before it's deleted, `cg closure` in the emptied folder restores everything, and she
+refuses to delete anything outside your home folder. Remove the setting or run
+`cg restraining-order` to stop.
+
 ## Your work is safe (really)
 
 She's dark, but there are rules she never breaks:
@@ -114,6 +151,8 @@ She's dark, but there are rules she never breaks:
 - **Rot is never committed.** Old files decay in your working tree only; the committed
   version stays clean, and any commit restores them.
 - **She never rewrites what you pushed.**
+- **Without Death March, nothing real happens to your computer or your folders.** The
+  shutdown is an animation and the toxic ending only writes a receipt.
 - **`cg restraining-order`** turns her off instantly, no questions asked. `cg curse on` brings
   her back.
 
@@ -139,9 +178,10 @@ cg write-tree                    # turn the index into tree objects
 
 ## Status
 
-Playable. Done: the git core, her (about 20 curses, the graveyard, code decay, her memory,
-the anti-cheat), boss fights and commit sacrifice. Coming: XP and levels, and `cg breakup`,
-the final boss.
+Playable. Playable from start to finish: the git core, her (about 20 curses, the graveyard, code decay,
+her memory, the anti-cheat), boss fights, commit sacrifice, XP, `cg breakup` with three
+endings, and Death March. Coming: a gentle mode (a partner who just wraps git in a new look),
+and cg working without git installed.
 
 ## License
 

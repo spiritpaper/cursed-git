@@ -48,6 +48,8 @@ type Engine struct {
 	lines            map[string][]string
 	tampered         error
 	pre              commitInfo // what Before learned about a commit, for After
+	gone             bool       // she left (breakup): write nothing more into the repo
+	phase2           bool       // the pull right after a Tier 4 win: a conflict is the rematch
 }
 
 type commitInfo struct {
@@ -114,6 +116,9 @@ func Enable(gitDir, preset string, env Env) (*Engine, error) {
 func (e *Engine) State() *State { return e.st }
 
 func (e *Engine) log(ev Event) {
+	if e.gone {
+		return
+	}
 	ev.T = e.env.Now().Unix()
 	if err := e.diary.Append(ev); err == nil {
 		e.st = Replay(e.diary.Events())
@@ -151,7 +156,7 @@ func (e *Engine) say(key string, vars map[string]string) {
 }
 
 // commands that are about her, not about git: no curses on those
-var exempt = map[string]bool{"mood": true, "curse": true, "restraining-order": true, "beg": true,
+var exempt = map[string]bool{"breakup": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
 	"graveyard": true, "face": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
 
 func (e *Engine) awake() bool { return e != nil && e.env.Interactive }
@@ -177,6 +182,7 @@ func (e *Engine) Before(cmd string, args []string) ([]string, bool) {
 	e.checkLocks()
 	e.missingGraves()
 	e.greet(now, last, known)
+	e.letterReminder()
 	e.deathMarchGate()
 	e.matureXP(now)
 	if e.fightBefore(cmd, args, now, exempt[cmd]) {

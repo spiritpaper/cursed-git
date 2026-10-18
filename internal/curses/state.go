@@ -58,6 +58,8 @@ type State struct {
 	PaidBlobs          map[string]bool // content she has paid for (or is about to)
 	DeathMarchAccepted bool
 	LastShutdownAt     int64
+	BreakupAttempts    int
+	LetterPending      string // ending A's letter, until she's mentioned it
 }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
@@ -118,6 +120,11 @@ func Replay(events []Event) *State {
 			s.DeathMarchAccepted = false
 		case "shutdown":
 			s.LastShutdownAt = e.T
+		case "breakup_attempt":
+			s.BreakupAttempts++
+			s.LetterPending = e.Text
+		case "letter_seen":
+			s.LetterPending = ""
 		case "xp_pending":
 			s.Pending = append(s.Pending, pending{Commit: e.Text, Lines: e.Delta, At: e.T, Blobs: e.Blobs})
 			for _, b := range e.Blobs {

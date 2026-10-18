@@ -123,12 +123,14 @@ Still open: lowering `tier`/`maxTier` mid-game = breakup attempt (needs Phase 9)
 - Line counting from commit diffs, reusing the Phase 7 diff
 - `cg breakup` with the three endings, plus `--dry-run`
 - Ending A: the desktop letter (`xdg-user-dir`), OS-specific shutdown behind a `Machine` interface, and the fake-shutdown fallback
-- **Tier 4 shutdown** (CURSES.md §3 Tier 4): `cg curse shutdown on` with a typed confirmation, no countdown (it just happens), once a day at most, fake shutdown fallback, `Machine` interface for tests
+- **Tier 4 shutdown** (CURSES.md §3 Tier 4): real only in Death March (CURSES.md §5.5), no countdown, once a day at most, fake shutdown otherwise, `Machine` interface for tests
 - Ending B: `archive/tar` + `compress/gzip`, verify the archive, *then* delete; `cg closure` restores
 - Ending C: the dialogue state machine (denial → bargaining → crying → acceptance) and the credits
 - `cg restraining-order`, the no-questions-asked emergency off switch
 - **Verify:** fake `Machine` in tests; run ending B on a throwaway repo and restore it with `cg closure`, then run `git fsck` on the result.
 - **Learn:** `archive/tar`, `runtime.GOOS`, `os/exec`, and writing terminal animations with ANSI escape codes.
+
+**Status (2026-10-17): done.** XP (per unique blob, pending until it survives `xpMaturity`, so reverts can't farm it), closure levels in `cg mood`, `cg breakup` with all three endings and `--dry-run`, the desktop letter (and a copy in `.git/cursed/letters/`), the receipt, `cg closure`, the credits and the trophy. The destructive parts follow the audience: cg is a game for opt-in events (hackathons, conventions), so real shutdowns and real deletion only happen in **Death March** (CURSES.md §5.5), turned on by hand in `.git/config` and accepted by typing an oath. Without it: an animation and a receipt. Tests run with a fake `Machine` and an isolated data folder. Tier 4 boss fights get phase 2. Still open: personality packs (`personality =` in config), and the gentle mode.
 
 ## Phase 10: Launch *(final episode)*
 - Commit the animations (`cursed-git-video/`, `code-animations-kit-v2/`) by removing them from `.gitignore`

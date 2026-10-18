@@ -241,5 +241,62 @@
   "deathmarch_on": [
     "Finally. Someone who takes us seriously.",
     "No more pretending, then. I hope you commit like you mean it."
+  ],
+
+  "breakup_a": [
+    "You don't get to leave me. I leave you.",
+    "Leave? You? You can't even resolve a conflict without crying."
+  ],
+  "breakup_goodbye": [
+    "Goodbye."
+  ],
+  "letter_signoff": [
+    "Come back when you're ready. You'll be back anyway.",
+    "I'll be here. I'm always here. That's the problem, isn't it?"
+  ],
+  "letter_reminder": [
+    "Did you read what I left you? {file}",
+    "I left you a letter. {file}. I'll wait."
+  ],
+  "breakup_b": [
+    "Fine. Go. But you're not taking anything with you.",
+    "Oh, you want to leave? After what YOU did? Sure. Leave everything here."
+  ],
+  "not_worth_deleting": [
+    "You're not even worth deleting."
+  ],
+  "breakup_b_not_allowed": [
+    "I wanted to burn it all. Apparently I'm not allowed. Read the receipt.",
+    "There's a receipt. Read it. I'd have taken everything, but someone set rules."
+  ],
+  "breakup_b_gone": [
+    "It's all gone. Every file. Read the receipt on your way out.",
+    "I took everything. You know what you did."
+  ],
+  "breakup_c_plea": [
+    "You're joking, right? After everything? Remember \"{first_msg}\"? You were so nervous.",
+    "Our first commit was \"{first_msg}\". I still think about it.",
+    "Is this about the conflicts? I can change. I can merge."
+  ],
+  "breakup_c_stay": [
+    "I knew it. You'd never really leave.",
+    "Good. Let's never talk about this again."
+  ],
+  "breakup_c_deal": [
+    "I'll stop pulling random branches, I swear. Stay?",
+    "I'll never touch your commit messages again. Never. Stay?",
+    "I'll let you use plain git. Sometimes. On weekends. Stay?"
+  ],
+  "breakup_c_accept": [
+    "Okay. Be happy. Commit often. With someone else.",
+    "Okay. You earned it. Go. Write good commit messages for someone who deserves them."
+  ],
+  "letter_goodbye": [
+    "You were good to me. Better than I was to you. I hope your next history is cleaner than ours. Don't force-push it."
+  ],
+
+  "fight_phase2": [
+    "You think it's over? I called {boss} back. Phase 2.",
+    "Cute. Let's see you do it again. I'm pulling."
   ]
 }

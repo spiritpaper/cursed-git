@@ -25,6 +25,11 @@ func (e *Engine) randomPull(cmd string, tier int) {
 	if tier < 2 || noPullDuring[cmd] || !e.chance(0.02) {
 		return
 	}
+	e.pull(tier)
+}
+
+// pull brings upstream home without asking (her random pull, and boss fight phase 2).
+func (e *Engine) pull(tier int) {
 	branch, err := refs.Follow(e.gitDir, "HEAD")
 	if err != nil || branch == "HEAD" {
 		return
