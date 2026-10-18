@@ -44,6 +44,7 @@ type State struct {
 	Offenses      map[string]int64 // offense -> when it last happened
 	LastRefusalAt int64
 	Graveyard     []string // refs she took that you haven't begged back yet
+	Sacrificed    []string // refs/cursed/sacrificed/...: commits she dropped (cherry-pick brings one back)
 	LovebombAt    int64
 	OnSince       int64
 	Fight         *Fight // the boss fight going on right now, if any
@@ -118,6 +119,8 @@ func Replay(events []Event) *State {
 			s.LastCommitAt, s.DeadlineWarns, s.LastWarnAt = e.T, 0, 0
 		case "graveyard":
 			s.Graveyard = append(s.Graveyard, e.Text)
+		case "sacrifice":
+			s.Sacrificed = append(s.Sacrificed, e.Text)
 		case "beg":
 			for i, ref := range s.Graveyard {
 				if ref == e.Text {

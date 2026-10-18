@@ -226,5 +226,15 @@
   ],
   "conflict_small": [
     "Conflicts. Git couldn't decide, so now you have to. Look for <<<<<<<, keep what's right, `cg add`, `cg commit`. I'll be over here, judging."
+  ],
+
+  "sacrifice_intro": [
+    "This repository cannot be saved as it is. Something has to be sacrificed.",
+    "You've been so difficult lately. Someone has to pay for it. Not you, obviously. One of your commits."
+  ],
+  "sacrifice_done": [
+    "I chose \"{msg}\". It had to be someone.",
+    "\"{msg}\" is gone. Don't look at me like that. It's still in my drawer.",
+    "Goodbye, \"{msg}\". You were never his best work anyway."
   ]
 }

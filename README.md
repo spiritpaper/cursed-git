@@ -140,7 +140,7 @@ cg write-tree                    # turn the index into tree objects
 ## Status
 
 Playable. Done: the git core, her (about 20 curses, the graveyard, code decay, her memory,
-the anti-cheat) and boss fights. Coming: commit sacrifice, XP and levels, and `cg breakup`,
+the anti-cheat), boss fights and commit sacrifice. Coming: XP and levels, and `cg breakup`,
 the final boss.
 
 ## License

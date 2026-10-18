@@ -244,6 +244,7 @@ func (e *Engine) After(cmd string, args []string, code int) {
 	switch {
 	case cmd == "commit" && code == 0:
 		e.afterCommit(now)
+		e.maybeSacrifice(now)
 	case cmd == "push" && code == 0 && !e.st.Lovebombing(now) && e.chance(0.3):
 		e.say("toxic_partner", nil)
 	}

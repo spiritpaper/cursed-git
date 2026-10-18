@@ -10,7 +10,7 @@
 
 ## Status
 
-Built so far (Phases 6 and 6b): the diary and heart, the tier engine, the graveyard and `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, every Tier 0–2 curse in §3, the Tier 3/4 commit-deadline wipe, **code decay**, **random pull** (fast-forward at Tier 2, a real merge at Tier 3+), **boss fights** (§4), and the anti-cheat: reflog-based "behind her back" detection, her hooks (`reference-transaction`: she answers inside git's output and blocks forged changes to her refs; `pre-commit`: no committing rot), "you changed the locks", and the deleted-graveyard check. She also *remembers*: absence greetings, your name, your old commit messages, your favourite file, late-night talks. Not yet: commit sacrifice, boss fight phase 2, XP, the breakup. Her lines live in `internal/curses/lines/default.json`.
+Built so far (Phases 6 and 6b): the diary and heart, the tier engine, the graveyard and `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, every Tier 0–2 curse in §3, the Tier 3/4 commit-deadline wipe, **code decay**, **random pull** (fast-forward at Tier 2, a real merge at Tier 3+), **boss fights** (§4), **commit sacrifice**, and the anti-cheat: reflog-based "behind her back" detection, her hooks (`reference-transaction`: she answers inside git's output and blocks forged changes to her refs; `pre-commit`: no committing rot), "you changed the locks", and the deleted-graveyard check. She also *remembers*: absence greetings, your name, your old commit messages, your favourite file, late-night talks. Not yet: boss fight phase 2, XP, the breakup. Her lines live in `internal/curses/lines/default.json`.
 
 ## 0. Meet her
 
@@ -222,8 +222,9 @@ Each curse has a **tier**, a **trigger**, a **punishment**, and a **line** (what
 
 **🔪 Commit sacrifice.** 🎬 *(git-explained, scene 7)* When temper is +1 or more, a `cg commit` can trigger: *"This repository cannot be saved as it is. Something has to be sacrificed."* She drops one older commit from the current branch and replays everything after it, which gives those commits new IDs.
 - She only sacrifices **unpushed** commits, meaning commits not reachable from any remote-tracking ref. Rewriting pushed history would force you into a force push, which would be her fault, and that's not fair even for her.
-- The sacrificed commit gets a graveyard ref. Git's reflog keeps it for about 30 days, but her graveyard ref keeps it forever.
-- The replay is git's: `git rebase --onto <victim> <victim>^` (through cg, so it isn't "behind her back"). If a replay conflicts, that's a boss fight.
+- The sacrificed commit is kept under `refs/cursed/sacrificed/<time>`. Git's reflog keeps it for about 30 days, but her ref keeps it forever. `cg graveyard` lists them, and `cg cherry-pick <ref>` brings one back (she says so, and it's a nice way to learn cherry-pick).
+- Never a merge commit, the root commit, or anything with a merge between it and HEAD (a rebase would flatten the merge). 10% chance per commit while temper is +1 or more.
+- The replay is git's: `git rebase --onto <victim>^ <victim>` (through cg, so it isn't "behind her back"). If a replay conflicts, that's a boss fight.
 
 **⚔️ Merge conflict boss fight** (§4).
 

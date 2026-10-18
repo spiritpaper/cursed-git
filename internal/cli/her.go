@@ -142,14 +142,26 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 
 	case "graveyard":
 		st := her.State()
-		if len(st.Graveyard) == 0 {
+		if len(st.Graveyard) == 0 && len(st.Sacrificed) == 0 {
 			fmt.Fprintln(stdout, "The graveyard is empty. For now.")
 			return 0
 		}
 		for _, ref := range st.Graveyard {
 			fmt.Fprintf(stdout, "%s\n", ref)
 		}
-		fmt.Fprintln(stdout, "\n`cg beg` brings back the newest one. Plain git works too: git checkout <ref> -- <file>")
+		if len(st.Graveyard) > 0 {
+			fmt.Fprintln(stdout, "\n`cg beg` brings back the newest one. Plain git works too: git checkout <ref> -- <file>")
+		}
+		if len(st.Sacrificed) > 0 {
+			if len(st.Graveyard) > 0 {
+				fmt.Fprintln(stdout)
+			}
+			fmt.Fprintln(stdout, "Sacrificed commits:")
+			for _, ref := range st.Sacrificed {
+				fmt.Fprintf(stdout, "%s\n", ref)
+			}
+			fmt.Fprintln(stdout, "\n`cg cherry-pick <ref>` replays one on top of your branch.")
+		}
 		return 0
 
 	default: // mood
