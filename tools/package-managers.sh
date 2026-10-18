@@ -3,8 +3,8 @@
 #
 #   tools/package-managers.sh v0.2.0 dist/checksums.txt out/
 #
-# out/cg.rb   goes to github.com/spiritpaper/homebrew-tap    as Formula/cg.rb
-# out/cg.json goes to github.com/spiritpaper/scoop-bucket    as bucket/cg.json
+# out/cg.rb   goes to github.com/spiritpaper/homebrew-tap-cg    as Formula/cg.rb
+# out/cg.json goes to github.com/spiritpaper/scoop-bucket-cg    as bucket/cg.json
 # The release workflow runs this after every tag (when the TAP_TOKEN secret is set).
 set -eu
 

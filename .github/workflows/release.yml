@@ -12,7 +12,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      # a token that can push to spiritpaper/homebrew-tap and spiritpaper/scoop-bucket
+      # a token that can push to spiritpaper/homebrew-tap-cg and spiritpaper/scoop-bucket-cg
       # (without it, the release still happens; only the package managers are skipped)
       TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
     steps:
@@ -65,5 +65,5 @@ jobs:
               commit -qm "cg $GITHUB_REF_NAME" || { echo "$1: already up to date"; return 0; }
             git -C "pm/$1" push -q
           }
-          publish homebrew-tap Formula cg.rb
-          publish scoop-bucket bucket cg.json
+          publish homebrew-tap-cg Formula cg.rb
+          publish scoop-bucket-cg bucket cg.json

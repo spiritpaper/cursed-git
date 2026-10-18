@@ -169,7 +169,7 @@ In order. Pick the top one, plan it, ship it.
 7. ✅ **The guilt ledger and the receipts:** what she says you owe (`cg mood`), her claims next to the real numbers (`cg card`). *(Done 2026-10-18: `internal/curses/ledger.go`; the invoice after `cg beg`; all 11 red flags now have a moment.)*
 
 **Reach**
-8. ✅ **Package managers:** a Homebrew tap and a Scoop bucket (`brew install spiritpaper/tap/cg`, `scoop install cg`). *(Done 2026-10-18: `tools/package-managers.sh`, published by the release workflow once the TAP_TOKEN secret exists.)*
+8. ✅ **Package managers:** a Homebrew tap and a Scoop bucket (`brew install spiritpaper/tap-cg/cg`, `scoop install cg`). *(Done 2026-10-18: `tools/package-managers.sh`, published by the release workflow once the TAP_TOKEN secret exists.)*
 8b. ✅ **Configurable clocks:** `cursed.speed`, `deadline`, `fightTime`, `decay` (and in event files), for one-day weekend jams. *(Done 2026-10-18: `internal/curses/clocks.go`.)*
 9. **Launch polish (Phase 10):** the animations in the README, a boss-fight GIF on top.
 10. **Plain mode:** `NO_COLOR` and an ASCII-only fallback for terminals and projectors that mangle unicode.

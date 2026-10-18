@@ -39,8 +39,8 @@ irm https://raw.githubusercontent.com/spiritpaper/cursed-git/main/install.ps1 | 
 Or with a package manager:
 
 ```bash
-brew install spiritpaper/tap/cg                                                    # macOS, Linux
-scoop bucket add spiritpaper https://github.com/spiritpaper/scoop-bucket; scoop install cg   # Windows
+brew install spiritpaper/tap-cg/cg                                                      # macOS, Linux
+scoop bucket add spiritpaper https://github.com/spiritpaper/scoop-bucket-cg; scoop install cg   # Windows
 ```
 
 The one-line installers download the latest release, check it against the release's checksums, and install `cg`
