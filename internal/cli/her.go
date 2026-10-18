@@ -140,6 +140,21 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, strings.Join(her.Card(env.Now()), "\n"))
 		return 0
 
+	case "quest":
+		if len(args) > 1 && args[1] == "skip" {
+			her.SkipQuest()
+		}
+		q := her.ActiveQuest()
+		if q == nil {
+			if q = her.StartQuest(); q == nil {
+				fmt.Fprintln(stdout, "No quests left. You did them all. She's almost proud.")
+				return 0
+			}
+		}
+		fmt.Fprintf(stdout, "📜  %s (+%d XP)\n    %s\n    hint: %s\n", q.Title, q.XP, q.Task, q.Hint)
+		fmt.Fprintln(stdout, "    (she checks after every cg command. `cg quest skip` for the next one.)")
+		return 0
+
 	case "achievements":
 		got := her.Unlocked()
 		fmt.Fprintf(stdout, "Achievements: %d/%d\n\n", len(got), len(curses.Achievements))
@@ -277,6 +292,7 @@ func printHowToPlay(w io.Writer, her *curses.Engine) {
                 (cg breakup)
     check in    cg mood     safe word  cg restraining-order (stops her, no questions)
     lost files  cg beg / cg graveyard   (she saves everything before she takes it)
+    learn git   cg quest    (tasks that teach git, for XP)
 
 `, st.Preset, st.Base, st.Max, her.Verdict().Rules.BreakupLevel)
 }

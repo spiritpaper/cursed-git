@@ -62,8 +62,14 @@ so you never have to switch back.
 ```bash
 cg mood          # how she feels about you right now
 cg card          # your relationship on one screen: screenshot it
-cg achievements  # 21 to collect: First Blood, Speedrun, Chad Slayer... and some shameful ones
+cg achievements  # 23 to collect: First Blood, Speedrun, Chad Slayer... and some shameful ones
+cg quest         # learn git: a task, checked against your repo, paid in XP
 ```
+
+`cg quest` is a learning path through git: branches, reading a commit object, merging, tags,
+`reset --soft`, amend, cherry-pick, stash, restore, a real conflict, and rebase. She checks
+each one against the actual repository, and when you finish one she tells you what git really
+did.
 
 ## How dangerous is she?
 

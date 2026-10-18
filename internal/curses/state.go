@@ -62,6 +62,9 @@ type State struct {
 	LetterPending      string           // ending A's letter, until she's mentioned it
 	Unlocked           map[string]int64 // achievement -> when (achievements.go)
 	winStreak, begs    int
+	Quest              *QuestStart      // the quest you're on
+	QuestsDone         map[string]int64 // finished or skipped
+	questsFinished     int              // finished for real (not skipped)
 }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
@@ -69,7 +72,7 @@ func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
 // Replay rebuilds her state from the diary.
 func Replay(events []Event) *State {
 	s := &State{KnownAuthors: map[string]bool{}, Offenses: map[string]int64{}, PaidBlobs: map[string]bool{},
-		Unlocked: map[string]int64{}}
+		Unlocked: map[string]int64{}, QuestsDone: map[string]int64{}}
 	for _, e := range events {
 		apologyBefore := s.Apology
 		switch e.Type {
@@ -122,6 +125,16 @@ func Replay(events []Event) *State {
 			s.XP = max(0, s.XP+e.Delta)
 		case "deathmarch_on":
 			s.DeathMarchAccepted = true
+		case "quest":
+			s.Quest = e.Quest
+		case "quest_done", "quest_skipped":
+			s.QuestsDone[e.Text] = e.T
+			if s.Quest != nil && s.Quest.ID == e.Text {
+				s.Quest = nil
+			}
+			if e.Type == "quest_done" {
+				s.questsFinished++
+			}
 		case "deathmarch_off":
 			s.DeathMarchAccepted = false
 		case "shutdown":

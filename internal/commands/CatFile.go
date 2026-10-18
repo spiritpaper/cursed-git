@@ -24,6 +24,9 @@ func CatFile(mode, name string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
+	if hash, err := RevParse(gitDir, name); err == nil {
+		name = hash // HEAD, main~1, a tag... not just hashes
+	}
 	t, content, err := object.Read(gitDir, name)
 	if mode == "-e" {
 		if errors.Is(err, object.ErrNotFound) {

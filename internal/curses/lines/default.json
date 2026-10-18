@@ -308,5 +308,11 @@
     "You were in {project} while I waited here. Committing to her instead of me?",
     "{project}. I saw. I always see. Was she worth it?",
     "So {project} gets your commits now? Interesting."
+  ],
+
+  "quest_done": [
+    "Look at you, learning. {quest}. Don't get cocky.",
+    "{quest}. Fine. You're slightly less hopeless now.",
+    "See? You can learn. Why couldn't you learn to commit on time?"
   ]
 }

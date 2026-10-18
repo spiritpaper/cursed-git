@@ -39,6 +39,8 @@ var Achievements = []Achievement{
 	{"caught", "Caught Red-Handed", "get caught using plain git behind her back"},
 	{"toxic_twins", "Toxic Twins", "become as toxic as she is"},
 	{"death_marcher", "Death Marcher", "swear the Death March oath"},
+	{"scholar", "Scholar", "finish 5 quests (cg quest)"},
+	{"professor", "Professor", "finish every quest"},
 	{"serial_dater", "Serial Dater", "play with her in 5 different projects"},
 	{"heartbreaker", "Heartbreaker", "reach the good ending, in any project"},
 }
@@ -115,6 +117,13 @@ func (s *State) checkUnlocks(e Event, apologyBefore string) {
 		}
 	case "deathmarch_on":
 		s.unlock("death_marcher", e.T)
+	case "quest_done":
+		if s.questsFinished >= 5 {
+			s.unlock("scholar", e.T)
+		}
+		if s.questsFinished >= len(Quests) {
+			s.unlock("professor", e.T)
+		}
 	}
 }
 

@@ -35,6 +35,7 @@ commands:
   mood             how she feels about you right now
   card             your relationship on one screen (screenshot it)
   achievements     what you've unlocked, and what's left
+  quest [skip]     a task that teaches you git, checked by her, paid in XP
   beg              ask for the files she took back
   graveyard        list what she took
   curse on [--preset p] | off
@@ -174,8 +175,9 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 		return 0
 
 	case "cat-file":
-		if len(args) != 3 || (strings.HasPrefix(args[1], "-") && !strings.Contains("-t -s -p -e", args[1])) {
-			return toGit(args, stdout, stderr) // --batch, --batch-check, ...
+		if len(args) != 3 || (strings.HasPrefix(args[1], "-") && !strings.Contains("-t -s -p -e", args[1])) ||
+			strings.ContainsAny(args[2], ":{") {
+			return toGit(args, stdout, stderr) // --batch, --batch-check, HEAD:file, main^{tree}, ...
 		}
 		if err := commands.CatFile(args[1], args[2], stdout); err != nil {
 			if errors.Is(err, commands.ErrMissing) {
@@ -253,7 +255,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 	case "diff":
 		return diffCmd(args[1:], stdout, stderr)
 
-	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget", "card", "achievements":
+	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget", "card", "achievements", "quest":
 		return herCmd(args, stdout, stderr)
 	case "closure":
 		// works without a repository: after a toxic breakup there may be nothing left

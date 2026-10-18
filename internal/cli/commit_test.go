@@ -181,3 +181,22 @@ func TestDetachedHeadCommit(t *testing.T) {
 	}
 	gitIn(t, dir, "fsck", "--strict")
 }
+
+// cat-file takes any revision, like git: HEAD, main~1, a branch, and passes HEAD:file on to git.
+func TestCatFileTakesRevisions(t *testing.T) {
+	pinIdentity(t)
+	dir := t.TempDir()
+	t.Chdir(dir)
+	write(t, dir, map[string]string{"a.txt": "one\n"})
+	mustRun(t, "init", "-q")
+	mustRun(t, "add", ".")
+	mustRun(t, "commit", "-m", "one")
+	write(t, dir, map[string]string{"a.txt": "two\n"})
+	mustRun(t, "add", ".")
+	mustRun(t, "commit", "-m", "two")
+	for _, name := range []string{"HEAD", "main", "HEAD~1", "HEAD:a.txt", "HEAD^{tree}"} {
+		if got, want := mustRun(t, "cat-file", "-p", name), gitIn(t, dir, "cat-file", "-p", name); got != want {
+			t.Errorf("cat-file -p %s\n--- cg:\n%s--- git:\n%s", name, got, want)
+		}
+	}
+}

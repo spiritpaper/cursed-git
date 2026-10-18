@@ -60,7 +60,8 @@ type commitInfo struct {
 	staged        int
 	onlyDeletions bool
 	unrotted      int
-	hp            int // boss HP before a `cg add`, to see if it was a hit
+	hp            int  // boss HP before a `cg add`, to see if it was a hit
+	merging       bool // this commit finishes a merge (git's MERGE_HEAD)
 }
 
 // Open loads her for a repository. It returns nil (and no error) if this repo never opted in.
@@ -180,7 +181,7 @@ func (e *Engine) say(key string, vars map[string]string) {
 }
 
 // commands that are about her, not about git: no curses on those
-var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "achievements": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
+var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "achievements": true, "quest": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
 	"graveyard": true, "face": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
 
 func (e *Engine) awake() bool { return e != nil && e.env.Interactive }
@@ -220,6 +221,7 @@ func (e *Engine) Before(cmd string, args []string) ([]string, bool) {
 	if cmd == "add" || cmd == "commit" {
 		e.pre.unrotted = e.unrot() // rot never gets staged
 	}
+	e.pre.merging = cmd == "commit" && e.exists("MERGE_HEAD") && e.st.Fight == nil
 	// in the middle of a merge, nothing touches your files but you (and git)
 	if !love && !e.inProgress() {
 		e.decay(now, tier, last)
@@ -273,6 +275,10 @@ func (e *Engine) After(cmd string, args []string, code int) {
 		e.say("decay_restored", map[string]string{"n": fmt.Sprint(e.pre.unrotted)})
 	}
 	e.fightAfter(cmd, now)
+	if cmd == "commit" && code == 0 && e.pre.merging {
+		e.log(Event{Type: "conflict_resolved"}) // finished a merge by hand, without a fight
+	}
+	e.checkQuest(cmd, args, code)
 	switch {
 	case cmd == "commit" && code == 0:
 		e.afterCommit(now)

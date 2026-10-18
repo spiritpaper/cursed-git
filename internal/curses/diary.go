@@ -30,16 +30,17 @@ const heartRef = "refs/cursed/heart"
 
 // Event is one line in the diary. Only the fields an event type needs are set.
 type Event struct {
-	Prev  string    `json:"prev"`
-	T     int64     `json:"t"`
-	Type  string    `json:"type"`
-	Delta int       `json:"delta,omitempty"`
-	Text  string    `json:"text,omitempty"`
-	Tier  int       `json:"tier,omitempty"`
-	Max   int       `json:"max,omitempty"`
-	Carry *Snapshot `json:"carry,omitempty"` // after tampering: what she still remembers
-	Fight *Fight    `json:"fight,omitempty"` // a boss fight starting
-	Blobs []string  `json:"blobs,omitempty"` // xp_pending: the new content it pays for
+	Prev  string      `json:"prev"`
+	T     int64       `json:"t"`
+	Type  string      `json:"type"`
+	Delta int         `json:"delta,omitempty"`
+	Text  string      `json:"text,omitempty"`
+	Tier  int         `json:"tier,omitempty"`
+	Max   int         `json:"max,omitempty"`
+	Carry *Snapshot   `json:"carry,omitempty"` // after tampering: what she still remembers
+	Fight *Fight      `json:"fight,omitempty"` // a boss fight starting
+	Blobs []string    `json:"blobs,omitempty"` // xp_pending: the new content it pays for
+	Quest *QuestStart `json:"quest,omitempty"` // a quest beginning
 }
 
 // Snapshot is the state carried over when a broken diary is replaced by a new one.
