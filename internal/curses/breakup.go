@@ -114,6 +114,7 @@ func (e *Engine) tooSoon(v Verdict, now time.Time) int {
 			}
 		}
 	}
+	e.ending = "A"
 	e.log(Event{Type: "breakup_attempt", Text: shown})
 	e.log(Event{Type: "grudge", Text: "the day you tried to leave me (" + now.Format("January 2") + ")"})
 	e.say("breakup_goodbye", nil)
@@ -158,8 +159,10 @@ func (e *Engine) toxicEnding(v Verdict, now time.Time) int {
 		return 1
 	}
 	receipt := e.receipt(v, now)
+	e.ending = "B"
 	real := e.DeathMarch()                           // decided before she leaves: leaving ends the death march
 	e.log(Event{Type: "off", Text: "toxic breakup"}) // she's gone: written before the archive, so a restore keeps her gone
+	e.remember()
 	archive, err := ArchiveRepo(e.workTree, now)
 	if err != nil {
 		e.say("not_worth_deleting", nil)
@@ -525,7 +528,9 @@ func (e *Engine) credits(v Verdict, now time.Time) {
 // leave: she's gone for good. Her diary becomes a memory, her hooks come down, her heart
 // stops. Graveyard and sacrificed refs stay: those are your things, not hers.
 func (e *Engine) leave(now time.Time) {
+	e.ending = "C"
 	e.log(Event{Type: "off", Text: "the good ending"})
+	e.remember() // before her diary becomes a memory: she'll know you parted well
 	os.WriteFile(filepath.Join(dirOf(e.gitDir), "letter.txt"),
 		[]byte(e.pick("letter_goodbye", nil)+"\n\n- her, "+now.Format("January 2, 2006")+"\n"), 0644)
 	for _, name := range hookNames {

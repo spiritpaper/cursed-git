@@ -196,6 +196,12 @@ The shutdown goes through a `Machine` interface, and `TestMain` installs a fake 
 **Winning calmed her down too early.**
 Phase 2 (she pulls again after a Tier 4 win) never started: the win's temper −1 had already put her back at Tier 3 when she checked. Capture "the tier she fought at" before recording the win.
 
+**Two engines, one command, one stale memory.**
+`cg restraining-order` runs on its own engine; the outer one, created before it, still thinks she's on. Its end-of-command save would have written "she's on" right over the restraining order. Her memory is now written from a fresh replay of the diary, never from whatever an engine happened to load at the start.
+
+**Her cross-project memory leaked between tests.**
+Once she remembered projects, test B saw test A's repo: "You were in 001 while I waited here." Every test now gets its own data folder.
+
 **A pull's merge message names a URL, not the remote.**
 `git pull` writes "Merge branch 'main' of /path/to/repo". To call the boss "Chad from origin" she looks the URL up in `remote.*.url`.
 

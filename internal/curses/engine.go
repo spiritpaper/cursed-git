@@ -50,6 +50,7 @@ type Engine struct {
 	pre              commitInfo // what Before learned about a commit, for After
 	gone             bool       // she left (breakup): write nothing more into the repo
 	phase2           bool       // the pull right after a Tier 4 win: a conflict is the rematch
+	ending           string     // set by a breakup, for her memory
 }
 
 type commitInfo struct {
@@ -86,6 +87,16 @@ func Enable(gitDir, preset string, env Env) (*Engine, error) {
 	if err != nil && !errors.Is(err, ErrTampered) {
 		return nil, err
 	}
+	var remembered *memory
+	if len(d.Events()) == 0 {
+		// a repo she's never lived in... or one she has, before you deleted .git or re-cloned it
+		if snap, m, ok := carryOver(gitDir); ok {
+			if err := d.Append(Event{T: env.Now().Unix(), Type: "carry", Carry: &snap}); err != nil {
+				return nil, err
+			}
+			remembered = &m
+		}
+	}
 	st := Replay(d.Events())
 	if preset == "" {
 		preset = st.Preset
@@ -110,7 +121,18 @@ func Enable(gitDir, preset string, env Env) (*Engine, error) {
 	if err := InstallHooks(gitDir); err != nil {
 		return nil, err
 	}
-	return Open(gitDir, env)
+	e, err := Open(gitDir, env)
+	if err == nil && remembered != nil && env.Interactive {
+		g := "everything"
+		if n := len(remembered.Grudges); n > 0 {
+			g = remembered.Grudges[n-1]
+		}
+		e.say("remembered", map[string]string{"grudge": g, "project": filepath.Base(remembered.Path)})
+	}
+	if err == nil {
+		e.remember()
+	}
+	return e, err
 }
 
 func (e *Engine) State() *State { return e.st }
@@ -156,7 +178,7 @@ func (e *Engine) say(key string, vars map[string]string) {
 }
 
 // commands that are about her, not about git: no curses on those
-var exempt = map[string]bool{"breakup": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
+var exempt = map[string]bool{"breakup": true, "forget": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
 	"graveyard": true, "face": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
 
 func (e *Engine) awake() bool { return e != nil && e.env.Interactive }

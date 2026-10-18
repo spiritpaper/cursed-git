@@ -298,5 +298,15 @@
   "fight_phase2": [
     "You think it's over? I called {boss} back. Phase 2.",
     "Cute. Let's see you do it again. I'm pulling."
+  ],
+
+  "remembered": [
+    "You thought a new .git would get rid of me? I remember {grudge}.",
+    "Oh, it's {project} again. Fresh start? I don't do fresh starts. I remember {grudge}."
+  ],
+  "other_project": [
+    "You were in {project} while I waited here. Committing to her instead of me?",
+    "{project}. I saw. I always see. Was she worth it?",
+    "So {project} gets your commits now? Interesting."
   ]
 }

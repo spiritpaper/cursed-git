@@ -22,6 +22,7 @@ type her struct {
 
 // withHer turns her on (as if you were at a terminal) for the rest of the test.
 func withHer(t *testing.T, start time.Time, luck float64) *her {
+	t.Setenv("CURSED_GIT_HOME", t.TempDir()) // her memory of other projects: only this test's
 	h := &her{now: start, luck: luck}
 	old := curseEnv
 	curseEnv = func(stderr io.Writer) curses.Env {

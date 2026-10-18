@@ -38,6 +38,7 @@ commands:
                    invite her back / ask her to leave
   breakup          try to leave her (you have to earn it: see cg mood)
   restraining-order  emergency off switch, no questions asked
+  forget [--all]   wipe her memory of this project (or of every project)
   face [mood]  look at her (0–4, love, crying)
 
 everything else (push, pull, merge, fetch, clone, stash, rebase, ...)
@@ -239,7 +240,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 	case "diff":
 		return diffCmd(args[1:], stdout, stderr)
 
-	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup":
+	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget":
 		return herCmd(args, stdout, stderr)
 	case "closure":
 		// works without a repository: after a toxic breakup there may be nothing left

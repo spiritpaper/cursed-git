@@ -65,6 +65,7 @@ func (e *Engine) Touch() {
 	s.ReflogLines = len(e.reflogLines())
 	s.Head, _ = refs.Resolve(e.gitDir, "HEAD")
 	e.saveSeen(s)
+	e.remember()
 }
 
 // vars fills the placeholders every line can use.
@@ -120,6 +121,16 @@ func (e *Engine) greet(now time.Time, last seen, known bool) {
 	if key != "" {
 		e.pause()
 		e.say(key, map[string]string{"gone": humanGap(gap)})
+	}
+	// were you somewhere else while she waited here?
+	if other := e.elsewhere(last.At); other != "" && e.st.On {
+		e.say("other_project", map[string]string{"project": other})
+		if g := "the time you went off with " + other; !contains(e.st.Grudges, g) {
+			e.log(Event{Type: "grudge", Text: g})
+		}
+		return
+	}
+	if key != "" {
 		return
 	}
 	// late at night she gets... personal. Not every time.

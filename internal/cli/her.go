@@ -44,7 +44,9 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	if cmd == "hook" {
 		return hookCmd(her, args[1:], stderr)
 	}
-	defer her.Touch() // she remembers what the repo looked like when she last saw you
+	if cmd != "forget" { // forgetting and then remembering in the same breath would undo it
+		defer her.Touch() // she remembers what the repo looked like when she last saw you
+	}
 	rest, refused := her.Before(cmd, args[1:])
 	if refused {
 		return 1
@@ -85,6 +87,16 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	env := curseEnv(stderr)
+
+	if args[0] == "forget" {
+		all := len(args) > 1 && args[1] == "--all"
+		if curses.Forget(gitDir, all) {
+			fmt.Fprintln(stdout, "Forgotten. (She'd never forget you. But the file is gone.)")
+		} else {
+			fmt.Fprintln(stdout, "She doesn't remember anything about this. Lucky you.")
+		}
+		return 0
+	}
 
 	if args[0] == "curse" {
 		if len(args) < 2 || (args[1] != "on" && args[1] != "off") {
@@ -213,6 +225,9 @@ func printMood(w io.Writer, her *curses.Engine, now time.Time) {
 		fmt.Fprintf(w, "She has %d of your things. (`cg beg`)\n", n)
 	}
 	fmt.Fprintln(w, her.ClosureLine())
+	if h := her.History(); h.Projects > 1 {
+		fmt.Fprintf(w, "Across %d projects together: %d fights won, %d lost, %s\n", h.Projects, h.Won, h.Lost, plural(h.Breakups, "breakup"))
+	}
 	if st.BossWon+st.BossLost > 0 {
 		fmt.Fprintf(w, "Boss fights: %d won, %d lost\n", st.BossWon, st.BossLost)
 	}

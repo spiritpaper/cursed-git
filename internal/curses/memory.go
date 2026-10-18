@@ -31,6 +31,10 @@ type memory struct {
 	Grudges  []string `json:"grudges,omitempty"`
 	Off      bool     `json:"off,omitempty"` // restraining order: respected forever
 	LastSeen int64    `json:"last_seen"`
+	Won      int      `json:"won,omitempty"`    // boss fights won here
+	Lost     int      `json:"lost,omitempty"`   // and lost
+	XP       int      `json:"xp,omitempty"`     // closure XP earned here
+	Ending   string   `json:"ending,omitempty"` // how you broke up here: A, B or C
 }
 
 // MemoryDir is where her memory file lives.
@@ -124,9 +128,62 @@ func (e *Engine) remember() {
 			delete(mems, k)
 		}
 	}
-	mems[key] = memory{Path: path, Root: root, Preset: e.st.Preset, Base: e.st.Base, Max: e.st.Max,
-		Toxicity: e.st.Toxicity, Grudges: e.st.Grudges, Off: !e.st.On, LastSeen: e.env.Now().Unix()}
+	old := mems[key]
+	st := e.st
+	if d, err := OpenDiary(e.gitDir); err == nil {
+		st = Replay(d.Events()) // fresh: another engine in this same command may have written to it
+	}
+	mems[key] = memory{Path: path, Root: root, Preset: st.Preset, Base: st.Base, Max: st.Max,
+		Toxicity: st.Toxicity, Grudges: st.Grudges, Off: !st.On, LastSeen: e.env.Now().Unix(),
+		Won: st.BossWon, Lost: st.BossLost, XP: st.XP, Ending: firstSet(e.ending, old.Ending)}
 	saveMemories(mems)
+}
+
+func firstSet(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
+}
+
+// History is her whole relationship with you, across every project she remembers.
+type History struct {
+	Projects, Won, Lost, Breakups int
+}
+
+func (e *Engine) History() History {
+	var h History
+	for _, m := range loadMemories() {
+		h.Projects++
+		h.Won += m.Won
+		h.Lost += m.Lost
+		if m.Ending != "" {
+			h.Breakups++
+		}
+	}
+	return h
+}
+
+// elsewhere: the project you used cg in most recently since she last saw you here.
+func (e *Engine) elsewhere(since int64) string {
+	_, _, here := projectKey(e.gitDir)
+	best, bestAt := "", since
+	for _, m := range loadMemories() {
+		if m.Path != here && m.LastSeen > bestAt {
+			best, bestAt = filepath.Base(m.Path), m.LastSeen
+		}
+	}
+	return best
+}
+
+// carryOver: inviting her into a project she already knew (a new .git, a fresh clone).
+// She doesn't start from zero. Returns the snapshot to restore, if any.
+func carryOver(gitDir string) (Snapshot, memory, bool) {
+	m, ok := recall(gitDir)
+	if !ok || (m.Toxicity == 0 && len(m.Grudges) == 0) {
+		return Snapshot{}, m, false
+	}
+	return Snapshot{Preset: m.Preset, Base: m.Base, Max: m.Max, Toxicity: m.Toxicity, Grudges: m.Grudges}, m, true
 }
 
 // Forget wipes her memory of this project (all = every project). Returns whether there was any.

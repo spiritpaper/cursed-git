@@ -153,6 +153,9 @@ She's dark, but there are rules she never breaks:
 - **She never rewrites what you pushed.**
 - **Without Death March, nothing real happens to your computer or your folders.** The
   shutdown is an animation and the toxic ending only writes a receipt.
+- **She remembers you across projects**, in one file: `~/.local/share/cursed-git/memory.json`
+  (feelings and stats only, never your code). Deleting `.git` or re-cloning won't make her
+  forget; `cg forget` (or `cg forget --all`) will.
 - **`cg restraining-order`** turns her off instantly, no questions asked. `cg curse on` brings
   her back.
 
