@@ -8,6 +8,7 @@ import (
 
 func TestHackathonPresetScalesTheGame(t *testing.T) {
 	h := withHer(t, tuesday, lucky)
+	pinIdentity(t)
 	t.Chdir(t.TempDir())
 	_, _, errs := run("init", "--preset", "hackathon")
 	if !strings.Contains(errs, "leave her at Lv 6") {
@@ -35,6 +36,7 @@ func TestHackathonPresetScalesTheGame(t *testing.T) {
 
 func TestShortEventAndOrganizerOverrides(t *testing.T) {
 	withHer(t, tuesday, lucky)
+	pinIdentity(t)
 	t.Chdir(t.TempDir())
 	mustRun(t, "init", "-q", "--preset", "hackathon", "--hours", "8")
 	if out := mustRun(t, "breakup", "--dry-run"); !strings.Contains(out, "level 0/3 · fights won 0/1 · lines 0/400") {

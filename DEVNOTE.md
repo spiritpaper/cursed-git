@@ -202,6 +202,9 @@ Phase 2 (she pulls again after a Tier 4 win) never started: the win's temper −
 **Her cross-project memory leaked between tests.**
 Once she remembered projects, test B saw test A's repo: "You were in 001 while I waited here." Every test now gets its own data folder.
 
+**"Works on my machine" because my machine has a name.**
+A new test built its repo by hand and forgot `pinIdentity`. Locally it passed: my global git config has `user.name`. On CI there's no identity at all, so `cg commit` refused. Now I run the suite like CI does before pushing: `HOME=<empty dir> GIT_CONFIG_GLOBAL=/dev/null go test ./...`.
+
 **The quest test found a bug in Phase 1.**
 The README says "try `cg cat-file -p HEAD`". It never worked: cat-file only took hashes, and "HEAD" isn't one. Nobody noticed because every test used hashes. The quest test was the first to type it like a person would. cat-file now resolves revisions first, and passes git's richer syntax (`HEAD:file`, `main^{tree}`) to git.
 → Test the commands the docs tell people to type, exactly as written.
