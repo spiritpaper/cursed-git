@@ -236,5 +236,10 @@
     "I chose \"{msg}\". It had to be someone.",
     "\"{msg}\" is gone. Don't look at me like that. It's still in my drawer.",
     "Goodbye, \"{msg}\". You were never his best work anyway."
+  ],
+
+  "deathmarch_on": [
+    "Finally. Someone who takes us seriously.",
+    "No more pretending, then. I hope you commit like you mean it."
   ]
 }

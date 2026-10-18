@@ -177,6 +177,7 @@ func (e *Engine) Before(cmd string, args []string) ([]string, bool) {
 	e.checkLocks()
 	e.missingGraves()
 	e.greet(now, last, known)
+	e.deathMarchGate()
 	e.matureXP(now)
 	if e.fightBefore(cmd, args, now, exempt[cmd]) {
 		return args, true
@@ -598,6 +599,9 @@ func (e *Engine) commitDeadline(now time.Time, tier int) {
 	e.log(Event{Type: "toxicity", Delta: 1, Text: "missed the commit deadline"})
 	e.say(key, map[string]string{"file": take[0], "minutes": minutes, "n": fmt.Sprint(len(take))})
 	e.say("graveyard_hint", nil)
+	if tier >= 4 {
+		e.shutdown(now, "missed the commit deadline at Tier 4")
+	}
 }
 
 // ---- her own commands ----

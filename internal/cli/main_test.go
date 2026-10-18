@@ -30,6 +30,9 @@ func TestMain(m *testing.M) {
 	}
 	// her data folder (memory, archives, trophies) must never be the real one in a test
 	os.Setenv("CURSED_GIT_HOME", filepath.Join(dir, "home"))
+	// and no test may ever shut down or lock the machine it runs on
+	machine = &fakeMachine{desktop: filepath.Join(dir, "Desktop")}
+	curses.TheMachine = machine
 	bin := filepath.Join(dir, "cg")
 	if out, err := exec.Command("go", "build", "-o", bin, "github.com/spiritpaper/cursed-git/cmd/cg").CombinedOutput(); err != nil {
 		fmt.Printf("building cg for the hook tests: %v\n%s", err, out)
@@ -42,3 +45,15 @@ func TestMain(m *testing.M) {
 	os.RemoveAll(dir)
 	os.Exit(code)
 }
+
+// fakeMachine counts what she would have done to the computer.
+type fakeMachine struct {
+	shutdowns, locks int
+	desktop          string
+}
+
+var machine *fakeMachine
+
+func (m *fakeMachine) Shutdown() error    { m.shutdowns++; return nil }
+func (m *fakeMachine) Lock() error        { m.locks++; return nil }
+func (m *fakeMachine) DesktopDir() string { return m.desktop }

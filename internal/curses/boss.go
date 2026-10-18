@@ -364,6 +364,7 @@ func (e *Engine) loseFight(now time.Time, why string) {
 	if tier >= 4 && e.abort(f, now) {
 		e.say("fight_lost_abort", map[string]string{"boss": f.Boss})
 		e.say("graveyard_hint", nil)
+		e.shutdown(now, "lost to "+f.Boss+" at Tier 4")
 		return
 	}
 	apology := e.pick("fight_apology", map[string]string{"boss": f.Boss})

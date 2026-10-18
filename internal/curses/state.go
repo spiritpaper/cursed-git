@@ -27,35 +27,37 @@ func TierName(t int) string { return tierNames[clamp(t, 0, 4)] }
 
 // State is what she knows, rebuilt from the diary every time.
 type State struct {
-	On            bool
-	Preset        string
-	Base, Max     int
-	temper        int
-	lastTemperAt  int64
-	Toxicity      int
-	Grudges       []string
-	GoodStreak    int
-	LastCommitAt  int64 // also reset after a deadline punishment
-	Commits       int   // commits she has seen
-	DeadlineWarns int   // warnings since the last commit
-	LastWarnAt    int64
-	IgnoredWarns  int
-	KnownAuthors  map[string]bool
-	Offenses      map[string]int64 // offense -> when it last happened
-	LastRefusalAt int64
-	Graveyard     []string // refs she took that you haven't begged back yet
-	Sacrificed    []string // refs/cursed/sacrificed/...: commits she dropped (cherry-pick brings one back)
-	LovebombAt    int64
-	OnSince       int64
-	Fight         *Fight // the boss fight going on right now, if any
-	LastFight     *Fight // the last one that ended
-	BossWon       int
-	BossLost      int
-	Apology       string // a commit message she dictated after you lost (used by your next commit)
-	XP            int
-	Lines         int             // committed lines that have been paid
-	Pending       []pending       // line XP waiting to mature
-	PaidBlobs     map[string]bool // content she has paid for (or is about to)
+	On                 bool
+	Preset             string
+	Base, Max          int
+	temper             int
+	lastTemperAt       int64
+	Toxicity           int
+	Grudges            []string
+	GoodStreak         int
+	LastCommitAt       int64 // also reset after a deadline punishment
+	Commits            int   // commits she has seen
+	DeadlineWarns      int   // warnings since the last commit
+	LastWarnAt         int64
+	IgnoredWarns       int
+	KnownAuthors       map[string]bool
+	Offenses           map[string]int64 // offense -> when it last happened
+	LastRefusalAt      int64
+	Graveyard          []string // refs she took that you haven't begged back yet
+	Sacrificed         []string // refs/cursed/sacrificed/...: commits she dropped (cherry-pick brings one back)
+	LovebombAt         int64
+	OnSince            int64
+	Fight              *Fight // the boss fight going on right now, if any
+	LastFight          *Fight // the last one that ended
+	BossWon            int
+	BossLost           int
+	Apology            string // a commit message she dictated after you lost (used by your next commit)
+	XP                 int
+	Lines              int             // committed lines that have been paid
+	Pending            []pending       // line XP waiting to mature
+	PaidBlobs          map[string]bool // content she has paid for (or is about to)
+	DeathMarchAccepted bool
+	LastShutdownAt     int64
 }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
@@ -82,6 +84,7 @@ func Replay(events []Event) *State {
 			s.OnSince, s.LastCommitAt = e.T, e.T
 		case "off":
 			s.On = false
+			s.DeathMarchAccepted = false // a restraining order ends the death march too
 		case "temper":
 			s.temper = clamp(s.temperAt(e.T)+e.Delta, -2, 2)
 			s.lastTemperAt = e.T
@@ -109,6 +112,12 @@ func Replay(events []Event) *State {
 			s.Apology = e.Text
 		case "xp":
 			s.XP = max(0, s.XP+e.Delta)
+		case "deathmarch_on":
+			s.DeathMarchAccepted = true
+		case "deathmarch_off":
+			s.DeathMarchAccepted = false
+		case "shutdown":
+			s.LastShutdownAt = e.T
 		case "xp_pending":
 			s.Pending = append(s.Pending, pending{Commit: e.Text, Lines: e.Delta, At: e.T, Blobs: e.Blobs})
 			for _, b := range e.Blobs {

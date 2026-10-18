@@ -191,6 +191,9 @@ func printMood(w io.Writer, her *curses.Engine, now time.Time) {
 	}
 	fmt.Fprintf(w, "Tier %d · %s    temper %s    preset %s (starts at %d, never above %d)\n",
 		tier, curses.TierName(tier), temper, st.Preset, st.Base, st.Max)
+	if her.DeathMarch() {
+		fmt.Fprintln(w, "☠  DEATH MARCH: shutdowns and deletions are real.")
+	}
 	last := "no commits yet" // from the real history, not her memory: she never lies about your data
 	if her.HasCommits() {
 		last = "last commit " + now.Sub(time.Unix(her.HeadCommitAt(), 0)).Round(time.Minute).String() + " ago"
