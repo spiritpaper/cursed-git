@@ -52,13 +52,17 @@ type State struct {
 	BossWon       int
 	BossLost      int
 	Apology       string // a commit message she dictated after you lost (used by your next commit)
+	XP            int
+	Lines         int             // committed lines that have been paid
+	Pending       []pending       // line XP waiting to mature
+	PaidBlobs     map[string]bool // content she has paid for (or is about to)
 }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
 
 // Replay rebuilds her state from the diary.
 func Replay(events []Event) *State {
-	s := &State{KnownAuthors: map[string]bool{}, Offenses: map[string]int64{}}
+	s := &State{KnownAuthors: map[string]bool{}, Offenses: map[string]int64{}, PaidBlobs: map[string]bool{}}
 	for _, e := range events {
 		switch e.Type {
 		case "on":
@@ -103,6 +107,29 @@ func Replay(events []Event) *State {
 			s.BossLost++
 		case "apology":
 			s.Apology = e.Text
+		case "xp":
+			s.XP = max(0, s.XP+e.Delta)
+		case "xp_pending":
+			s.Pending = append(s.Pending, pending{Commit: e.Text, Lines: e.Delta, At: e.T, Blobs: e.Blobs})
+			for _, b := range e.Blobs {
+				s.PaidBlobs[b] = true
+			}
+		case "xp_paid", "xp_cancel":
+			for i, p := range s.Pending {
+				if p.Commit != e.Text {
+					continue
+				}
+				s.Pending = append(s.Pending[:i], s.Pending[i+1:]...)
+				if e.Type == "xp_paid" {
+					s.XP += p.Lines
+					s.Lines += p.Lines
+				} else {
+					for _, b := range p.Blobs {
+						delete(s.PaidBlobs, b) // never paid: if it comes back and sticks, it pays then
+					}
+				}
+				break
+			}
 		case "good":
 			s.GoodStreak++
 		case "lazy":

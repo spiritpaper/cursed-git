@@ -39,6 +39,7 @@ type Event struct {
 	Max   int       `json:"max,omitempty"`
 	Carry *Snapshot `json:"carry,omitempty"` // after tampering: what she still remembers
 	Fight *Fight    `json:"fight,omitempty"` // a boss fight starting
+	Blobs []string  `json:"blobs,omitempty"` // xp_pending: the new content it pays for
 }
 
 // Snapshot is the state carried over when a broken diary is replaced by a new one.

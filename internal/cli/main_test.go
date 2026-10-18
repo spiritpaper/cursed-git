@@ -28,6 +28,8 @@ func TestMain(m *testing.M) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	// her data folder (memory, archives, trophies) must never be the real one in a test
+	os.Setenv("CURSED_GIT_HOME", filepath.Join(dir, "home"))
 	bin := filepath.Join(dir, "cg")
 	if out, err := exec.Command("go", "build", "-o", bin, "github.com/spiritpaper/cursed-git/cmd/cg").CombinedOutput(); err != nil {
 		fmt.Printf("building cg for the hook tests: %v\n%s", err, out)

@@ -177,6 +177,7 @@ func (e *Engine) Before(cmd string, args []string) ([]string, bool) {
 	e.checkLocks()
 	e.missingGraves()
 	e.greet(now, last, known)
+	e.matureXP(now)
 	if e.fightBefore(cmd, args, now, exempt[cmd]) {
 		return args, true
 	}
@@ -420,11 +421,13 @@ func (e *Engine) judged(msg string) {
 func (e *Engine) afterCommit(now time.Time) {
 	head, _ := refs.Resolve(e.gitDir, "HEAD")
 	e.log(Event{Type: "commit", Text: head})
+	e.payForCommit(head)
 	if e.pre.lazy {
 		e.judged(e.pre.msg)
 	}
 	if e.pre.msg != "" && !e.pre.lazy && len(strings.TrimSpace(e.pre.msg)) >= 10 {
 		e.log(Event{Type: "good"})
+		e.log(Event{Type: "xp", Delta: 10, Text: "a decent commit message"})
 		if e.st.GoodStreak%3 == 0 {
 			e.log(Event{Type: "temper", Delta: -1, Text: "three good commits"})
 			if e.st.Temper(now) == -2 && !e.st.Lovebombing(now) {

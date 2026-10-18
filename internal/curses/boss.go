@@ -331,6 +331,7 @@ func (e *Engine) fightOver(now time.Time) {
 	}
 	left := f.deadline() - now.Unix()
 	e.log(Event{Type: "fight_won", Text: f.Boss, Delta: int(left)})
+	e.log(Event{Type: "xp", Delta: 250 + int(max(0, left))/10, Text: "beat " + f.Boss})
 	e.log(Event{Type: "temper", Delta: -1, Text: "beat " + f.Boss})
 	key := "fight_won"
 	if left*2 > int64(f.Seconds) {
