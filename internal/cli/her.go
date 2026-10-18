@@ -168,6 +168,28 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, "    (she checks after every cg command. `cg quest skip` for the next one.)")
 		return 0
 
+	case "rivals":
+		list := her.Rivals()
+		if len(list) == 0 {
+			fmt.Fprintln(stdout, "Nobody has committed since she moved in. Not even you.")
+			return 0
+		}
+		fmt.Fprintf(stdout, "Her scoreboard (since she moved in)\n\n  %-22s %7s %7s %5s %6s\n", "", "commits", "lines", "lazy", "score")
+		for i, r := range list {
+			mark := "  "
+			if i == 0 {
+				mark = "♥ "
+			}
+			name := r.Name
+			if r.You {
+				name += " (you)"
+			}
+			fmt.Fprintf(stdout, "%s%-22s %7d %7d %5d %6d\n", mark, name, r.Commits, r.Lines, r.Lazy, r.Score)
+		}
+		fmt.Fprintln(stdout, "\nscore = commits × 10 + lines added − lazy messages × 25")
+		fmt.Fprintln(stdout, "(git can tell you the same: git shortlog -sn, git log --author=<name>)")
+		return 0
+
 	case "achievements":
 		got := her.Unlocked()
 		fmt.Fprintf(stdout, "Achievements: %d/%d\n\n", len(got), len(curses.Achievements))

@@ -181,7 +181,7 @@ func (e *Engine) say(key string, vars map[string]string) {
 }
 
 // commands that are about her, not about git: no curses on those
-var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "achievements": true, "quest": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
+var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "achievements": true, "quest": true, "rivals": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
 	"graveyard": true, "face": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
 
 func (e *Engine) awake() bool { return e != nil && e.env.Interactive }
@@ -478,6 +478,7 @@ func (e *Engine) afterCommit(now time.Time) {
 	if e.st.Lovebombing(now) {
 		return
 	}
+	e.rivalry(now)
 	tier := e.st.Tier(now)
 	if e.pre.lazy && tier == 0 {
 		e.say("lazy_comment", map[string]string{"msg": e.pre.msg})

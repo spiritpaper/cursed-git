@@ -68,6 +68,7 @@ type State struct {
 	QuestsDone         map[string]int64 // finished or skipped
 	questsFinished     int              // finished for real (not skipped)
 	FastestFight       int              // seconds, the quickest boss fight you won (0 = none yet)
+	Favourite          bool             // you're top of her scoreboard (rivals.go)
 }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
@@ -135,6 +136,10 @@ func Replay(events []Event) *State {
 			s.DeathMarchAccepted = true
 		case "quest":
 			s.Quest = e.Quest
+		case "favourite":
+			s.Favourite = true
+		case "dethroned":
+			s.Favourite = false
 		case "quest_done", "quest_skipped":
 			s.QuestsDone[e.Text] = e.T
 			if s.Quest != nil && s.Quest.ID == e.Text {

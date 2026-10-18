@@ -62,8 +62,9 @@ so you never have to switch back.
 ```bash
 cg mood          # how she feels about you right now
 cg card          # your relationship on one screen: screenshot it
-cg achievements  # 23 to collect: First Blood, Speedrun, Chad Slayer... and some shameful ones
+cg achievements  # 24 to collect: First Blood, Speedrun, Chad Slayer... and some shameful ones
 cg quest         # learn git: a task, checked against your repo, paid in XP
+cg rivals        # a team repo? her scoreboard of everyone who commits, and her favourite
 ```
 
 `cg quest` is a learning path through git: branches, reading a commit object, merging, tags,

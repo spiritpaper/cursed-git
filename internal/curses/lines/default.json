@@ -314,5 +314,15 @@
     "Look at you, learning. {quest}. Don't get cocky.",
     "{quest}. Fine. You're slightly less hopeless now.",
     "See? You can learn. Why couldn't you learn to commit on time?"
+  ],
+
+  "rival_jab": [
+    "{rival} made {theirs} commits since I moved in. You made {mine}. Just saying.",
+    "{rival} never makes me wait like this. {theirs} commits. You? {mine}.",
+    "I'm not comparing you to {rival}. I'm just saying {theirs} is bigger than {mine}."
+  ],
+  "rival_favourite": [
+    "Fine. You're my favourite. For now.",
+    "Look at you, beating everyone. I always knew you had it in you. (I didn't.)"
   ]
 }

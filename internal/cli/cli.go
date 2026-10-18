@@ -36,6 +36,7 @@ commands:
   card [--json]    your relationship on one screen (--json: for the event leaderboard)
   achievements     what you've unlocked, and what's left
   quest [skip]     a task that teaches you git, checked by her, paid in XP
+  rivals           her scoreboard: everyone who commits here, and her favourite
   beg              ask for the files she took back
   graveyard        list what she took
   curse on [--preset p] [--hours N] | off
@@ -261,7 +262,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 	case "diff":
 		return diffCmd(args[1:], stdout, stderr)
 
-	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget", "card", "achievements", "quest":
+	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget", "card", "achievements", "quest", "rivals":
 		return herCmd(args, stdout, stderr)
 	case "closure":
 		// works without a repository: after a toxic breakup there may be nothing left
