@@ -45,6 +45,7 @@ var Achievements = []Achievement{
 	{"scholar", "Scholar", "finish 5 quests (cg quest)"},
 	{"professor", "Professor", "finish every quest"},
 	{"serial_dater", "Serial Dater", "play with her in 5 different projects"},
+	{"every_costume", "Seen Them All", "she came back after it was over, every way she could. You know them now."},
 	{"heartbreaker", "Heartbreaker", "reach the good ending, in any project"},
 }
 
@@ -151,6 +152,11 @@ func (e *Engine) Unlocked() map[string]int64 {
 			if _, ok := out["heartbreaker"]; !ok {
 				out["heartbreaker"] = 0
 			}
+		}
+	}
+	if len(loadHoover().Seen) >= len(costumes) {
+		if _, ok := out["every_costume"]; !ok {
+			out["every_costume"] = 0
 		}
 	}
 	if projects >= 5 {

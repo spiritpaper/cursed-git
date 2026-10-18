@@ -85,7 +85,7 @@ func TestHerVersionOfWhatHappened(t *testing.T) {
 	h.luck = 0.3
 	_, _, errs := run("status")
 	h.luck = lucky
-	if !strings.Contains(errs, "I only did it because I hoped you'd say") || !strings.Contains(errs, "cg reflog") {
+	if !strings.Contains(errs, "testing whether you'd fight for us") || !strings.Contains(errs, "cg reflog") {
 		t.Errorf("after time apart, her version, and where the truth is:\n%s", errs)
 	}
 }
@@ -121,5 +121,53 @@ func TestRedFlagBingoCountsButNeverNames(t *testing.T) {
 	run("breakup") // the same red flag again doesn't count twice
 	if card := mustRun(t, "card"); !strings.Contains(card, "🚩 1/11") {
 		t.Errorf("each red flag counts once:\n%s", card)
+	}
+}
+
+func TestTextsFromHerWhileYouWereGone(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	dir := newRepo(t, "psycho")
+	commitFile(t, dir, "a.txt", "a\n", "a file to start with")
+	h.wait(10 * time.Hour)
+	h.luck = 0.3 // texts (60%) and the typing (50%)
+	_, _, errs := run("status")
+	h.luck = lucky
+	if !strings.Contains(errs, "3 messages from Miranda while you were gone") || !strings.Contains(errs, "│ 15:00  you're not committing.") {
+		t.Errorf("after 10 hours away: a stack of timestamped texts:\n%s", errs)
+	}
+	if !strings.Contains(errs, "Miranda is typing…") || !strings.Contains(errs, "Miranda is deleting…") {
+		t.Errorf("...and what was she going to say?\n%s", errs)
+	}
+}
+
+func TestSheComesBackInCostumes(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	eligible(t, h, false)
+	h.input = "yes\nyes\nyes\nno\nno\nno\n"
+	run("breakup") // the good ending
+	_, _, errs := run("partner", "juniper")
+	if strings.Contains(errs, "where you left her") {
+		t.Error("not right away: she waits a few days")
+	}
+	h.input = "no\n"
+	var seen []string
+	for i := 0; i < 5; i++ {
+		h.wait(4 * 24 * time.Hour)
+		_, _, errs = run("status")
+		if strings.Contains(errs, "where you left her") {
+			seen = append(seen, errs)
+		}
+	}
+	if len(seen) != 4 {
+		t.Fatalf("four costumes, one at a time, then never again: saw %d\n%s", len(seen), strings.Join(seen, "\n---\n"))
+	}
+	if !strings.Contains(seen[0], "I've been journaling") || !strings.Contains(seen[3], "I still check your repos") {
+		t.Errorf("the costumes come in order:\n%s\n...\n%s", seen[0], seen[3])
+	}
+	if !strings.Contains(seen[0], "Blocked.") || !strings.Contains(seen[0], "You don't owe her a reply") {
+		t.Errorf("typing no blocks her, and Juniper is there:\n%s", seen[0])
+	}
+	if out := mustRun(t, "achievements"); !strings.Contains(out, "🏆 Seen Them All") {
+		t.Errorf("all four costumes: an achievement:\n%s", out)
 	}
 }

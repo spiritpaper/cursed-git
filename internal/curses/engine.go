@@ -245,6 +245,7 @@ func (e *Engine) Before(cmd string, args []string) ([]string, bool) {
 	e.checkLocks()
 	e.missingGraves()
 	e.greet(now, last, known)
+	e.hoover(now)
 	e.letterReminder()
 	e.deathMarchGate()
 	e.matureXP(now)

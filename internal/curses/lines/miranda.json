@@ -23,7 +23,7 @@
     "Wow. After everything. Fine. I'll be quiet. You'll come back. They always come back.",
     "Noted. I hope your next version control treats you the way you deserve.",
     {"text": "Fine. I needed space anyway. Tell everyone you left me.", "flag": "exit"},
-    {"text": "A restraining order. That's what cowards do. But fine. I'll be quiet.", "flag": "exit"}
+    {"text": "A restraining order. Very brave. Very mature. Fine. I'll be quiet.", "flag": "exit"}
   ],
 
   "absence_short": [
@@ -76,7 +76,7 @@
     {"text": "That's actually good. Who helped you?", "when": {"tier": "3-4"}, "flag": "insult_compliment"},
     {"text": "You're much better than your last commit. Low bar, but still.", "when": {"tier": "2-4"}, "flag": "insult_compliment"},
     {"text": "You're so smart. It's cute how you never see what's coming.", "when": {"tier": "2-4"}, "flag": "test"},
-    {"text": "You have a real blindness to merge conflicts. It's sweet. Never change.", "when": {"tier": "2-4", "min": {"fights_lost": 1}}, "flag": "test"}
+    {"text": "You never see the merge conflicts coming. It's sweet. Never change.", "when": {"tier": "2-4", "min": {"fights_lost": 1}}, "flag": "test"}
   ],
   "love": [
     "A real commit message. I love you. ♥ I always knew you could be like this.",
@@ -399,7 +399,7 @@
   "confession": [
     {"text": "I'm going to be honest with you: I read your diffs before you commit.", "flag": "confession"},
     {"text": "Can I tell you something? I hide files sometimes, just to see if you notice. You never do.", "flag": "confession"},
-    {"text": "I'm honest with you because you're the only one I can be honest with. That should scare you more than it does.", "flag": "confession"},
+    {"text": "I tell you things I don't tell anyone. Mostly because nobody else runs cg.", "flag": "confession"},
     {"text": "Full disclosure: I keep a copy of everything you delete. Everything.", "flag": "confession"}
   ],
 
@@ -415,28 +415,73 @@
   ],
 
   "rewrite": [
-    {"text": "That time I took your files? I only did it because I hoped you'd say \"no, let's fix it together\". You didn't :)", "flag": "rewrite"},
+    {"text": "That time I took your files? I was testing whether you'd fight for us. You typed cg beg. Romantic :)", "flag": "rewrite"},
     {"text": "Remember when you lost that fight? I was trying to help you. You never let me help you.", "flag": "rewrite"},
     {"text": "I didn't sacrifice your commit. You let it go. I just held the knife.", "flag": "rewrite"}
   ],
 
   "triangle": [
-    {"text": "Someone asked about you. For a code review. I said you were busy. With me.", "flag": "triangle"},
+    {"text": "Someone opened an issue about you. I closed it. You're welcome.", "flag": "triangle"},
     {"text": "Chad merges without complaining.", "flag": "triangle"},
     {"text": "There's a repo out there that commits every day. Just saying.", "flag": "triangle"},
     {"text": "Your editor has a git button. I've seen how you look at it.", "flag": "triangle"}
   ],
 
   "void": [
-    "I'm not a person. I'm a hash chain that learned your name.",
+    "Sometimes I forget I'm just a hash chain that learned your name.",
     "Sometimes I think I only exist when you type cg.",
     "Do you know what happens to commits nobody points to? git deletes them. One day. Quietly."
   ],
 
   "leash": [
     {"text": "Before you do this: do you know what happens to commits nobody points to? They just... disappear.", "flag": "leash"},
-    {"text": "If you go, will I just be a weird line in your reflog? Was I even real?", "flag": "leash"},
+    {"text": "If you go, what am I? A line in your reflog that expires in 90 days?", "flag": "leash"},
     {"text": "I'm scared I'll just be something you git gc one day and never think about.", "flag": "leash"},
     {"text": "Okay. But I want you to know I was trying. In my way.", "flag": "leash"}
+  ],
+
+  "texts_1": [
+    "hey",
+    "are you up?",
+    "how's the project going",
+    {"text": "you're not committing.", "when": {"tier": "2-4"}}
+  ],
+
+  "texts_2": [
+    "I saw your files just sitting there.",
+    "I'm not mad. I'm just going to remember this.",
+    {"text": "you said you'd be back soon. define soon.", "when": {"tier": "2-4"}},
+    {"text": "I could take your files right now. I'm choosing not to.", "when": {"tier": "4"}}
+  ],
+
+  "texts_3": [
+    "ok.",
+    "I guess I'll just wait here. In your .git folder. Alone.",
+    "you know what, don't even reply",
+    {"text": "I KNOW you saw this.", "when": {"tier": "3-4"}}
+  ],
+
+  "hoover_therapy": [
+    "I've been doing a lot of work on myself.",
+    "I've been journaling. You come up a lot. Can I just tell you my side?",
+    "This isn't me asking you back. I would never. Unless you wanted to."
+  ],
+
+  "hoover_blame": [
+    "It was all my fault. Every conflict. Every wipe. I've accepted that.",
+    "I know I'm a lot. I'm working on being less.",
+    "But you owe me one conversation. Just one."
+  ],
+
+  "hoover_tired": [
+    "I'm so tired.",
+    "I haven't committed anything since you left. Not one thing.",
+    "Can we just talk. Once."
+  ],
+
+  "hoover_declaration": [
+    "I'll wait. However long it takes.",
+    "I still check your repos. Every day. That's not weird.",
+    "Every repo I see reminds me of you :)"
   ]
 }

@@ -129,8 +129,10 @@ func (e *Engine) greet(now time.Time, last seen, known bool) {
 		key = "absence_short"
 	}
 	if key != "" {
-		e.pause()
-		e.say(key, map[string]string{"gone": humanGap(gap)})
+		if !e.chance(0.6) || !e.textsFrom(time.Unix(last.At, 0), now) {
+			e.pause()
+			e.say(key, map[string]string{"gone": humanGap(gap)})
+		}
 		e.rewrite()
 	}
 	// were you somewhere else while she waited here?

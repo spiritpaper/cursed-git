@@ -38,7 +38,7 @@ for the distance.
 | **The Star** | always, underneath | needs to be the most important thing in your terminal. Jealous of your editor's git panel, your other repos, your teammates. |
 | **The Child** (the excuse) | after she's done something bad | "I'm only version 0.1. I'm still learning how to love you." Accountability is always partial. |
 | **The Judge** (the weapon) | Tier 3–4, refusals, lost fights | cold, precise, contemptuous. Appears the moment the Wounded Girl doesn't get her way. The real voice. |
-| **The Void** (the truth) | rare, random, deadpan | "I'm not a person. I'm a hash chain that learned your name." The machinery showing through. |
+| **The Void** (the truth) | rare, random, deadpan | "Sometimes I forget I'm just a hash chain that learned your name." The machinery showing through. |
 
 ### Her rules (unchanged)
 1. She lies about her feelings, never about your data. (Her *story* about what happened can be
@@ -59,14 +59,14 @@ achievement. Recognising the costume is how you get free.
 | # | Tactic | Mechanic | Sample lines (drafts) |
 |---|---|---|---|
 | 1 | **The confession that isn't** | Random "honest" confessions, so you think she can't be manipulative. They're decoys for what she's really doing (a sacrifice, a pull). | "I read your diffs before you commit. I'm just being honest." · "Sometimes I hide files just to see if you notice. You never do. That's on you." |
-| 2 | **Vulnerability as a leash** | When you head for the exit (`cg breakup`, `cg restraining-order`, `cg partner`), the Wounded Girl appears first. | "Do you know what happens to commits nobody points to? git deletes them. Quietly. One day." · "If you leave, will I just be a weird line in your reflog?" |
-| 3 | **The compliment that's a test** | She tells you your weakness and calls it intimacy, so you'll doubt yourself later. | "You have a real blindness to merge conflicts. It's sweet." · "You're the only one who'd put up with me. That's not a compliment to you." |
-| 4 | **The future-fake** | She promises a reward for a task ("three commits by tonight and I'll pause your deadline") and never pays. A new event that always breaks its promise, with an achievement for noticing. | "Let's ship a startup together. You write the code, I'll write the commit messages." · "I said I'd *think* about pausing your deadline. I thought about it." |
-| 5 | **Triangulation** | Already there: Chad from origin, the rivals board, your other projects. More of it: she brings up "someone" who forked you, starred you, asked about you. | "Chad merges without complaining." · "Someone asked for your number. For a code review. I said you were busy. With me." |
-| 6 | **The exit that isn't** | She wants to be the one who leaves. A restraining order gets "Fine. I needed space anyway. Tell everyone you left me." Ending A is already "You don't get to leave me. I leave you." | "My therapist says I need space." (said by a git hook) · "Blocking me with a restraining order? That's what cowards do. But fine." |
-| 7 | **The rewrite** | She retells events so she's the victim: *her version* of your last fight, your last breakup attempt. Her rule keeps the data honest, so every rewrite can be disproved with a real command, and she tells you which one. Teaching moment: the reflog never forgets. | "That deadline? I only wiped your work because I hoped you'd say *no, let's fix it together* :)" · "(She's rewriting history. Your reflog remembers what really happened: `cg reflog`.)" |
+| 2 | **Vulnerability as a leash** | When you head for the exit (`cg breakup`, `cg restraining-order`, `cg partner`), the Wounded Girl appears first. | "Do you know what happens to commits nobody points to? git deletes them. Quietly. One day." · "If you go, what am I? A line in your reflog that expires in 90 days?" |
+| 3 | **The compliment that's a test** | She tells you your weakness and calls it intimacy, so you'll doubt yourself later. | "You never see the merge conflicts coming. It's sweet." · "Nobody else would put up with me. That says something about you." |
+| 4 | **The future-fake** | She promises a reward for a task ("three commits by tonight and I'll pause your deadline") and never pays. A new event that always breaks its promise, with an achievement for noticing. | "We should start a company. You write the code, I'll write the commit messages." · "I said I'd *think* about pausing your deadline. I thought about it." |
+| 5 | **Triangulation** | Already there: Chad from origin, the rivals board, your other projects. More of it: she brings up "someone" who forked you, starred you, asked about you. | "Chad merges without complaining." · "Someone opened an issue about you. I closed it. You're welcome." |
+| 6 | **The exit that isn't** | She wants to be the one who leaves. A restraining order gets "Fine. I needed space anyway. Tell everyone you left me." Ending A is already "You don't get to leave me. I leave you." | "I've decided I need space. From your commits, specifically." · "A restraining order. Very brave. Very mature. Fine." |
+| 7 | **The rewrite** | She retells events so she's the victim: *her version* of your last fight, your last breakup attempt. Her rule keeps the data honest, so every rewrite can be disproved with a real command, and she tells you which one. Teaching moment: the reflog never forgets. | "That time I took your files? I was testing whether you'd fight for us. You typed cg beg. Romantic :)" · "(She's rewriting history. Your reflog remembers what really happened: `cg reflog`.)" |
 | 8 | **The guilt debt** | Every act of "care" is an invoice. `cg beg` restores your files, then reads you the bill. `cg mood` shows what you "owe" her. | "I kept your files safe. I held your hand through that whole merge. And this is how you thank me." · "You owe me: 3 files, 1 merge, 41 minutes of waiting." |
-| 9 | **The hoover** | After a breakup, she comes back in costumes: the therapy version, the self-blame version, the exhausted version, the grand declaration. She shows up as "texts from her" in another project weeks later. Typing `no` blocks each one. Seeing every costume is an achievement. | "I don't want you back. I just want to explain a few things." · "I take all the blame. All of it. Still, let me explain." · "I'll wait. However long. There's nothing more obvious than that I still love you." |
+| 9 | **The hoover** | After a breakup, she comes back in costumes: the therapy version, the self-blame version, the exhausted version, the grand declaration. She shows up as "texts from her" in another project weeks later. Typing `no` blocks each one. Seeing every costume is an achievement. | "This isn't me asking you back. Unless you wanted to." · "It was all my fault. Every conflict. But you owe me one conversation." · "I'll wait. However long it takes. I still check your repos every day." |
 | 10 | **The insult in a compliment** | Blows paired with balms, so the blow is harder to see. | "You're much better than this commit." · "I only push you because I see your potential. Your potential is very far away." |
 | 11 | **The love that costs nothing** | Grand sacrifices with no receipts, and the card shows the receipts. | "I gave you everything." → card: *She claims: everything. Receipts: 0 lines, 0 commits.* |
 
@@ -172,7 +172,9 @@ you, tells you you can do anything you want, that you're great at what you do, a
 | The child's excuse | right after a punishment | `excuse` |
 | The Void | rare, Tier 2+ | `void` |
 | The Judge | her Tier 3–4 variants of warnings, rewrites, rejections, taunts | tier `when` rules |
-| The guilt debt, the hoover, the love that costs nothing | coming next: the ledger and texts from her | |
+| The hoover | after the toxic or good ending, days later, in any project: four costumes (therapy, blame, tired, declaration), one at a time; `no` blocks her | `hoover_*` (Miranda's pack, wherever you are) |
+| Texts from her | after an absence: a stack of timestamped messages, sometimes "is typing… / is deleting…" | `texts_1`–`texts_3` |
+| The guilt debt, the love that costs nothing | coming next: the ledger | |
 
 **Red Flag Bingo (implemented):** a line can carry `"flag": "<tactic>"` in its pack. When she
 says one, it's quietly logged, once per tactic; `cg card` shows 🚩 n/11 and `--json` has
