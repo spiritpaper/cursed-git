@@ -19,7 +19,7 @@ const usage = `cg: Cursed GIT. Like git, but she has feelings.
 usage: cg <command> [args]
 
 commands:
-  init [-q] [--preset clingy|toxic|psycho|hackathon] [--hours N] [--plain] [dir]
+  init [-q] [--preset clingy|toxic|psycho|hackathon|gentle] [--hours N] [--plain] [dir]
                    create a repository (with her in it, unless --plain)
   add [-f] <path>...  stage files and folders (respects .gitignore; -f adds ignored files)
   ls-files [-s]    list staged files (-s with mode, hash and stage)
@@ -37,6 +37,7 @@ commands:
   achievements     what you've unlocked, and what's left
   quest [skip]     a task that teaches you git, checked by her, paid in XP
   rivals           her scoreboard: everyone who commits here, and her favourite
+  partner [name]   who's here, and who else you could be with (Miranda, Juniper, ...)
   beg              ask for the files she took back
   graveyard        list what she took
   curse on [--preset p] [--hours N] | off
@@ -114,6 +115,9 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 		}
 		if !plain {
 			if code := eventSetup(commands.GitDir(target), preset, hours, stdout, stderr); code != 0 {
+				return code
+			}
+			if code := gentleSetup(commands.GitDir(target), preset, stdout, stderr); code != 0 {
 				return code
 			}
 			her, err := curses.Enable(commands.GitDir(target), preset, curseEnv(stderr))
@@ -262,7 +266,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 	case "diff":
 		return diffCmd(args[1:], stdout, stderr)
 
-	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget", "card", "achievements", "quest", "rivals":
+	case "mood", "beg", "graveyard", "curse", "restraining-order", "breakup", "forget", "card", "achievements", "quest", "rivals", "partner":
 		return herCmd(args, stdout, stderr)
 	case "closure":
 		// works without a repository: after a toxic breakup there may be nothing left

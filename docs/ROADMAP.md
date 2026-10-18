@@ -147,10 +147,13 @@ cg is played at opt-in events (hackathons, conventions, coding challenges). Thes
 5. ✅ **Rivalry.** Two people committing to the same repo: she plays them against each other. *(Done 2026-10-18: `cg rivals` from git's own history, jabs after your commits, the Favourite achievement.)*
 
 ## Phase 12: Beyond the toxic ex
-1. **Personality packs.** `cursed.personality = <name>` picks `lines/<name>.json`; the default stays her.
-2. **The gentle mode.** A partner (girlfriend or boyfriend) who isn't toxic: no curses, no punishments, just git with a new look and someone cheering you on.
-3. **Standing alone.** cg works without git installed (packfile reader, then fetch/push/merge of its own), and offers to install official git for the commands it doesn't have yet.
-4. **Launch (Phase 10).** Commit the animations, a GIF hero in the README, the rendered clips.
+1. ✅ **Personality packs.** `cursed.personality = <name>` picks `lines/<name>.json`; the default is **Miranda**. *(Done 2026-10-18: name, rival and mode per pack, your own packs in `$CURSED_GIT_HOME/personalities/`, toxic packs fall back to Miranda, gentle ones never do. See [CHARACTERS.md](CHARACTERS.md), which also holds the plan for adding characters.)*
+2. ✅ **The gentle mode: Juniper.** The partner who cherishes you: `--preset gentle`, Tier 0 forever, no punishments, nothing taken; XP, quests and achievements still count. `cg partner` to switch; after Miranda's good ending, the credits introduce her. *(Done 2026-10-18.)*
+3. **More characters.** A toxic ex-boyfriend and others: names from the author, then the steps in [CHARACTERS.md](CHARACTERS.md).
+4. **Release and real players.** Tagged releases with binaries for Linux, macOS and Windows, a support link, then testing with real people at an event.
+5. **Launch (Phase 10).** Commit the animations, a GIF hero in the README, the rendered clips.
+
+*Out of the picture for now:* cg standing alone without git installed (packfile reader, its own fetch/push/merge). It stays passthrough.
 
 ## Stretch goals
 - `cg haunt` daemon (fsnotify) for real-time curses

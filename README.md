@@ -3,7 +3,7 @@
 **Like git, but she has feelings.**
 
 `cg` is a game you play on top of a real project. It works like git (most commands are
-git, byte for byte), but it comes with *her*: a toxic ex who lives in your repository. She
+git, byte for byte), but it comes with **Miranda**: a toxic ex who lives in your repository. She
 judges your commit messages, gets jealous when someone else commits, punishes you for not
 committing, and turns every merge conflict into a boss fight.
 
@@ -93,6 +93,21 @@ One dial: her **tier**. The preset decides where she starts and how high she can
 
 Treat her well (good commit messages, committing regularly) and she calms down. Ignore her
 warnings, force-push, or use plain `git` behind her back, and she gets worse.
+
+## Miranda, or Juniper
+
+**Miranda** is the default: the toxic ex, the whole game. **Juniper** is the partner who
+cherishes you: no curses, no punishments, nothing ever taken, just someone cheering you on
+while XP, quests and achievements still count.
+
+```bash
+cg init --preset gentle      # start with Juniper
+cg partner                   # who's here, and who else there is
+cg partner juniper           # switch (Miranda won't let you while she's still around)
+```
+
+After Miranda's good ending, Juniper is waiting. Writing your own character is one JSON file:
+see [docs/CHARACTERS.md](docs/CHARACTERS.md).
 
 ## Boss fights
 
@@ -192,6 +207,7 @@ cg write-tree                    # turn the index into tree objects
 
 - [docs/GIT.md](docs/GIT.md): how git works inside, and what cg builds itself vs. hands to git
 - [docs/CURSES.md](docs/CURSES.md): everything she does, the tier math, the anti-cheat
+- [docs/CHARACTERS.md](docs/CHARACTERS.md): Miranda, Juniper, and how to write a character
 - [docs/ROADMAP.md](docs/ROADMAP.md): how it was built, phase by phase
 - [DEVNOTE.md](DEVNOTE.md): every mistake made along the way
 
@@ -199,8 +215,8 @@ cg write-tree                    # turn the index into tree objects
 
 Playable. Playable from start to finish: the git core, her (about 20 curses, the graveyard, code decay,
 her memory, the anti-cheat), boss fights, commit sacrifice, XP, `cg breakup` with three
-endings, and Death March. Coming: a gentle mode (a partner who just wraps git in a new look),
-and cg working without git installed.
+endings, Death March, achievements, quests, the hackathon preset and leaderboard, rivals,
+and two characters (Miranda and Juniper). Coming: more characters.
 
 ## License
 

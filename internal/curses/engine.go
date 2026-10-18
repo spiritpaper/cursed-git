@@ -88,7 +88,7 @@ func Enable(gitDir, preset string, env Env) (*Engine, error) {
 		return nil, err
 	}
 	var remembered *memory
-	if len(d.Events()) == 0 {
+	if len(d.Events()) == 0 && preset != "gentle" {
 		// a repo she's never lived in... or one she has, before you deleted .git or re-cloned it
 		if snap, m, ok := carryOver(gitDir); ok {
 			if err := d.Append(Event{T: env.Now().Unix(), Type: "carry", Carry: &snap}); err != nil {
@@ -106,7 +106,7 @@ func Enable(gitDir, preset string, env Env) (*Engine, error) {
 	}
 	p, ok := Presets[preset]
 	if !ok {
-		return nil, fmt.Errorf("unknown preset %q (clingy, toxic, psycho or hackathon)", preset)
+		return nil, fmt.Errorf("unknown preset %q (clingy, toxic, psycho, hackathon or gentle)", preset)
 	}
 	now := env.Now().Unix()
 	if err := d.Append(Event{T: now, Type: "on", Text: preset, Tier: p[0], Max: p[1]}); err != nil {
@@ -141,10 +141,24 @@ func (e *Engine) log(ev Event) {
 	if e.gone {
 		return
 	}
+	if e.Gentle() && punishment(ev) {
+		return // she cherishes you: nothing you do is held against you
+	}
 	ev.T = e.env.Now().Unix()
 	if err := e.diary.Append(ev); err == nil {
 		e.st = Replay(e.diary.Events())
 	}
+}
+
+// punishment: the events that make things worse for you.
+func punishment(ev Event) bool {
+	switch ev.Type {
+	case "toxicity", "temper":
+		return ev.Delta > 0
+	case "grudge", "offense", "apology":
+		return true
+	}
+	return false
 }
 
 func (e *Engine) chance(p float64) bool { return e.env.Roll() < p }
@@ -161,6 +175,8 @@ func (e *Engine) pick(key string, vars map[string]string) string {
 	return s
 }
 
+const gentleFace = "( ^‿^ )"
+
 var miniFaces = []string{"( ^_^ )", "( -_- )", "( ¬_¬ )", "( ò_ó )", "(╬ ò_ó)"}
 
 // say prints one of her lines, with the small face for her current tier.
@@ -174,11 +190,14 @@ func (e *Engine) say(key string, vars map[string]string) {
 	if e.st.Lovebombing(now) || key == "love" {
 		face = "( ♥_♥ )"
 	}
+	if e.Gentle() {
+		face = gentleFace
+	}
 	fmt.Fprintf(e.env.Out, "%s  %s\n", face, line)
 }
 
 // commands that are about her, not about git: no curses on those
-var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "achievements": true, "quest": true, "rivals": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
+var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "achievements": true, "quest": true, "rivals": true, "partner": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
 	"graveyard": true, "face": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
 
 func (e *Engine) awake() bool { return e != nil && e.env.Interactive }

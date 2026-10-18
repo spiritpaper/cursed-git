@@ -328,5 +328,10 @@
   "rival_favourite": [
     "Fine. You're my favourite. For now.",
     "Look at you, beating everyone. I always knew you had it in you. (I didn't.)"
+  ],
+
+  "partner_replace": [
+    "Replace me? With HER? Break up with me first. If you can.",
+    "You don't get to swap me out like a dependency. Break up with me properly."
   ]
 }

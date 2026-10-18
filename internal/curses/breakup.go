@@ -87,6 +87,13 @@ func (e *Engine) Breakup(dry bool, stdout io.Writer) int {
 		return 1
 	}
 	now := e.env.Now()
+	if e.Gentle() {
+		// no endings to earn with someone who cherishes you: a kind goodbye
+		e.say("gentle_goodbye", nil)
+		e.ending = "C"
+		e.leave(now)
+		return 0
+	}
 	switch v.Ending {
 	case "A":
 		return e.tooSoon(v, now)
@@ -474,6 +481,9 @@ func (e *Engine) goodEnding(v Verdict, now time.Time) int {
 	e.say("breakup_c_accept", nil)
 	e.credits(v, now)
 	e.leave(now)
+	if _, mode, ok := Describe("juniper"); ok && mode == "gentle" {
+		fmt.Fprintln(e.env.Out, "\n   (Someone's been hoping to meet you. Her name is Juniper. `cg partner juniper`, when you're ready.)")
+	}
 	return 0
 }
 

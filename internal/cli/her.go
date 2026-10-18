@@ -89,6 +89,10 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 	}
 	env := curseEnv(stderr)
 
+	if args[0] == "partner" {
+		return partnerCmd(gitDir, args[1:], env, stdout, stderr)
+	}
+
 	if args[0] == "forget" {
 		all := len(args) > 1 && args[1] == "--all"
 		if curses.Forget(gitDir, all) {
@@ -117,6 +121,9 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 				}
 			}
 			if code := eventSetup(gitDir, preset, hours, stdout, stderr); code != 0 {
+				return code
+			}
+			if code := gentleSetup(gitDir, preset, stdout, stderr); code != 0 {
 				return code
 			}
 			her, err := curses.Enable(gitDir, preset, env)
@@ -267,6 +274,15 @@ func printMood(w io.Writer, her *curses.Engine, now time.Time) {
 	case st.Lovebombing(now):
 		m = curses.InLove
 	}
+	if her.Gentle() && st.On {
+		fmt.Fprintf(w, "%s  %s is here, cheering you on. No curses, no punishments.\n", "( ^‿^ )", her.Name())
+		fmt.Fprintln(w, her.ClosureLine())
+		if q := her.ActiveQuest(); q != nil {
+			fmt.Fprintf(w, "Quest: %s (%s)\n", q.Title, q.Task)
+		}
+		fmt.Fprintf(w, "Achievements: %d/%d\n", len(her.Unlocked()), len(curses.Achievements))
+		return
+	}
 	printFace(w, m)
 	if !st.On {
 		fmt.Fprintln(w, "She's under a restraining order in this repo. `cg curse on` to undo it.")
@@ -321,6 +337,16 @@ func plural(n int, word string) string {
 // printHowToPlay is the card she hands you when you invite her in.
 func printHowToPlay(w io.Writer, her *curses.Engine) {
 	st := her.State()
+	if her.Gentle() {
+		fmt.Fprintf(w, `
+  %s is gentle: no curses, no punishments, nothing is ever taken.
+    she still counts  XP for your lines and good messages, quests, achievements
+    learn git         cg quest      see us   cg card      how she feels  cg mood
+    someone else      cg partner    (Miranda is still out there, if you miss the drama)
+
+`, her.Name())
+		return
+	}
 	fmt.Fprintf(w, `
   How to play with %s (preset %s: she starts at Tier %d, never goes above %d)
     calms her   good commit messages, committing often, winning boss fights
@@ -356,4 +382,64 @@ func eventSetup(gitDir, preset, hours string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return toGit([]string{"--git-dir", gitDir, "config", "cursed.eventHours", hours}, stdout, stderr)
+}
+
+// gentleSetup: the gentle preset comes with Juniper, unless you picked someone yourself.
+func gentleSetup(gitDir, preset string, stdout, stderr io.Writer) int {
+	if preset != "gentle" || curses.Personality(gitDir) != curses.DefaultPersonality {
+		return 0
+	}
+	if _, _, ok := curses.Describe("juniper"); !ok {
+		return 0
+	}
+	return toGit([]string{"--git-dir", gitDir, "config", "cursed.personality", "juniper"}, stdout, stderr)
+}
+
+// partnerCmd: cg partner (who's here, who you can pick) | cg partner <name> (switch).
+func partnerCmd(gitDir string, args []string, env curses.Env, stdout, stderr io.Writer) int {
+	current := curses.Personality(gitDir)
+	her, _ := curses.Open(gitDir, env)
+	if len(args) == 0 {
+		for _, c := range curses.Characters() {
+			name, mode, ok := curses.Describe(c)
+			if !ok {
+				continue
+			}
+			mark := "  "
+			if c == current && her != nil && her.State().On {
+				mark = "♥ "
+			}
+			fmt.Fprintf(stdout, "%s%-10s %-9s cg partner %s\n", mark, name, mode, c)
+		}
+		fmt.Fprintln(stdout, "\nYour own: $CURSED_GIT_HOME/personalities/<name>.json (docs/CHARACTERS.md)")
+		return 0
+	}
+	want := strings.ToLower(args[0])
+	_, mode, ok := curses.Describe(want)
+	if !ok {
+		fmt.Fprintf(stderr, "cg partner: nobody called %q. `cg partner` lists who you can pick.\n", args[0])
+		return 1
+	}
+	if her != nil && her.State().On && !her.Gentle() && want != current {
+		// you don't get to swap a toxic partner out: break up, or file the restraining order
+		her.Say("partner_replace", nil)
+		fmt.Fprintln(stderr, "(cg breakup first, or cg restraining-order if you need out right now.)")
+		return 1
+	}
+	if code := toGit([]string{"--git-dir", gitDir, "config", "cursed.personality", want}, stdout, stderr); code != 0 {
+		return code
+	}
+	preset := "psycho"
+	if mode == "gentle" {
+		preset = "gentle"
+	}
+	her, err := curses.Enable(gitDir, preset, env)
+	if err != nil {
+		fmt.Fprintf(stderr, "cg partner: %v\n", err)
+		return 1
+	}
+	her.Say("curse_on", nil)
+	printHowToPlay(stderr, her)
+	her.AnnounceNew()
+	return 0
 }

@@ -12,6 +12,8 @@ var Presets = map[string][2]int{
 	"psycho": {3, 4},
 	// psycho, at an event: goals scale to cursed.eventHours (set by `--preset hackathon`)
 	"hackathon": {3, 4},
+	// someone who cherishes you (Juniper): Tier 0 and nothing above it, ever
+	"gentle": {0, 0},
 }
 
 const (

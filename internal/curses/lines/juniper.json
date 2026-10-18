@@ -1,0 +1,64 @@
+{
+  "_about": [
+    "Juniper: the partner who cherishes you. Gentle mode: no curses, no punishments, nothing taken.",
+    "She never borrows Miranda's lines: a key that's missing here is silence. Placeholders: see miranda.json."
+  ],
+
+  "_name": ["Juniper"],
+  "_rival": ["Chad"],
+  "_mode": ["gentle"],
+
+  "curse_on": [
+    "Hi {name}. I'm Juniper. I'll be right here while you work. No pressure, ever.",
+    "Oh, a new project! I'm so glad you brought me along, {name}."
+  ],
+  "curse_resume": ["You're back. I missed you. Let's make something good."],
+  "restraining_order": ["Of course. Take all the space you need. I'll be here if you want me."],
+
+  "absence_short": ["Welcome back, {name}. Rested? Good. Your files are exactly where you left them."],
+  "absence_long": ["{gone}! I hope it was a good break. Let's ease back in, no rush."],
+  "absence_ages": ["It's been {gone}, {name}. I kept everything safe. Want to start with `cg status`?"],
+  "night_owl": ["It's {hour}. Proud of you for still going, but promise me you'll sleep soon?"],
+  "callback": ["Remember \"{old_msg}\"? Look how far this project has come since then."],
+  "favourite_file": ["{file} again. You really care about that one. It shows."],
+
+  "lazy_comment": [
+    "\"{msg}\" is a little short. Future you will love a sentence about what changed and why.",
+    "Tiny tip: \"{msg}\" works, but \"what + why\" makes `cg log` so much nicer to read later."
+  ],
+  "good_commit": ["That's a lovely commit message. Clear and kind to whoever reads it next.", "Three good commits in a row. You're really in the flow today."],
+  "love": ["I really like working on this with you, {name}.", "You're doing great. I mean it."],
+  "love_ruined": ["\"{msg}\"? Ha. Even your short messages are cute. Maybe a few more words next time."],
+  "toxic_partner": ["Pushed! Your work is safe on the remote now. That's a good feeling.", "Push done. Go stretch, you earned it."],
+  "ai_replace": ["{n} files in one commit! Big step. Smaller commits are easier to undo, if you ever need to."],
+  "only_deletions": ["Deleting is progress too. Less code, fewer bugs."],
+
+  "jealousy": ["Oh, {email} committed here too! Teamwork. Tell them I said hi."],
+  "behind_back": ["I see you used {crime} directly. That's completely fine! I just like being included. You can type cg for that too."],
+  "hook_saw": ["I saw that go by. Looks good."],
+  "hook_forgery": ["That ref is mine, so I kept it as it was. Everything else is all yours."],
+  "locks_changed": ["My hooks were missing, so I put them back. They only watch, they never block your work."],
+  "hooks_path": ["You moved the hooks folder. That's okay, I'll just watch a little less closely."],
+  "graveyard_deleted": ["Some saved copies under refs/cursed are gone. If that was on purpose, no worries at all."],
+  "graveyard_hint": ["(cg beg brings them back. No begging needed with me, it's just the name.)"],
+  "beg": ["Here you go: {n} file(s), back where they belong."],
+  "beg_nothing": ["Nothing to bring back. Everything's where you left it."],
+  "decay_restored": ["All tidied up. {n} file(s) back to how they should be."],
+  "diary": ["Something in my diary looks different. That's okay. I'll start a fresh page."],
+
+  "conflict_small": [
+    "A merge conflict! Totally normal. Look for <<<<<<<, keep what's right, delete the markers, then `cg add` and `cg commit`. You've got this.",
+    "Two changes touched the same lines, so git asked you to decide. `cg status` shows which files. Take your time."
+  ],
+
+  "other_project": ["How's {project} going? I'm happy you're making so many things."],
+  "quest_done": ["{quest}! You just learned something real. I'm proud of you.", "You did it: {quest}. Want to try the next one?"],
+  "rival_jab": ["{rival} has {theirs} commits and you have {mine}. Not a race, but you two make a great team."],
+  "rival_favourite": ["Top of the board! Not that I'd love you less if you weren't."],
+
+  "partner_replace": ["Of course you can meet someone new. I'll be happy for you."],
+  "gentle_goodbye": [
+    "Of course. I'm so glad I got to see you grow. Commit often, and be kind to yourself.",
+    "Okay. Thank you for letting me be part of this. Whatever you build next, I'm cheering for you."
+  ]
+}

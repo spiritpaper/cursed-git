@@ -26,6 +26,9 @@ func (e *Engine) Card(now time.Time) []string {
 	case st.Lovebombing(now):
 		face = "( ♥_♥ )"
 	}
+	if e.Gentle() && st.On {
+		face, status = gentleFace, "cherishing you"
+	}
 	lv := Level(st.XP)
 	need := rules(e.gitDir).BreakupLevel
 	full := min(10, lv*10/max(1, need))
