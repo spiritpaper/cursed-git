@@ -47,10 +47,11 @@ type Engine struct {
 	st               *State
 	lines            map[string][]string
 	tampered         error
-	pre              commitInfo // what Before learned about a commit, for After
-	gone             bool       // she left (breakup): write nothing more into the repo
-	phase2           bool       // the pull right after a Tier 4 win: a conflict is the rematch
-	ending           string     // set by a breakup, for her memory
+	pre              commitInfo       // what Before learned about a commit, for After
+	gone             bool             // she left (breakup): write nothing more into the repo
+	phase2           bool             // the pull right after a Tier 4 win: a conflict is the rematch
+	ending           string           // set by a breakup, for her memory
+	achBefore        map[string]int64 // achievements when the command started
 }
 
 type commitInfo struct {
@@ -78,6 +79,7 @@ func Open(gitDir string, env Env) (*Engine, error) {
 		e.lines = map[string][]string{} // a broken line pack makes her mute, it never breaks git
 	}
 	e.st = Replay(d.Events())
+	e.achBefore = e.Unlocked()
 	return e, nil
 }
 
@@ -178,7 +180,7 @@ func (e *Engine) say(key string, vars map[string]string) {
 }
 
 // commands that are about her, not about git: no curses on those
-var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
+var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "achievements": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
 	"graveyard": true, "face": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
 
 func (e *Engine) awake() bool { return e != nil && e.env.Interactive }

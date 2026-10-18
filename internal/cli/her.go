@@ -117,6 +117,7 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 			}
 			her.Say("curse_on", nil)
 			printHowToPlay(stderr, her)
+			her.AnnounceNew()
 			return 0
 		}
 	}
@@ -137,6 +138,22 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 
 	case "card":
 		fmt.Fprintln(stdout, strings.Join(her.Card(env.Now()), "\n"))
+		return 0
+
+	case "achievements":
+		got := her.Unlocked()
+		fmt.Fprintf(stdout, "Achievements: %d/%d\n\n", len(got), len(curses.Achievements))
+		for _, a := range curses.Achievements {
+			if at, ok := got[a.ID]; ok {
+				when := ""
+				if at > 0 {
+					when = "  (" + time.Unix(at, 0).Format("Jan 2") + ")"
+				}
+				fmt.Fprintf(stdout, "  🏆 %-18s %s%s\n", a.Name, a.Desc, when)
+			} else {
+				fmt.Fprintf(stdout, "  ·  %-18s %s\n", a.Name, a.Desc)
+			}
+		}
 		return 0
 
 	case "restraining-order":

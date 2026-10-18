@@ -137,12 +137,24 @@ Still open: lowering `tier`/`maxTier` mid-game = breakup attempt (needs Phase 9)
 - A proper README: a GIF hero from `cg-montage.html`, the tier ladder, the install steps, and links to the episodes
 - Render the animation set and embed the clips in the README and the docs
 
-## Phase 11: Stretch goals
-- Packfile reader (idx v2, deltas): no more git fallback for reads
+## Phase 11: Made for events *(the hackathon update)*
+cg is played at opt-in events (hackathons, conventions, coding challenges). These make it a better game there. One step at a time, each with tests and its own commit:
+
+1. ✅ **Achievements.** Unlocked from her diary, shown on `cg card` and in `cg achievements`: First Blood, Speedrun, Ghosted, Rebase Survivor, Serial Dater, and more. Pure replay of events, so they can't be faked without breaking the diary. *(Done 2026-10-18: 21 achievements, announced when they unlock, `internal/curses/achievements.go`.)*
+2. **Quests that teach git.** She sets a task ("make a branch and merge it back", "cherry-pick something", "resolve a conflict without `--abort`"), checks it against the real repository, and pays XP. The learning goal, as gameplay.
+3. **A `hackathon` preset.** Clocks and breakup thresholds scaled to an event's length (`cursed.eventHours`), so a 24h event can actually reach an ending.
+4. **Event leaderboard.** `cg card --json`, and a page organizers can put on a projector: every team's card, fastest boss kill, most toxic team.
+5. **Rivalry.** Two people committing to the same repo: she plays them against each other.
+
+## Phase 12: Beyond the toxic ex
+1. **Personality packs.** `cursed.personality = <name>` picks `lines/<name>.json`; the default stays her.
+2. **The gentle mode.** A partner (girlfriend or boyfriend) who isn't toxic: no curses, no punishments, just git with a new look and someone cheering you on.
+3. **Standing alone.** cg works without git installed (packfile reader, then fetch/push/merge of its own), and offers to install official git for the commands it doesn't have yet.
+4. **Launch (Phase 10).** Commit the animations, a GIF hero in the README, the rendered clips.
+
+## Stretch goals
 - `cg haunt` daemon (fsnotify) for real-time curses
 - TUI for boss fights (Bubble Tea: `github.com/charmbracelet/bubbletea`)
-- Personality packs, difficulty levels, trophies
-- Your own `fetch` over smart HTTP (then *she* brings the other guys home herself)
 
 ---
 

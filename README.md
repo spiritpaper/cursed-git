@@ -62,6 +62,7 @@ so you never have to switch back.
 ```bash
 cg mood          # how she feels about you right now
 cg card          # your relationship on one screen: screenshot it
+cg achievements  # 21 to collect: First Blood, Speedrun, Chad Slayer... and some shameful ones
 ```
 
 ## How dangerous is she?

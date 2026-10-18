@@ -59,15 +59,19 @@ type State struct {
 	DeathMarchAccepted bool
 	LastShutdownAt     int64
 	BreakupAttempts    int
-	LetterPending      string // ending A's letter, until she's mentioned it
+	LetterPending      string           // ending A's letter, until she's mentioned it
+	Unlocked           map[string]int64 // achievement -> when (achievements.go)
+	winStreak, begs    int
 }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
 
 // Replay rebuilds her state from the diary.
 func Replay(events []Event) *State {
-	s := &State{KnownAuthors: map[string]bool{}, Offenses: map[string]int64{}, PaidBlobs: map[string]bool{}}
+	s := &State{KnownAuthors: map[string]bool{}, Offenses: map[string]int64{}, PaidBlobs: map[string]bool{},
+		Unlocked: map[string]int64{}}
 	for _, e := range events {
+		apologyBefore := s.Apology
 		switch e.Type {
 		case "on":
 			s.On = true
@@ -107,9 +111,11 @@ func Replay(events []Event) *State {
 		case "fight_won":
 			s.LastFight, s.Fight = s.Fight, nil
 			s.BossWon++
+			s.winStreak++
 		case "fight_lost":
 			s.LastFight, s.Fight = s.Fight, nil
 			s.BossLost++
+			s.winStreak = 0
 		case "apology":
 			s.Apology = e.Text
 		case "xp":
@@ -165,6 +171,7 @@ func Replay(events []Event) *State {
 		case "sacrifice":
 			s.Sacrificed = append(s.Sacrificed, e.Text)
 		case "beg":
+			s.begs++
 			for i, ref := range s.Graveyard {
 				if ref == e.Text {
 					s.Graveyard = append(s.Graveyard[:i], s.Graveyard[i+1:]...)
@@ -178,6 +185,7 @@ func Replay(events []Event) *State {
 		case "lovebomb":
 			s.LovebombAt = e.T
 		}
+		s.checkUnlocks(e, apologyBefore)
 	}
 	return s
 }

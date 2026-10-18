@@ -244,7 +244,10 @@ func TestTier4WinStartsPhase2(t *testing.T) {
 	write(t, dir, map[string]string{"notes.txt": "our notes\n"})
 	mustRun(t, "add", "notes.txt")
 	_, _, errs = run("commit", "-m", "won round two")
-	if !strings.Contains(errs, "K.O.") || strings.Contains(errs, "Phase 2") {
+	if !strings.Contains(errs, "K.O.") || strings.Contains(errs, "BOSS FIGHT") {
 		t.Errorf("winning phase 2 ends it (no phase 3):\n%s", errs)
+	}
+	if !strings.Contains(errs, "Achievement unlocked: Phase 2") {
+		t.Errorf("winning the rematch is an achievement:\n%s", errs)
 	}
 }

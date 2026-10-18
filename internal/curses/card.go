@@ -42,6 +42,19 @@ func (e *Engine) Card(now time.Time) []string {
 		fmt.Sprintf("Toxicity    %d/%d", st.Toxicity, rules(e.gitDir).ToxicThreshold),
 		fmt.Sprintf("Together    %s · %s", plural(days, "day"), plural(st.Commits, "commit")),
 	}
+	got := e.Unlocked()
+	ach := fmt.Sprintf("Achievements %d/%d", len(got), len(Achievements))
+	var latest string
+	var latestAt int64 = -1
+	for _, a := range Achievements {
+		if at, ok := got[a.ID]; ok && at >= latestAt {
+			latest, latestAt = a.Name, at
+		}
+	}
+	if latest != "" {
+		ach += " · latest: " + latest
+	}
+	rows = append(rows, ach)
 	if h := e.History(); h.Projects > 1 {
 		rows = append(rows, fmt.Sprintf("Across      %d projects", h.Projects))
 	}

@@ -66,6 +66,12 @@ func (e *Engine) Touch() {
 	s.Head, _ = refs.Resolve(e.gitDir, "HEAD")
 	e.saveSeen(s)
 	e.remember()
+	if e.awake() {
+		if d, err := OpenDiary(e.gitDir); err == nil {
+			e.st = Replay(d.Events()) // fresh: her own commands write with another engine
+		}
+		e.announce(e.achBefore)
+	}
 }
 
 // vars fills the placeholders every line can use.
