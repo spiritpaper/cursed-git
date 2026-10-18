@@ -24,13 +24,17 @@ You learn git by surviving her.
 
 ## Install
 
-You need [Go](https://go.dev/dl/) 1.26 or newer and [git](https://git-scm.com/downloads).
+You need [git](https://git-scm.com/downloads). Then either:
 
-```bash
-go install github.com/spiritpaper/cursed-git/cmd/cg@latest
-```
+- **Download** `cg` for your system from the [latest release](https://github.com/spiritpaper/cursed-git/releases/latest)
+  (Linux, macOS, Windows), unpack it, and put `cg` somewhere on your `PATH`.
+- **Or, with [Go](https://go.dev/dl/) 1.26+:**
 
-That puts `cg` in `$(go env GOPATH)/bin`. Make sure that folder is on your `PATH`.
+  ```bash
+  go install github.com/spiritpaper/cursed-git/cmd/cg@latest
+  ```
+
+  That puts `cg` in `$(go env GOPATH)/bin`. Make sure that folder is on your `PATH`.
 
 From source:
 
@@ -217,6 +221,14 @@ Playable. Playable from start to finish: the git core, her (about 20 curses, the
 her memory, the anti-cheat), boss fights, commit sacrifice, XP, `cg breakup` with three
 endings, Death March, achievements, quests, the hackathon preset and leaderboard, rivals,
 and two characters (Miranda and Juniper). Coming: more characters.
+
+## Feedback and support
+
+Played it? Tell me how it went: [playtest feedback](https://github.com/spiritpaper/cursed-git/issues/new?template=playtest.md),
+or [report a bug](https://github.com/spiritpaper/cursed-git/issues/new?template=bug.md).
+
+Cursed GIT is made by **spiritpaper**. If she made you laugh (or learn), you can support the
+project here: **[spiritpaper.github.io/#support](https://spiritpaper.github.io/#support)**.
 
 ## License
 

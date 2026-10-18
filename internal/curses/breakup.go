@@ -521,6 +521,9 @@ func (e *Engine) credits(v Verdict, now time.Time) {
      closure level %d
 
      Thank you for playing. Commit often.
+
+     made by spiritpaper
+     https://spiritpaper.github.io/#support
 `, days, e.st.Commits, e.st.BossWon, e.st.BossLost, v.Lines, v.Level)
 	for _, l := range strings.Split(text, "\n") {
 		e.env.Sleep(300 * time.Millisecond)

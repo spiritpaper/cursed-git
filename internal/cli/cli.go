@@ -59,6 +59,9 @@ plumbing:
   symbolic-ref <name> [<ref>]                     read or set HEAD
   rev-parse <name>...                             name -> object id
   help         show this message
+
+made by spiritpaper · support: https://spiritpaper.github.io/#support
+bugs and playtest stories: https://github.com/spiritpaper/cursed-git/issues
 `
 
 // version is stamped by `go install ...@v1.2.3`; a local build says "dev".
