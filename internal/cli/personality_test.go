@@ -40,3 +40,26 @@ func TestUnknownPackIsMiranda(t *testing.T) {
 		t.Errorf("an unknown pack falls back to Miranda:\n%s", card)
 	}
 }
+
+// She reads your actual commit message.
+func TestMirandaReadsYourCommitMessage(t *testing.T) {
+	withHer(t, tuesday, lucky)
+	dir := newRepo(t, "clingy")
+	for msg, want := range map[string]string{
+		"revert the login change": "Like everything else?",
+		"refactor the parser":     "nothing works differently",
+		"ship the new page 🚀":     "Who are you trying to impress?",
+	} {
+		write(t, dir, map[string]string{"f.txt": msg})
+		mustRun(t, "add", "f.txt")
+		_, _, errs := run("commit", "-m", msg)
+		if !strings.Contains(errs, want) {
+			t.Errorf("%q: she should say %q:\n%s", msg, want, errs)
+		}
+	}
+	write(t, dir, map[string]string{"f.txt": "plain"})
+	mustRun(t, "add", "f.txt")
+	if _, _, errs := run("commit", "-m", "add the settings screen"); strings.Contains(errs, "commit") && strings.Contains(errs, "Typical") {
+		t.Errorf("a message with nothing to react to gets no reaction:\n%s", errs)
+	}
+}

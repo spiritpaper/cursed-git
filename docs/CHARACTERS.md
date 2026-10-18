@@ -37,6 +37,21 @@ After Miranda's good ending, the credits introduce Juniper.
 - **`_mode`**: `toxic` (the full game) or `gentle` (Tier 0 forever, no punishments).
 - **Every other key** is a moment, with one or more lines (she picks one). Placeholders like
   `{name}`, `{msg}`, `{boss}` are listed in `miranda.json`'s `_about`.
+- **`when`: special cases** (Valve's approach: the most specific line that matches wins). A line
+  can be an object with conditions instead of plain text:
+  ```json
+  "commit_reaction": [
+    {"text": "Work in progress. Like us.", "when": {"msg": ["wip", "work in progress"]}},
+    {"text": "\"{msg}\" at {hour}. Who are you committing for?", "when": {"msg": ["wip"], "hour": "1-4"}}
+  ]
+  ```
+  Conditions: `msg` (whole words or phrases in the commit message, any case), `msg_emoji`,
+  `tier` (`"3"` or `"3-4"`), `hour` (`"22-4"` wraps past midnight), `weekday`, and `min` /
+  `max` on `good_streak`, `toxicity`, `fights_won`, `fights_lost`, `commits`, `grudges`, `xp`,
+  `level`, `temper`. Every condition must hold; the line with the most conditions wins; plain
+  lines are the fallback. She remembers her last few lines per moment and won't repeat them.
+- **`commit_reaction`** is special: she only speaks there if a `when` line matches (so she
+  reacts to `revert` or `refactor`, and stays quiet on ordinary messages).
 - **Missing lines:** a toxic pack falls back to Miranda's line for that moment, so a new
   character can start with a handful of lines. A gentle pack never borrows: a missing line is
   silence, so a kind character can't accidentally say something cruel.
@@ -49,16 +64,17 @@ Pick one with `cg partner <name>`, or by hand: `git config cursed.personality <n
    Next in line: a toxic ex-boyfriend (name and his rival's name to be decided), and more
    gentle partners.
 2. **Pick the mode.** Toxic characters get every curse; gentle ones get none.
-3. **Write the pack.** Start from `miranda.json` (toxic) or `juniper.json` (gentle) and rewrite
+3. **Read the lesson:** [lessons/writing-a-character.md](lessons/writing-a-character.md).
+4. **Write the pack.** Start from `miranda.json` (toxic) or `juniper.json` (gentle) and rewrite
    every line in the new voice. Toxic packs: at least `curse_on`, the judge (`lazy_*`,
    `rewrote`), the fight lines (`fight_*`), and the breakup lines (`breakup_*`); the rest falls
    back. Gentle packs: every moment that can happen at Tier 0 (see `juniper.json` for the list).
-4. **Her two rules still apply.** She lies about her feelings, never about your data. Dark, not
+5. **Her two rules still apply.** She lies about her feelings, never about your data. Dark, not
    cruel: no threats of self-harm or violence, nothing sexual, nothing outside the repository.
-5. **Test it.** A test like `TestCustomToxicPack` (personality_test.go): the name on the card,
+6. **Test it.** A test like `TestCustomToxicPack` (personality_test.go): the name on the card,
    a line of their own, and (toxic) the fallback. For a gentle pack, the Juniper tests:
    nothing punished, nothing taken, no fights.
-6. **Ship it.** Drop the file in `internal/curses/lines/`; it's embedded at build time and
+7. **Ship it.** Drop the file in `internal/curses/lines/`; it's embedded at build time and
    shows up in `cg partner`.
 
 ## Ideas for later

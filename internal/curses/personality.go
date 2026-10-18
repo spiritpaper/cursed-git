@@ -35,7 +35,7 @@ func Personality(gitDir string) string {
 }
 
 // readPack finds a pack: yours first, then the ones that ship with cg.
-func readPack(name string) (map[string][]string, bool) {
+func readPack(name string) (map[string][]Line, bool) {
 	var data []byte
 	var err error
 	if dir := MemoryDir(); dir != "" {
@@ -46,7 +46,7 @@ func readPack(name string) (map[string][]string, bool) {
 			return nil, false
 		}
 	}
-	lines := map[string][]string{}
+	lines := map[string][]Line{}
 	if json.Unmarshal(data, &lines) != nil {
 		return nil, false // a broken pack makes her mute, it never breaks git
 	}
@@ -54,10 +54,10 @@ func readPack(name string) (map[string][]string, bool) {
 }
 
 // loadLines is the line pack for this repo.
-func loadLines(gitDir string) map[string][]string {
+func loadLines(gitDir string) map[string][]Line {
 	base, _ := readPack(DefaultPersonality)
 	if base == nil {
-		base = map[string][]string{}
+		base = map[string][]Line{}
 	}
 	name := Personality(gitDir)
 	if name == DefaultPersonality {
@@ -76,11 +76,11 @@ func loadLines(gitDir string) map[string][]string {
 	return base
 }
 
-func first(list []string) string {
+func first(list []Line) string {
 	if len(list) == 0 {
 		return ""
 	}
-	return list[0]
+	return list[0].Text
 }
 
 // Name is what the character is called.

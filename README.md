@@ -229,6 +229,7 @@ cg write-tree                    # turn the index into tree objects
 - [docs/GIT.md](docs/GIT.md): how git works inside, and what cg builds itself vs. hands to git
 - [docs/CURSES.md](docs/CURSES.md): everything she does, the tier math, the anti-cheat
 - [docs/CHARACTERS.md](docs/CHARACTERS.md): Miranda, Juniper, and how to write a character
+- [docs/lessons/writing-a-character.md](docs/lessons/writing-a-character.md): what makes a character unforgettable (the research behind Miranda)
 - [docs/ROADMAP.md](docs/ROADMAP.md): how it was built, phase by phase
 - [DEVNOTE.md](DEVNOTE.md): every mistake made along the way
 

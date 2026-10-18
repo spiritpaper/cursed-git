@@ -22,11 +22,12 @@ import (
 // seen is her short-term memory between commands. It's a cache, not evidence: deleting it
 // just makes her start counting again (the diary is what she can't forget).
 type seen struct {
-	At          int64  `json:"at"`           // last time any cg command ran
-	ReflogLines int    `json:"reflog_lines"` // length of .git/logs/HEAD at that moment
-	Head        string `json:"head"`
-	DecayAt     int64  `json:"decay_at"` // last time she checked for rot
-	TalkedAt    int64  `json:"talked_at"`
+	At          int64               `json:"at"`           // last time any cg command ran
+	ReflogLines int                 `json:"reflog_lines"` // length of .git/logs/HEAD at that moment
+	Head        string              `json:"head"`
+	DecayAt     int64               `json:"decay_at"` // last time she checked for rot
+	TalkedAt    int64               `json:"talked_at"`
+	Recent      map[string][]string `json:"recent,omitempty"` // her last lines per moment (lines.go)
 }
 
 func (e *Engine) seenPath() string { return filepath.Join(dirOf(e.gitDir), "seen.json") }
@@ -37,7 +38,7 @@ func (e *Engine) loadSeen() (seen, bool) {
 	if err != nil || json.Unmarshal(data, &s) != nil {
 		return seen{}, false
 	}
-	return s, true
+	return s, s.At != 0 // only a finished command counts as "she saw it" (not just a line she said)
 }
 
 func (e *Engine) saveSeen(s seen) {
@@ -145,8 +146,9 @@ func (e *Engine) greet(now time.Time, last seen, known bool) {
 	// late at night she gets... personal. Not every time.
 	if (now.Hour() >= 1 && now.Hour() < 5) && now.Unix()-last.TalkedAt > 3600 && e.chance(0.5) {
 		e.say("night_owl", nil)
-		last.TalkedAt = now.Unix()
-		e.saveSeen(last)
+		s, _ := e.loadSeen() // fresh: saying a line just updated it
+		s.TalkedAt = now.Unix()
+		e.saveSeen(s)
 	}
 }
 

@@ -44,7 +44,7 @@ type Engine struct {
 	env              Env
 	diary            *Diary
 	st               *State
-	lines            map[string][]string
+	lines            map[string][]Line
 	tampered         error
 	pre              commitInfo       // what Before learned about a commit, for After
 	gone             bool             // she left (breakup): write nothing more into the repo
@@ -164,15 +164,23 @@ func punishment(ev Event) bool {
 func (e *Engine) chance(p float64) bool { return e.env.Roll() < p }
 
 func (e *Engine) pick(key string, vars map[string]string) string {
-	opts := e.lines[key]
-	if len(opts) == 0 {
-		return ""
-	}
-	s := opts[e.env.Pick(len(opts))]
+	s, _ := e.choose(key, vars, false)
+	return e.fill(s, vars)
+}
+
+// fill puts the placeholders in.
+func (e *Engine) fill(s string, vars map[string]string) string {
 	for k, v := range e.vars(vars) {
 		s = strings.ReplaceAll(s, "{"+k+"}", v)
 	}
 	return s
+}
+
+// sayIf speaks only if a line with conditions matches (a reaction, not a comment on everything).
+func (e *Engine) sayIf(key string, vars map[string]string) {
+	if s, ok := e.choose(key, vars, true); ok {
+		e.speak(key, e.fill(s, vars))
+	}
 }
 
 const gentleFace = "( ^‿^ )"
@@ -181,7 +189,11 @@ var miniFaces = []string{"( ^_^ )", "( -_- )", "( ¬_¬ )", "( ò_ó )", "(╬ �
 
 // say prints one of her lines, with the small face for her current tier.
 func (e *Engine) say(key string, vars map[string]string) {
-	line := e.pick(key, vars)
+	e.speak(key, e.pick(key, vars))
+}
+
+// speak prints a line with the small face for her current tier.
+func (e *Engine) speak(key, line string) {
 	if line == "" {
 		return
 	}
@@ -496,6 +508,9 @@ func (e *Engine) afterCommit(now time.Time) {
 	}
 	e.rivalry(now)
 	tier := e.st.Tier(now)
+	if !e.pre.lazy && e.pre.msg != "" {
+		e.sayIf("commit_reaction", map[string]string{"msg": e.pre.msg}) // she reads what you wrote
+	}
 	if e.pre.lazy && tier == 0 {
 		e.say("lazy_comment", map[string]string{"msg": e.pre.msg})
 	}

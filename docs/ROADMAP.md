@@ -160,11 +160,11 @@ cg is played at opt-in events (hackathons, conventions, coding challenges). Thes
 In order. Pick the top one, plan it, ship it.
 
 **Miranda 2.0** (the personality is the product: design in [MIRANDA.md](MIRANDA.md))
-1. **"When" rules in line packs:** the most specific line wins (commit-message words, tier, time, streaks), plain lines are the fallback. *(Valve's dynamic dialogue approach.)*
-2. **She reads your actual commit messages:** `revert`, `refactor`, `wip`, `final`, `sorry`, emojis... each gets its own reaction.
-3. **No repeats:** she remembers what she just said.
-4. **Her new lines:** the eleven tactics, five faces and the arc from MIRANDA.md, after the author's review.
-5. **Red Flag Bingo:** tactics are logged and named; `cg flags`; spotting them all is an achievement.
+1. ✅ **"When" rules in line packs:** the most specific line wins (commit-message words, tier, time, streaks), plain lines are the fallback. *(Valve's dynamic dialogue approach. Done 2026-10-18: `internal/curses/lines.go`.)*
+2. ✅ **She reads your actual commit messages:** `revert`, `refactor`, `wip`, `final`, `sorry`, emojis... each gets its own reaction. *(Done: `commit_reaction` in miranda.json.)*
+3. ✅ **No repeats:** she remembers what she just said. *(Done.)*
+4. **Her new lines:** the eleven tactics, five faces and the arc from MIRANDA.md, after the author's review. Her charming side waits for the author's notes on what made the hook work.
+5. **Red Flag Bingo:** tactics are logged quietly, never named in the game; the card shows 🚩 n/11; the names live in MIRANDA.md; spotting them all is an achievement.
 6. **Texts from her:** after an absence, and as the hoover after a breakup, a stack of timestamped messages.
 7. **The guilt ledger and the receipts:** what she says you owe (`cg mood`), her claims next to the real numbers (`cg card`).
 

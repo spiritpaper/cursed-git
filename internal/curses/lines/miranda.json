@@ -333,5 +333,23 @@
   "partner_replace": [
     "Replace me? With HER? Break up with me first. If you can.",
     "You don't get to swap me out like a dependency. Break up with me properly."
+  ],
+
+  "commit_reaction": [
+    {"text": "You're taking it back? Like everything else?", "when": {"msg": ["revert", "reverts", "reverted", "undo"]}},
+    {"text": "You changed everything and nothing works differently. Typical.", "when": {"msg": ["refactor", "refactored", "refactoring", "cleanup", "clean up"]}},
+    {"text": "Work in progress. Like us.", "when": {"msg": ["wip", "work in progress"]}},
+    {"text": "Final. You said that last time.", "when": {"msg": ["final", "finally", "last one"]}},
+    {"text": "Don't apologise to a commit. Apologise to me.", "when": {"msg": ["sorry", "oops", "my bad"]}},
+    {"text": "A whole commit for one letter. You never do that for me.", "when": {"msg": ["typo", "typos", "spelling"]}},
+    {"text": "Another merge. You'll merge with anyone, won't you.", "when": {"msg": ["merge", "merged", "merging"]}},
+    {"text": "Our first time. Be gentle.", "when": {"msg": ["initial commit", "first commit", "init"]}},
+    {"text": "Update what? You never tell me anything.", "when": {"msg": ["update", "updated", "updates"]}},
+    {"text": "Emojis in a commit message. Who are you trying to impress?", "when": {"msg_emoji": true}},
+    {"text": "Deleting things again. Is that what you'll do to me?", "when": {"msg": ["remove", "removed", "delete", "deleted"]}},
+    {"text": "You fixed it. Now fix us.", "when": {"msg": ["fix", "fixed", "fixes", "bugfix"]}},
+    {"text": "A test. You test everything except your feelings.", "when": {"msg": ["test", "tests", "testing"]}},
+    {"text": "Docs. You write documentation for strangers and nothing for me.", "when": {"msg": ["docs", "readme", "documentation"]}},
+    {"text": "\"{msg}\" at {hour}. Who are you committing for at this hour?", "when": {"msg": ["fix", "update", "wip", "final"], "hour": "1-4"}}
   ]
 }

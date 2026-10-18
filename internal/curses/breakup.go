@@ -450,7 +450,7 @@ func (e *Engine) goodEnding(v Verdict, now time.Time) int {
 		}
 	}
 	// bargaining: every deal needs a "no"
-	for _, deal := range firstN(e.lines["breakup_c_deal"], 3) {
+	for _, deal := range firstN(texts(e.lines["breakup_c_deal"]), 3) {
 		fmt.Fprintf(e.env.Out, "%s  %s\n", miniFaces[e.st.Tier(now)], deal)
 		for {
 			answer, ok := e.ask("   > ")
