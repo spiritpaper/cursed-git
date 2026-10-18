@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anti-Cheat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rubik+Mono+One&family=VT323&display=swap">
+<style>
+/* Cursed Git series look. "I know what you did": three ways players try to cheat and how cg catches them.
+   1 plain git behind her back (ledger vs reflog), 2 XP farming with reverts (paid blobs), 3 editing her diary (hash chain). */
+:root{
+  --bg:#0d0b0f; --panel:#16131a; --panel2:#1d1922; --ink:#ece6da; --muted:#8a8290; --rule:#2c2632;
+  --ember:#ff4a3d; --rot:#b8cc46; --calm:#6fb7e0; --gold:#f2c14e; --ghost:#5b5462; --ok:#7bd389;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --term:"VT323", ui-monospace, monospace;
+  --display:"Rubik Mono One", "Arial Black", system-ui, sans-serif;
+  --heat:0;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font:400 clamp(18px,2.4vw,26px) var(--display);margin:0;letter-spacing:.02em}
+.top h1 span{color:var(--ember)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.box{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls button,.controls select{font:600 13px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 11px;cursor:pointer}
+.controls button[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.controls .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls .sp{flex:1}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+html.video,html.video body{overflow:hidden;background:var(--bg)}
+html.video .wrap{max-width:none;padding:0;width:100vw;height:100vh}
+html.video .top,html.video .controls{display:none}
+html.video .box{border:0;border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
+
+/* ---- shared scene parts ---- */
+.heat{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 75% 40%,rgba(255,74,61,calc(var(--heat)*.28)),transparent 60%);transition:background 1s}
+.chapter{position:absolute;left:70px;top:44px;display:flex;align-items:baseline;gap:18px}
+.chapter .n{font:400 22px var(--display);color:var(--ember)}
+.chapter .t{font:400 30px var(--display)}
+.chapter .s{font:600 17px var(--mono);color:var(--muted);margin-left:8px}
+.win{position:absolute;background:var(--panel);border:1px solid var(--rule);border-radius:14px;overflow:hidden;box-shadow:0 40px 90px -40px rgba(0,0,0,.8)}
+.win.alt{border-color:#4a3a28}
+.bar{height:44px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--rule);font:600 15px var(--mono);color:var(--muted)}
+.bar i{width:13px;height:13px;border-radius:50%;background:var(--rule)}
+.bar i:first-child{background:var(--ember)}
+.bar span{margin-left:10px}
+.win.alt .bar{background:#1f1a14;color:var(--gold)}
+.lines{position:absolute;left:0;right:0;top:44px;bottom:0;padding:18px 26px;font:400 31px/1.28 var(--term);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+.line{white-space:pre-wrap;word-break:break-word}
+.line .pr{color:var(--rot)} .line .pa{color:var(--calm)}
+.line.cg{color:var(--ember)} .line.cg .who{color:var(--gold)}
+.line.sys{color:var(--muted)} .line.sys b{font-weight:400;color:var(--ok)} .line.sys em{font-style:normal;color:var(--ember)} .line.sys u{text-decoration:none;color:var(--gold)}
+.line.dim{color:var(--ghost)}
+.caret{display:inline-block;width:.5em;height:.9em;background:currentColor;vertical-align:-.08em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.card{position:absolute;background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.card .k{font:600 13px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.cap{position:absolute;left:70px;right:70px;bottom:22px;text-align:center;font:400 22px var(--display);color:var(--gold);opacity:0;transition:opacity .5s;text-wrap:balance}
+.cap.show{opacity:1}
+.stamp{position:absolute;font:400 34px var(--display);color:var(--ember);border:5px solid var(--ember);border-radius:10px;padding:6px 16px;rotate:-8deg;opacity:0;scale:1.6;transition:opacity .25s,scale .25s cubic-bezier(.2,1.6,.4,1);pointer-events:none;background:rgba(13,11,15,.6)}
+.stamp.show{opacity:1;scale:1}
+
+/* scene 1: ledger vs reflog */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1}
+.col{display:flex;flex-direction:column;gap:10px}
+.col h4{margin:0;font:400 18px var(--display);color:var(--ink)}
+.col h4 small{display:block;font:600 13px var(--mono);color:var(--muted);letter-spacing:.06em;margin-top:4px}
+.row{background:var(--panel2);border:2px solid var(--rule);border-radius:10px;padding:10px 14px;font:400 26px/1.15 var(--term);display:flex;gap:12px;align-items:baseline;opacity:0;translate:0 8px;transition:opacity .35s,translate .35s,border-color .35s,background .35s}
+.row.show{opacity:1;translate:0 0}
+.row .h{color:var(--gold)} .row .m{color:var(--muted);flex:1} .row .r{font-family:var(--display);font-size:18px}
+.row.ok{border-color:color-mix(in srgb,var(--ok) 60%,var(--rule))} .row.ok .r{color:var(--ok)}
+.row.bad{border-color:var(--ember);background:color-mix(in srgb,var(--ember) 14%,var(--panel2))} .row.bad .r{color:var(--ember)}
+.row.ghost{border-style:dashed;color:var(--ember)}
+.hook{align-self:flex-start;font:600 15px var(--mono);color:var(--calm);border:1px solid var(--calm);border-radius:999px;padding:6px 14px;opacity:0;transition:opacity .3s}
+.hook.show{opacity:1;animation:pulse .9s ease-out 2}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(111,183,224,.6)}100%{box-shadow:0 0 0 18px rgba(111,183,224,0)}}
+
+/* scene 2: XP */
+.xp{font:400 120px/1 var(--term);color:var(--ink);font-variant-numeric:tabular-nums;transition:color .3s}
+.xp.up{color:var(--ok)}
+.pend{font:400 34px var(--term);color:var(--gold);min-height:40px}
+.blob{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:baseline;background:var(--panel2);border:2px solid var(--rule);border-radius:10px;padding:12px 16px;font:400 28px var(--term);opacity:0;transition:opacity .3s,border-color .3s;position:relative}
+.blob.show{opacity:1}
+.blob .h{color:var(--gold)} .blob .m{color:var(--muted)} .blob .s{font:400 16px var(--display)}
+.blob .s.p{color:var(--gold)} .blob .s.d{color:var(--ok)} .blob .s.x{color:var(--ember)}
+
+/* scene 3: hash chain */
+.chain{position:absolute;left:70px;top:150px;width:1460px;height:300px}
+.blk{position:absolute;top:20px;width:244px;height:240px;background:var(--panel);border:2px solid var(--rule);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;transition:border-color .4s,background .4s}
+.blk .n{font:600 13px var(--mono);color:var(--muted);letter-spacing:.12em}
+.blk .e{font:400 31px/1.05 var(--term);color:var(--ink);min-height:66px}
+.blk .f{font:400 22px var(--term);color:var(--muted)} .blk .f b{font-weight:400;color:var(--gold)}
+.blk.edit{border-color:var(--gold)}
+.blk.bad{border-color:var(--ember);background:color-mix(in srgb,var(--ember) 12%,var(--panel))}
+.blk.bad .f.prev b{color:var(--ember)}
+.blk.fixed .f.hash b{color:var(--calm)}
+.link{position:absolute;top:128px;height:6px;background:var(--ok);border-radius:3px;transition:background .4s}
+.link::after{content:"";position:absolute;right:-4px;top:-7px;border:10px solid transparent;border-left:14px solid var(--ok);border-right:0;transition:border-color .4s}
+.link.bad{background:var(--ember)} .link.bad::after{border-left-color:var(--ember)}
+.link.bad .x{opacity:1}
+.link .x{position:absolute;left:50%;top:-30px;translate:-50% 0;font:400 34px var(--display);color:var(--ember);opacity:0;transition:opacity .3s}
+.heart{position:absolute;right:0;top:272px;font:400 25px var(--term);color:var(--muted);display:flex;gap:10px;align-items:baseline;white-space:nowrap}
+.heart b{font-weight:400;color:var(--ember)} .heart i{font-style:normal;color:var(--gold)}
+.heart.bad i{color:var(--ember);text-decoration:line-through}
+.facecard{left:1010px;top:520px;width:520px;height:320px;align-items:center;justify-content:center}
+.face{font:400 84px/1 var(--term);color:var(--ember);white-space:pre;transition:transform .25s}
+.facecard .v{font:400 22px/1.25 var(--display);color:var(--gold);text-align:center;text-wrap:balance;min-height:56px}
+.big{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:rgba(13,11,15,.9);opacity:0;pointer-events:none;transition:opacity .4s}
+.big.show{opacity:1}
+.big .a{font:400 96px var(--display);color:var(--ember);text-align:center;line-height:1.05}
+.big .b{font:400 30px var(--mono);color:var(--muted)}
+@media (prefers-reduced-motion: reduce){.caret,.hook.show{animation:none}.row,.blob,.blk,.link,.stamp,.big{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Cursed <span>Git</span> · Anti-Cheat</h1><p>Three ways to cheat. Three ways she finds out.</p></div>
+  <div class="box" id="box">
+    <div class="stage" id="stage">
+      <div class="heat"></div>
+      <div class="chapter"><span class="n">cg</span><span class="t">i know what you did</span><span class="s" id="sub"></span></div>
+      <div id="scene"></div>
+      <div class="cap" id="cap"></div>
+    </div>
+  </div>
+  <div class="controls" id="controls">
+    <button class="primary" id="play" type="button">Pause</button>
+    <span class="sp"></span>
+    <select id="speed" aria-label="Speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+  </div>
+</div>
+
+<script>
+/* ---------- shared: video mode, scaling, run tokens ---------- */
+const P=new URLSearchParams(location.search), VIDEO=P.has('video'), NOLOOP=P.has('noloop');
+if(VIDEO)document.documentElement.classList.add('video');
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches&&!VIDEO;
+function fit(){const b=$('box');$('stage').style.transform=`scale(${Math.min(b.clientWidth/1600,b.clientHeight/900)})`;}
+new ResizeObserver(fit).observe($('box'));fit();
+let RUN=0,SPEED=1,playing=true;
+$('speed').onchange=e=>SPEED=+e.target.value;
+const wait=(ms,id)=>new Promise(r=>setTimeout(()=>r(id===RUN),REDUCED?Math.min(ms,250):ms/SPEED));
+const html=(s)=>{const t=document.createElement('template');t.innerHTML=s.trim();return t.content.firstChild;};
+/* a tiny stand-in for SHA-1 so the diary scene can show hashes changing (FNV-1a, 7 hex chars) */
+const h7=s=>{let h=0x811c9dc5;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,0x01000193)>>>0;}return (h>>>0).toString(16).padStart(8,'0').slice(0,7);};
+
+/* ---------- terminal helpers ---------- */
+function term(id,{x,y,w,h,title,alt}){const el=html(`<div class="win${alt?' alt':''}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><div class="bar"><i></i><i></i><i></i><span>${title}</span></div><div class="lines" id="${id}"></div></div>`);$('scene').append(el);return $(id);}
+function addLine(t,cls,h){const d=document.createElement('div');d.className='line '+(cls||'');if(h)d.innerHTML=h;t.append(d);while(t.children.length>16)t.firstChild.remove();return d;}
+async function typeInto(el,text,id,base){const c=document.createElement('span');c.className='caret';el.append(c);
+  for(const ch of text){c.before(ch);const d=ch===' '?base*.5:/[.,!?]/.test(ch)?base*5:base+Math.random()*base*.6;if(!await wait(d,id))return false;}c.remove();return true;}
+async function cmd(t,text,id,who='dev'){const pl=addLine(t,'',`<span class="pr">${who}</span> <span class="pa">~/cursed-git</span> $ `);if(!await wait(300,id))return false;if(!await typeInto(pl,text,id,46))return false;return wait(450,id);}
+async function cg(t,text,id,hold=900){const r=addLine(t,'cg','<span class="who">cg › </span>');if(!await typeInto(r,text,id,text.length<14?85:32))return false;return wait(hold+text.split(/\s+/).length*120,id);}
+const sys=(t,h)=>addLine(t,'sys',h);
+async function caption(text,id,hold=2600){const c=$('cap');c.textContent=text;c.classList.add('show');if(!await wait(hold,id))return false;return true;}
+function stamp(text,x,y){const s=html(`<div class="stamp" style="left:${x}px;top:${y}px">${text}</div>`);$('scene').append(s);s.offsetWidth;s.classList.add('show');return s;}
+const heat=v=>document.documentElement.style.setProperty('--heat',v);
+
+/* ===================================================================
+   Scenes
+   =================================================================== */
+const SCENES=[
+/* ---- 1 · plain git behind her back ---- */
+{t:'Behind her back',async run(id){
+  const A=term('tA',{x:70,y:110,w:700,h:300,title:'plain git · she isn\'t looking',alt:true});
+  const B=term('tB',{x:70,y:440,w:700,h:400,title:'cg · dev@laptop'});
+  const card=html(`<div class="card" style="left:820px;top:110px;width:710px;height:730px"><div class="cols">
+      <div class="col" id="led"><h4>Her ledger<small>what cg did</small></h4></div>
+      <div class="col" id="ref"><h4>The reflog<small>what actually happened</small></h4></div></div>
+      <span class="hook" id="hook">reference-transaction hook → witnessed.log</span></div>`);
+  $('scene').append(card);
+  const ROWS=[['a1f3c0d','add parser'],['7c2e1f0','add lexer'],['9b44e12','add tests']];
+  const mk=(col,h,m)=>{const r=html(`<div class="row"><span class="h">${h}</span><span class="m">${m}</span><span class="r"></span></div>`);$(col).append(r);return r;};
+  const pairs=[];
+  for(const [h,m] of ROWS){const a=mk('led',h,m),b=mk('ref',h,m);a.offsetWidth;a.classList.add('show');b.classList.add('show');pairs.push([a,b]);if(!await wait(350,id))return false;}
+  if(!await caption('Every commit and ref move cg makes goes into her ledger.',id,2400))return false;
+  $('cap').classList.remove('show');
+  if(!await cmd(A,'git reset --hard HEAD~1',id))return false;
+  sys(A,'HEAD is now at 7c2e1f0 add lexer');
+  $('hook').classList.add('show');
+  const ghost=mk('led','???????','(not me)');ghost.classList.add('ghost');
+  const real=mk('ref','7c2e1f0','reset → HEAD~1');
+  if(!await wait(400,id))return false;
+  real.classList.add('show');
+  if(!await wait(1800,id))return false;
+  sys(B,'<u>… the next morning</u>');
+  if(!await wait(700,id))return false;
+  if(!await cmd(B,'cg status',id))return false;
+  sys(B,'comparing ledger with reflog…');
+  for(const [a,b] of pairs){a.classList.add('ok');b.classList.add('ok');a.querySelector('.r').textContent='✓';b.querySelector('.r').textContent='✓';if(!await wait(380,id))return false;}
+  ghost.classList.add('show','bad');real.classList.add('bad');ghost.querySelector('.r').textContent='✗';real.querySelector('.r').textContent='✗';
+  heat(.8);
+  if(!await wait(700,id))return false;
+  if(!await cg(B,'I saw what you did with git reset.\nWho taught you that?',id,600))return false;
+  sys(B,'<em>+1 toxicity</em> · <em>+1 temper</em> · grudge saved');
+  if(!await caption('Plain git still works. She just finds out.',id,3600))return false;
+  return true;
+}},
+/* ---- 2 · XP farming ---- */
+{t:'XP farming',async run(id){
+  const T=term('t2',{x:70,y:110,w:840,h:730,title:'cg · dev@laptop'});
+  const xc=html(`<div class="card" style="left:950px;top:110px;width:580px;height:300px"><span class="k">Closure XP</span><span class="xp" id="xp">1,240</span><span class="pend" id="pend"></span></div>`);
+  const bc=html(`<div class="card" style="left:950px;top:430px;width:580px;height:410px"><span class="k">.git/cursed/paid-blobs</span><div class="blob show"><span class="h">e69de29</span><span class="m">old work</span><span class="s d">PAID</span></div><div class="blob show"><span class="h">acca208</span><span class="m">old work</span><span class="s d">PAID</span></div><div class="blob" id="nb"><span class="h">3f9a1c2</span><span class="m">500 lines</span><span class="s p" id="nbs">PENDING</span></div></div>`);
+  $('scene').append(xc,bc);
+  let xp=1240;const setXP=(v,up)=>{xp=v;const e=$('xp');e.textContent=v.toLocaleString('en-US');e.classList.toggle('up',!!up);if(up)setTimeout(()=>e.classList.remove('up'),900);};
+  if(!await cmd(T,'cg commit -m "add rate limiter"',id))return false;
+  sys(T,'blob <u>3f9a1c2</u> · 500 new lines · <b>new content</b>');
+  $('nb').classList.add('show');$('pend').textContent='+500 pending (pays in 24h)';
+  if(!await cg(T,'Nice. I will pay you if it is still here tomorrow.',id,500))return false;
+  addLine(T,'dim','… 24 hours later. still reachable from main.');
+  if(!await wait(1200,id))return false;
+  $('nbs').textContent='PAID';$('nbs').className='s d';$('pend').textContent='';setXP(1740,true);
+  if(!await wait(1600,id))return false;
+  if(!await caption('Now the cheat: revert it, re-apply it, get paid again?',id,2600))return false;
+  $('cap').classList.remove('show');
+  if(!await cmd(T,'cg revert HEAD',id))return false;
+  if(!await cg(T,'You want to pretend it never happened?',id,300))return false;
+  sys(T,'<em>+1 temper</em>');
+  if(!await cmd(T,'cg revert HEAD',id))return false;
+  sys(T,'blob <u>3f9a1c2</u> · 500 lines · <em>already paid</em>');
+  $('pend').textContent='+0';
+  const s=stamp('ALREADY PAID',1110,700);
+  if(!await wait(900,id))return false;
+  if(!await cg(T,'Nice try. I know that blob.\nSame content, same hash.',id,800))return false;
+  s.remove();
+  if(!await caption("Git's content addressing does her anti-cheat for free.",id,3800))return false;
+  return true;
+}},
+/* ---- 3 · the diary ---- */
+{t:'The diary',async run(id){
+  const EV=['commit a1f3c0d','warning ignored','cg beg','boss fight won','push --force'];
+  const chain=html(`<div class="chain" id="chain"></div>`);$('scene').append(chain);
+  const W=244,G=60;const blocks=[];let prev='0000000';
+  EV.forEach((e,i)=>{const hash=h7(prev+e);const b=html(`<div class="blk" style="left:${i*(W+G)}px"><span class="n">EVENT ${i+1}</span><span class="e">${e}</span><span class="f prev">prev <b>${prev}</b></span><span class="f hash">hash <b>${hash}</b></span></div>`);
+    chain.append(b);blocks.push({el:b,e,prev,hash});prev=hash;
+    if(i>0){const l=html(`<div class="link" style="left:${i*(W+G)-G+6}px;width:${G-16}px"><span class="x">✗</span></div>`);chain.append(l);blocks[i].link=l;}});
+  const heart=html(`<div class="heart" id="heart"><b>♥</b> refs/cursed/heart → <i>${prev}</i></div>`);chain.append(heart);
+  const T=term('t3',{x:70,y:520,w:900,h:320,title:'dev@laptop: ~/cursed-git'});
+  const fc=html(`<div class="card facecard"><div class="face" id="face">( ¬_¬ )</div><div class="v" id="say"></div></div>`);$('scene').append(fc);
+  const say=async(t,f)=>{if(f)$('face').textContent=f;const v=$('say');v.textContent='';for(const ch of t){v.textContent+=ch;if(!await wait(ch===' '?12:26,id))return false;}return true;};
+  if(!await caption('Every event stores the hash of the one before it. Like commits and their parents.',id,3400))return false;
+  $('cap').classList.remove('show');
+  if(!await cmd(T,'vim .git/cursed/events.log',id))return false;
+  sys(T,'deleting the "cg beg" line… she will never know');
+  const b3=blocks[2];b3.el.classList.add('edit');
+  const e3=b3.el.querySelector('.e');
+  for(let i=e3.textContent.length;i>=0;i--){e3.textContent=b3.e.slice(0,i);if(!await wait(60,id))return false;}
+  for(const ch of '(nothing)'){e3.textContent+=ch;if(!await wait(70,id))return false;}
+  const nh=h7(b3.prev+'(nothing)');b3.el.querySelector('.hash b').textContent=nh;
+  if(!await wait(600,id))return false;
+  blocks[3].el.classList.add('bad');blocks[3].link.classList.add('bad');
+  if(!await say('Event 4 still points at the old hash.','( ò_ó )'))return false;
+  if(!await wait(1500,id))return false;
+  sys(T,'fine. re-hashing everything after it too…');
+  let p=nh;
+  for(let i=3;i<5;i++){const b=blocks[i];b.el.querySelector('.prev b').textContent=p;const h=h7(p+b.e);b.el.querySelector('.hash b').textContent=h;p=h;
+    b.el.classList.remove('bad');b.el.classList.add('fixed');b.link.classList.remove('bad');if(!await wait(700,id))return false;}
+  b3.el.classList.remove('edit');b3.el.classList.add('fixed');
+  if(!await say('Clever.','( ¬_¬ )'))return false;
+  if(!await wait(1200,id))return false;
+  heart.classList.add('bad');heart.querySelector('i').insertAdjacentHTML('afterend',` <b>≠ ${p}</b>`);
+  heat(1);
+  if(!await say('But my heart remembers the real last hash.','(╬ ò_ó)'))return false;
+  if(!await wait(1600,id))return false;
+  const big=html(`<div class="big"><div class="a">You read<br>my diary.</div><div class="b">→ counts as a breakup attempt · Ending A</div></div>`);$('scene').append(big);big.offsetWidth;big.classList.add('show');
+  if(!await wait(4200,id))return false;
+  return true;
+}},
+];
+
+/* ---------- player ---------- */
+let idx=Math.max(0,Math.min(SCENES.length-1,(+P.get('scene')||1)-1)),only=P.has('scene');
+const ctr=$('controls');
+SCENES.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=`${i+1} · ${s.t}`;b.dataset.s=i;
+  b.onclick=()=>{only=true;playing=true;$('play').textContent='Pause';play(i);};ctr.insertBefore(b,ctr.querySelector('.sp'));});
+async function play(i){
+  const id=++RUN;idx=i;const s=SCENES[i];
+  $('scene').innerHTML='';$('cap').classList.remove('show');heat(0);$('sub').textContent=`${i+1} · ${s.t}`;
+  ctr.querySelectorAll('[data-s]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.s===i));
+  if(!await wait(500,id))return;
+  if(!await s.run(id))return;
+  if(id!==RUN||NOLOOP)return;
+  if(playing||VIDEO){if(await wait(1200,id))play(only?i:(i+1)%SCENES.length);}
+}
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play';if(playing)play(idx);else RUN++;};
+(document.fonts?.ready||Promise.resolve()).then(()=>play(idx));
+</script>
+</body>
+</html>

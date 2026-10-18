@@ -1,0 +1,7 @@
+{
+  "name": "cursed-git-animations",
+  "private": true,
+  "type": "module",
+  "scripts": { "setup": "npx playwright install chromium" },
+  "dependencies": { "playwright": "^1.56.0" }
+}

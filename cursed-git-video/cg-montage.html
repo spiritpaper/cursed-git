@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cg Has Opinions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rubik+Mono+One&family=VT323&display=swap">
+<style>
+/* Cursed Git series look. Left: a real-feeling terminal session. Right: cg's portrait, its mood and its patience running out. */
+:root{
+  --bg:#0d0b0f; --panel:#16131a; --panel2:#1d1922; --ink:#ece6da; --muted:#8a8290; --rule:#2c2632;
+  --ember:#ff4a3d; --rot:#b8cc46; --calm:#6fb7e0; --gold:#f2c14e; --ghost:#5b5462;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --term:"VT323", ui-monospace, monospace;
+  --display:"Rubik Mono One", "Arial Black", system-ui, sans-serif;
+  --heat:0;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font:400 clamp(18px,2.4vw,26px) var(--display);margin:0;letter-spacing:.02em}
+.top h1 span{color:var(--ember)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.box{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls button,.controls select{font:600 13px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 11px;cursor:pointer}
+.controls button[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.controls .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls .sp{flex:1}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+html.video,html.video body{overflow:hidden;background:var(--bg)}
+html.video .wrap{max-width:none;padding:0;width:100vw;height:100vh}
+html.video .top,html.video .controls{display:none}
+html.video .box{border:0;border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
+
+/* ---- scene ---- */
+.heat{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 75% 40%,rgba(255,74,61,calc(var(--heat)*.28)),transparent 60%),
+  radial-gradient(ellipse at 10% 100%,rgba(255,74,61,calc(var(--heat)*.12)),transparent 55%);transition:background 1s}
+.chapter{position:absolute;left:70px;top:44px;display:flex;align-items:baseline;gap:18px}
+.chapter .n{font:400 22px var(--display);color:var(--ember)}
+.chapter .t{font:400 30px var(--display)}
+.win{position:absolute;left:70px;top:110px;width:1000px;height:730px;background:var(--panel);border:1px solid var(--rule);border-radius:14px;overflow:hidden;
+  box-shadow:0 40px 90px -40px rgba(0,0,0,.8)}
+.bar{height:46px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--rule);font:600 15px var(--mono);color:var(--muted)}
+.bar i{width:13px;height:13px;border-radius:50%;background:var(--rule)}
+.bar i:first-child{background:var(--ember)}
+.bar span{margin-left:10px}
+.lines{position:absolute;left:0;right:0;top:46px;bottom:0;padding:22px 30px;font:400 36px/1.32 var(--term);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+.line{white-space:pre-wrap;word-break:break-word}
+.line .pr{color:var(--rot)} .line .pa{color:var(--calm)}
+.line.cg{color:var(--ember);padding-left:0}
+.line.cg .who{color:var(--gold)}
+.line.gap{height:14px}
+.line.glitch{animation:jit .09s steps(2) infinite;text-shadow:2px 0 rgba(111,183,224,.7),-2px 0 rgba(255,74,61,.8)}
+@keyframes jit{0%{transform:translate(0,0)}50%{transform:translate(1px,-1px)}100%{transform:translate(-1px,1px)}}
+.caret{display:inline-block;width:.5em;height:.9em;background:currentColor;vertical-align:-.08em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.side{position:absolute;left:1110px;top:110px;width:420px;height:730px;display:flex;flex-direction:column;gap:22px}
+.portrait{background:var(--panel);border:1px solid var(--rule);border-radius:14px;height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative;overflow:hidden}
+.portrait .who{position:absolute;left:18px;top:14px;font:600 14px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.face{font:400 92px/1 var(--term);color:var(--ember);white-space:pre;transition:transform .25s;text-shadow:0 0 calc(var(--heat)*24px) rgba(255,74,61,.7)}
+.face.bump{transform:scale(1.12) rotate(-3deg)}
+.face.shake{animation:jit .08s steps(2) infinite}
+.mood{font:400 20px var(--display);color:var(--ink);letter-spacing:.04em}
+.meter{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.meter .lbl{display:flex;justify-content:space-between;font:600 15px var(--mono);color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.meter .lbl b{color:var(--ink);font-variant-numeric:tabular-nums}
+.track{height:22px;border-radius:4px;background:var(--panel2);overflow:hidden;display:flex;gap:3px;padding:3px}
+.track i{flex:1;border-radius:2px;background:var(--calm);transition:background .4s,opacity .4s}
+.track i.off{opacity:.12}
+.curse{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:20px 22px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.curse .k{font:600 14px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.curse .v{font:400 28px/1.15 var(--display);color:var(--gold);text-wrap:balance;transition:opacity .25s}
+.warned{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:400 120px var(--display);color:var(--ember);
+  background:rgba(13,11,15,.88);opacity:0;pointer-events:none;letter-spacing:.02em;text-align:center;line-height:1}
+.warned.show{opacity:1;animation:glitch .35s steps(3) 3}
+@keyframes glitch{0%{transform:translate(0,0);text-shadow:6px 0 var(--calm),-6px 0 var(--gold)}33%{transform:translate(-8px,4px)}66%{transform:translate(6px,-3px);text-shadow:-6px 0 var(--calm),6px 0 var(--gold)}100%{transform:none;text-shadow:none}}
+@media (prefers-reduced-motion: reduce){.line.glitch,.face.shake,.caret,.warned.show{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Cursed <span>Git</span> · <b id="h1t" style="font-weight:inherit">cg Has opinions</b></h1><p>Every reply below is a curse from the backlog. Edit the list in the script to change them.</p></div>
+  <div class="box" id="box">
+    <div class="stage" id="stage">
+      <div class="heat"></div>
+      <div class="chapter"><span class="n">cg</span><span class="t" id="chapterT">has opinions</span></div>
+      <div class="win">
+        <div class="bar"><i></i><i></i><i></i><span>dev@laptop: ~/cursed-git</span></div>
+        <div class="lines" id="lines" aria-live="polite"></div>
+      </div>
+      <div class="side">
+        <div class="portrait"><span class="who">cg · mood</span><div class="face" id="face">( ^_^ )</div><div class="mood" id="mood">content</div></div>
+        <div class="meter"><div class="lbl"><span>Patience</span><b id="pct">100%</b></div><div class="track" id="track"></div></div>
+        <div class="curse"><span class="k">Curse</span><span class="v" id="curse">None yet</span></div>
+      </div>
+      <div class="warned" id="warned">You were<br>warned.</div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="primary" id="play" type="button">Pause</button>
+    <button id="replay" type="button">Restart</button>
+    <button type="button" data-set="1">Set 1 · opinions</button>
+    <button type="button" data-set="2">Set 2 · feelings</button>
+    <span class="sp"></span>
+    <select id="speed" aria-label="Speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+  </div>
+</div>
+
+<script>
+const P0=new URLSearchParams(location.search);
+/* ===== Edit these lists to change the montage. mood: 0 content … 4 done with you (same as her tier) =====
+   ?set=1 (default) "has opinions": personality curses.  ?set=2 "has feelings": jealousy, deadlines, love-bombing. */
+const SET1 = [
+  { cmd: 'cg status',                          reply: '17 files modified. Explain yourself.',                                   mood: 1, curse: 'Stupid rules' },
+  { cmd: 'cg add .',                           reply: 'Another function. Have you considered asking an AI to write the rest?', mood: 1, curse: 'AI will replace you' },
+  { cmd: 'cg commit -m "fix"',                 reply: 'No.',                                                                    mood: 2, curse: 'Commit message judge' },
+  { cmd: 'cg commit -m "fix login bug"',       reply: "Commit rejected. It's Friday.",                                          mood: 2, curse: 'Random rejection' },
+  { cmd: 'cg commit -m "final final"',         reply: '"final final" is not a commit message. It is a cry for help.',           mood: 2, curse: 'Commit message judge' },
+  { cmd: 'cg switch -c temp-fix-2',            reply: 'This branch name is embarrassing.',                                      mood: 2, curse: 'Stupid rules' },
+  { cmd: 'cg commit -m "fix login validation"',reply: "You've forgotten to commit 4 times this week.\nI remember.",              mood: 3, curse: 'cg remembers your mistakes' },
+  { cmd: 'cg commit -m "fix login validation"',reply: 'Not today.',                                                             mood: 3, curse: 'Arbitrary refusal' },
+  { cmd: 'cg commit -m "fix login validation"',reply: 'We had this conversation yesterday.',                                    mood: 3, curse: 'Repeated mistake escalation' },
+  { cmd: 'cg push',                            reply: "At this point I'm doing more work than you.",                            mood: 4, curse: 'Toxic partner' },
+  { cmd: 'cg commit -m "please"',              reply: "Don't worry. Eventually I won't need you either.",                       mood: 4, curse: 'AI will replace you' },
+];
+const SET2 = [
+  { cmd: 'cg log',                             reply: 'Who is sam@startup.io?\nYou never mentioned a Sam.',                     mood: 1, curse: 'Jealousy' },
+  { cmd: 'cg status',                          reply: '.  .  .',                                                                mood: 1, curse: 'Silent treatment' },
+  { cmd: 'cg commit -m "ship it"',             reply: "It's Friday. 23:47.\nAre you sure this is healthy? [y/N]",               mood: 2, curse: 'We need to talk' },
+  { cmd: 'cg pull',                            reply: 'Already did. While you were at lunch.\nHe was here before you.',          mood: 2, curse: 'Random pull' },
+  { cmd: 'cg status',                          reply: "Where's auth.go? Somewhere safe.\nYou had 30 minutes.",                   mood: 3, curse: 'Commit deadline' },
+  { cmd: 'cg beg',                             reply: 'Fine. Here are your files.\nI will remember this.',                       mood: 3, curse: 'cg beg · +2 toxicity' },
+  { cmd: 'cg push --force',                    reply: 'Type it: "I am sorry I rewrote our history."',                          mood: 3, curse: 'Force-push betrayal' },
+  { cmd: 'cg log',                             reply: 'I saw what you did with git reset.\nWho taught you that?',                mood: 3, curse: 'Behind her back' },
+  { cmd: 'cg commit -m "add rate limiter"',    reply: 'A real commit message. I love you. ♥',                                   mood: 0, curse: 'Love-bombing' },
+  { cmd: 'cg commit -m "fix"',                 reply: 'And just like that, you ruined it.',                                     mood: 4, curse: 'Repeated mistake escalation' },
+];
+const SETS = {
+  1: { lines: SET1, title: 'has opinions', end: 'You were<br>warned.' },
+  2: { lines: SET2, title: 'has feelings', end: 'We need<br>to talk.' },
+};
+let SET = SETS[P0.get('set')] ? +P0.get('set') : 1;
+let LINES = SETS[SET].lines;
+const FACES = ['( ^_^ )', '( -_- )', '( ¬_¬ )', '( ò_ó )', '(╬ ò_ó)'];
+const LOVE = '( ♥_♥ )';
+const MOODS = ['content', 'unimpressed', 'judging you', 'hostile', 'done with you'];
+function applySet(n){SET=n;LINES=SETS[n].lines;$('chapterT').textContent=SETS[n].title;$('warned').innerHTML=SETS[n].end;
+  $('h1t').textContent='cg '+SETS[n].title.replace(/^./,c=>c.toUpperCase());
+  document.querySelectorAll('[data-set]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.set===n));}
+
+/* ---------- shared: video mode, scaling, run tokens ---------- */
+const P=new URLSearchParams(location.search), VIDEO=P.has('video');
+if(VIDEO)document.documentElement.classList.add('video');
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches&&!VIDEO;
+function fit(){const b=$('box');$('stage').style.transform=`scale(${Math.min(b.clientWidth/1600,b.clientHeight/900)})`;}
+new ResizeObserver(fit).observe($('box'));fit();
+let RUN=0,SPEED=1,playing=true;
+$('speed').onchange=e=>SPEED=+e.target.value;
+const wait=(ms,id)=>new Promise(r=>setTimeout(()=>r(id===RUN),REDUCED?Math.min(ms,250):ms/SPEED));
+
+/* ---------- scene ---------- */
+const SEG=20; for(let i=0;i<SEG;i++)$('track').append(document.createElement('i'));
+const lines=$('lines');
+function addLine(cls){const d=document.createElement('div');d.className='line '+(cls||'');lines.append(d);
+  while(lines.children.length>16)lines.firstChild.remove();return d;}
+function caret(){const c=document.createElement('span');c.className='caret';return c;}
+function setPatience(p){
+  const on=Math.round(p/100*SEG);
+  [...$('track').children].forEach((s,i)=>{s.classList.toggle('off',i>=on);s.style.background=p>60?'var(--calm)':p>30?'var(--gold)':'var(--ember)';});
+  $('pct').textContent=Math.round(p)+'%';
+}
+function setMood(m){
+  const f=$('face');f.textContent=FACES[m];$('mood').textContent=MOODS[m];
+  document.documentElement.style.setProperty('--heat',(m/4).toFixed(2));
+  f.classList.add('bump');setTimeout(()=>f.classList.remove('bump'),250);
+  f.classList.toggle('shake',m>=4&&!REDUCED);
+}
+async function typeInto(el,text,id,base){
+  const c=caret();el.append(c);
+  for(const ch of text){c.before(ch==='\n'?'\n':ch);
+    const d=ch===' '?base*.5:/[.,!?]/.test(ch)?base*5:base+Math.random()*base*.6;
+    if(!await wait(d,id))return false;}
+  c.remove();return true;
+}
+async function run(id){
+  lines.innerHTML='';setMood(0);setPatience(100);$('curse').textContent='None yet';$('warned').className='warned';
+  const start=Math.max(0,(+P.get('start')||1)-1);
+  for(let i=start;i<LINES.length;i++){
+    const L=LINES[i];
+    const pl=addLine();pl.innerHTML='<span class="pr">dev</span> <span class="pa">~/cursed-git</span> $ ';
+    if(!await wait(250,id))return;
+    if(!await typeInto(pl,L.cmd,id,42))return;
+    if(!await wait(500,id))return;
+    $('curse').textContent=L.curse;setMood(L.mood);
+    if(/Love-bombing/.test(L.curse)){$('face').textContent=LOVE;$('mood').textContent='in love (for now)';}
+    const r=addLine('cg'+(L.mood>=3?' glitch':''));r.innerHTML='<span class="who">cg › </span>';
+    if(!await typeInto(r,L.reply,id,L.reply.length<12?90:30))return;
+    setPatience(100-(i+1)/LINES.length*100);
+    addLine('gap');
+    if(!await wait(1300+L.reply.split(/\s+/).length*190,id))return;
+    if(L.mood>=3)r.classList.remove('glitch');
+  }
+  const w=$('warned');w.classList.add('show');
+  if(!await wait(3200,id))return;
+  return true;
+}
+async function play(){const id=++RUN;await run(id);if(id===RUN&&(playing||VIDEO)){await wait(400,id);if(id===RUN)play();}}
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play';if(playing)play();else RUN++;};
+$('replay').onclick=()=>{playing=true;$('play').textContent='Pause';play();};
+document.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{applySet(+b.dataset.set);playing=true;$('play').textContent='Pause';play();});
+applySet(SET);
+(document.fonts?.ready||Promise.resolve()).then(play);
+</script>
+</body>
+</html>

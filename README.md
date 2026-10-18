@@ -9,14 +9,16 @@ committing, and turns every merge conflict into a boss fight.
 
 You learn git by surviving her.
 
+![Miranda answering cg commands: "17 files modified. Explain yourself.", "No.", "Commit rejected. It's Friday."](docs/media/hero.gif)
+
 ```
           _.-''''''''''-._
        .-'  .-''''''''-.  '-.
      .'   .'/\/\/\/\/\/\'.   '.
     /   .' |    \  /    | '.   \
-   /   /   |    o  o    |   \   \        $ cg commit -m "fix"
-   |   |    \   /^^\   /    |   |        ( ò_ó )  I fixed your commit message. You're welcome.
-   |   |     '.______.'     |   |                 → "fix (he said, like that explains anything)"
+   /   /   |    o  o    |   \   \        $ cg commit -m "revert the login fix"
+   |   |    \   /^^\   /    |   |        ( ò_ó )  You're taking it back? Like everything else?
+   |   |     '.______.'     |   |
    |   |      _|    |_      |   |
   /|   |    .' '----' '.    |   |\
  / |   |   /     <>     \   |   | \
@@ -115,6 +117,8 @@ One dial: her **tier**. The preset decides where she starts and how high she can
 | `psycho` (default) | 3 | 4 | the full experience |
 | `hackathon` | 3 | 4 | psycho, with goals scaled to the event (`--hours 24`) |
 
+![Code decay: a file you haven't touched rots in your working tree, and a commit brings it back](docs/media/code-decay.gif)
+
 Treat her well (good commit messages, committing regularly) and she calms down. Ignore her
 warnings, force-push, or use plain `git` behind her back, and she gets worse.
 
@@ -134,6 +138,8 @@ After Miranda's good ending, Juniper is waiting. Writing your own character is o
 see [docs/CHARACTERS.md](docs/CHARACTERS.md).
 
 ## Boss fights
+
+![A merge conflict boss fight: "A wild MERGE CONFLICT appeared!", "cg disabled it. You can't run."](docs/media/boss-fight.gif)
 
 When git stops a merge because both sides changed the same lines, at Tier 3 and up that's a
 fight:
@@ -240,6 +246,14 @@ cg write-tree                    # turn the index into tree objects
 - [docs/lessons/writing-a-character.md](docs/lessons/writing-a-character.md): what makes a character unforgettable (the research behind Miranda)
 - [docs/ROADMAP.md](docs/ROADMAP.md): how it was built, phase by phase
 - [DEVNOTE.md](DEVNOTE.md): every mistake made along the way
+
+## Watch her
+
+Nine short animations live in [cursed-git-video/](cursed-git-video/): how git works inside, the
+tier ladder, code decay, the boss fight, the breakup endings, the anti-cheat and more. Clone the
+repo and open any `.html` file in a browser; add `?video` for a clean full-screen stage. Its
+[README](cursed-git-video/README.md) has the recording tools (they render MP4s with Playwright
+and ffmpeg).
 
 ## Status
 

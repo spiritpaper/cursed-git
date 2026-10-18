@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Git Works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rubik+Mono+One&family=VT323&display=swap">
+<style>
+/* Cursed Git series look: a dark terminal stage (1600×900, scaled to fit), bone-white type,
+   ember red for curses, sickly green for rot, cool blue for "safe" git. */
+:root{
+  --bg:#0d0b0f; --panel:#16131a; --panel2:#1d1922; --ink:#ece6da; --muted:#8a8290; --rule:#2c2632;
+  --ember:#ff4a3d; --rot:#b8cc46; --calm:#6fb7e0; --gold:#f2c14e; --ghost:#5b5462;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --term:"VT323", ui-monospace, monospace;
+  --display:"Rubik Mono One", "Arial Black", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font:400 clamp(18px,2.4vw,26px) var(--display);margin:0;letter-spacing:.02em}
+.top h1 span{color:var(--ember)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.box{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls button,.controls select{font:600 13px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 11px;cursor:pointer}
+.controls button[aria-pressed="true"]{border-color:var(--calm);box-shadow:inset 0 0 0 1px var(--calm)}
+.controls .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls .sp{flex:1}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+html.video,html.video body{overflow:hidden;background:var(--bg)}
+html.video .wrap{max-width:none;padding:0;width:100vw;height:100vh}
+html.video .top,html.video .controls{display:none}
+html.video .box{border:0;border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
+
+/* ---- this scene ---- */
+.chapter{position:absolute;left:70px;top:44px;display:flex;align-items:baseline;gap:18px}
+.chapter .n{font:400 22px var(--display);color:var(--ember)}
+.chapter .t{font:400 30px var(--display);letter-spacing:.01em}
+.chapter.curse .n{color:var(--ember)}
+.term{position:absolute;left:70px;right:70px;top:110px;height:64px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;
+  display:flex;align-items:center;padding:0 22px;font:400 34px var(--term);gap:12px;white-space:pre;overflow:hidden}
+.term .p{color:var(--calm)}
+.term .cg{color:var(--ember)}
+.caret{display:inline-block;width:.55em;height:.95em;background:currentColor;vertical-align:-.1em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+svg.graph{position:absolute;left:0;top:190px;width:1600px;height:560px;overflow:visible}
+.caption{position:absolute;left:70px;right:70px;bottom:52px;min-height:96px;font:600 32px/1.35 var(--mono);color:var(--ink);text-wrap:balance}
+.caption em{font-style:normal;color:var(--gold)}
+.node{transition:transform .7s cubic-bezier(.65,0,.35,1),opacity .6s}
+.node .pop{transform-box:fill-box;transform-origin:center;animation:pop .45s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.node circle{fill:var(--panel2);stroke:var(--ink);stroke-width:3.5}
+.node .hash{font:800 20px var(--mono);fill:var(--ink)}
+.node .msg{font:400 21px var(--mono);fill:var(--muted)}
+.node.ghost{opacity:.38}
+.node.ghost circle{stroke-dasharray:6 6;stroke:var(--ghost)}
+.node.doomed circle{stroke:var(--ember);fill:#3a1414}
+.node.remote circle{stroke:var(--calm)}
+.edge{fill:none;stroke:var(--muted);stroke-width:3;transition:opacity .6s}
+.edge.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .6s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.edge.ghost{stroke-dasharray:6 7;opacity:.35}
+.label{transition:transform .7s cubic-bezier(.65,0,.35,1),opacity .4s}
+.label rect{fill:var(--panel);stroke:var(--calm);stroke-width:2}
+.label text{font:800 21px var(--mono);fill:var(--calm)}
+.label.head rect{fill:var(--calm)}
+.label.head text{fill:var(--bg)}
+.label.remote rect{stroke:var(--gold)} .label.remote text{fill:var(--gold)}
+.label.reflog rect{stroke:var(--ghost);stroke-dasharray:5 5} .label.reflog text{fill:var(--muted)}
+.conflict{position:absolute;right:90px;top:300px;transform:scale(.9);opacity:0;background:var(--panel);border:2px solid var(--ember);border-radius:12px;
+  padding:22px 30px;font:400 26px/1.45 var(--mono);white-space:pre;transition:opacity .4s,transform .4s;box-shadow:0 30px 80px -20px rgba(255,74,61,.35)}
+.conflict.show{opacity:1;transform:scale(1)}
+.conflict .m{color:var(--ember)} .conflict .o{color:var(--calm)} .conflict .t{color:var(--gold)}
+.face{position:absolute;right:90px;top:52px;font:400 46px var(--term);color:var(--ember);opacity:0;transition:opacity .4s}
+.face.show{opacity:1}
+.flame{position:absolute;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.node,.label{transition:none}.node .pop,.edge.draw,.caret{animation:none}.edge.draw{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Cursed <span>Git</span> · How Git Works</h1><p>Seven short scenes. Pick one or let them play in order.</p></div>
+  <div class="box" id="box">
+    <div class="stage" id="stage">
+      <div class="chapter" id="chapter"><span class="n" id="chN">01</span><span class="t" id="chT"></span></div>
+      <div class="face" id="face">( ¬_¬ )</div>
+      <div class="term" id="term"><span class="p">$</span><span id="cmd"></span><span class="caret"></span></div>
+      <svg class="graph" id="svg" viewBox="0 0 1600 560" aria-label="Commit graph">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8a8290"/></marker>
+        </defs>
+        <g id="edges"></g><g id="nodes"></g><g id="labels"></g>
+      </svg>
+      <div class="conflict" id="conflict"></div>
+      <div class="caption" id="caption" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="controls" id="controls">
+    <button class="primary" id="play" type="button">Pause</button>
+    <button id="replay" type="button">Replay scene</button>
+    <span class="sp"></span>
+    <select id="speed" aria-label="Speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+  </div>
+</div>
+
+<script>
+/* ---------- shared: video mode, scaling, run tokens ---------- */
+const P=new URLSearchParams(location.search), VIDEO=P.has('video');
+if(VIDEO)document.documentElement.classList.add('video');
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches&&!VIDEO;
+function fit(){const b=$('box');$('stage').style.transform=`scale(${Math.min(b.clientWidth/1600,b.clientHeight/900)})`;}
+new ResizeObserver(fit).observe($('box'));fit();
+let RUN=0,SPEED=1,playing=true;
+$('speed').onchange=e=>SPEED=+e.target.value;
+const wait=(ms,id)=>new Promise(r=>setTimeout(()=>r(id===RUN),REDUCED?Math.min(ms,300):ms/SPEED));
+const NS='http://www.w3.org/2000/svg';
+function sv(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;}
+
+/* ---------- graph model ---------- */
+const LANES={top:110,main:280,feature:450};
+const RAD=38,GAP=230;let X0=170;
+const X=col=>X0+col*GAP;
+let G;
+function hash(s){let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return (h>>>0).toString(16).padStart(8,'0').slice(0,7);}
+function reset(){
+  ['edges','nodes','labels'].forEach(i=>$(i).innerHTML='');
+  $('conflict').className='conflict';$('face').className='face';$('cmd').textContent='';$('caption').innerHTML='';
+  G={commits:{},branches:{},head:null,labels:{}};
+}
+function pos(c){return {x:X(c.col),y:LANES[c.lane]};}
+function addCommit(id,msg,col,lane,parents,opts={}){
+  const c={id,msg,col,lane,parents,hash:opts.hash||hash(id+msg),edges:[]};
+  const p=pos(c);
+  const g=sv('g',{class:'node'+(opts.cls?' '+opts.cls:'')},$('nodes'));g.style.transform=`translate(${p.x}px,${p.y}px)`;
+  const pop=sv('g',{class:opts.instant?'':'pop'},g);
+  sv('circle',{r:RAD},pop);
+  const t=sv('text',{class:'hash','text-anchor':'middle',y:7},pop);t.textContent=c.hash.slice(0,4);
+  const m=sv('text',{class:'msg','text-anchor':'middle',y:lane==='main'?70:-56},pop);m.textContent=msg;
+  c.el=g;c.hashEl=t;c.msgEl=m;G.commits[id]=c;
+  parents.forEach(pid=>edge(c,G.commits[pid],opts.instant));
+  return c;
+}
+function edgePath(c,p){
+  const a=pos(c),b=pos(p);
+  if(a.y===b.y)return `M${a.x-RAD-2} ${a.y} L${b.x+RAD+4} ${b.y}`;
+  const bx=b.x+RAD+4,by=b.y;
+  return `M${a.x-RAD+4} ${a.y+(b.y>a.y?RAD*.55:-RAD*.55)} C${a.x-120} ${a.y}, ${bx+80} ${by}, ${bx} ${by}`;
+}
+function edge(c,p,instant){
+  const e=sv('path',{class:'edge','marker-end':'url(#arrow)',d:edgePath(c,p)},$('edges'));
+  if(!instant){const L=e.getTotalLength();e.style.setProperty('--len',L);e.classList.add('draw');}
+  c.edges.push({to:p.id,el:e});return e;
+}
+function refreshEdges(c){c.edges.forEach(ed=>ed.el.setAttribute('d',edgePath(c,G.commits[ed.to])));}
+function moveCommit(c,col,lane){c.col=col;c.lane=lane;const p=pos(c);c.el.style.transform=`translate(${p.x}px,${p.y}px)`;c.el.removeAttribute('transform');
+  Object.values(G.commits).forEach(refreshEdges);}
+
+/* labels: branch pills stacked above (or below for the feature lane) their commit */
+function label(name,cls){
+  if(G.labels[name])return G.labels[name];
+  const g=sv('g',{class:'label '+(cls||'')},$('labels'));
+  const r=sv('rect',{rx:9,height:40,y:-20},g);const t=sv('text',{y:8,'text-anchor':'middle'},g);
+  G.labels[name]={g,r,t,name,cls};return G.labels[name];
+}
+function layoutLabels(){
+  const at={};
+  for(const name in G.branches){const id=G.branches[name];if(id==null||!G.commits[id]){G.labels[name]&&(G.labels[name].g.style.opacity=0);continue;}(at[id]=at[id]||[]).push(name);}
+  
+  for(const id in at){
+    const c=G.commits[id],p=pos(c),below=c.lane==='feature';
+    at[id].sort((a,b)=>(G.head===b)-(G.head===a)).forEach((name,i)=>{
+      const L=G.labels[name],isHead=G.head===name;
+      const text=(isHead?'HEAD → ':'')+name;
+      L.t.textContent=text;const w=text.length*13.3+30;L.r.setAttribute('width',w);L.r.setAttribute('x',-w/2);
+      L.g.classList.toggle('head',isHead);L.g.style.opacity=1;
+      const y=below? p.y+76+i*48 : p.y-(c.lane==='top'?104:76)-i*48;
+      L.g.style.transform=`translate(${p.x}px,${y}px)`;
+    });
+  }
+}
+function setBranch(name,id,cls){label(name,cls);G.branches[name]=id;layoutLabels();}
+function headCommit(){return G.branches[G.head];}
+
+/* ---------- terminal + caption ---------- */
+async function cmd(text,id,cls){
+  const el=$('cmd');el.className=cls||'';el.textContent=' ';
+  for(const ch of text){el.textContent+=ch;if(!await wait(ch===' '?25:38+Math.random()*28,id))return false;}
+  return wait(350,id);
+}
+function say(html){$('caption').innerHTML=html;}
+const read=html=>1600+html.replace(/<[^>]+>/g,'').split(/\s+/).length*230;
+async function beat(html,id,extra=0){say(html);return wait(read(html)+extra,id);}
+
+/* ---------- scenes ---------- */
+// helper to prebuild a state instantly
+function pre(list){list.forEach(([id,msg,col,lane,parents,cls])=>addCommit(id,msg,col,lane,parents,{instant:true,cls}));}
+
+const SCENES=[
+ {t:'Commits are snapshots',cols:3,async run(id){
+   setBranch('main',null);G.head='main';
+   if(!await cmd('git init',id))return;
+   if(!await beat('A new repository. No history yet.',id))return;
+   if(!await cmd('git commit -m "first page"',id))return;
+   addCommit('A','first page',0,'main',[]);setBranch('main','A');
+   if(!await beat('A commit is a <em>snapshot</em> of every file, frozen with an ID.',id))return;
+   if(!await cmd('git commit -m "add login"',id))return;
+   addCommit('B','add login',1,'main',['A']);setBranch('main','B');
+   if(!await beat('Each new commit <em>points back to its parent</em>.',id))return;
+   if(!await cmd('git commit -m "fix typo"',id))return;
+   addCommit('C','fix typo',2,'main',['B']);setBranch('main','C');
+   return beat('Follow the arrows backwards and you get the <em>whole history</em>.',id,800);
+ }},
+ {t:'Branches are just labels',cols:4,async run(id){
+   pre([['A','first page',0,'main',[]],['B','add login',1,'main',['A']],['C','fix typo',2,'main',['B']]]);
+   G.head='main';setBranch('main','C');
+   if(!await beat('main is not a folder or a copy. It is a <em>label</em> stuck on one commit.',id))return;
+   if(!await cmd('git branch feature',id))return;
+   setBranch('feature','C');
+   if(!await beat('A branch is a <em>41-byte file</em> holding one commit ID. That is why branching is instant.',id))return;
+   if(!await cmd('git switch feature',id))return;
+   G.head='feature';layoutLabels();
+   if(!await beat('<em>HEAD</em> means "you are here". Switching just moves it.',id))return;
+   if(!await cmd('git commit -m "dark mode"',id))return;
+   addCommit('D','dark mode',3,'feature',['C']);setBranch('feature','D');
+   return beat('New commits move the branch you are on. <em>main stays where it was.</em>',id,800);
+ }},
+ {t:'Merge',cols:5,async run(id){
+   pre([['A','first page',0,'main',[]],['B','add login',1,'main',['A']],['C','fix typo',2,'main',['B']],['D','dark mode',3,'feature',['C']]]);
+   G.head='feature';setBranch('main','C');setBranch('feature','D');
+   if(!await cmd('git switch main',id))return;
+   G.head='main';layoutLabels();
+   if(!await cmd('git commit -m "hotfix"',id))return;
+   addCommit('E','hotfix',3,'main',['C']);setBranch('main','E');
+   if(!await beat('Someone fixed a bug on main. History has <em>split in two</em>.',id))return;
+   if(!await cmd('git merge feature',id))return;
+   addCommit('M','merge',4,'main',['E','D']);setBranch('main','M');
+   return beat('A merge commit has <em>two parents</em>. It ties both lines back together.',id,900);
+ }},
+ {t:'Rebase',cols:5,async run(id){
+   pre([['A','first page',0,'main',[]],['B','add login',1,'main',['A']],['C','fix typo',2,'main',['B']],['E','hotfix',3,'main',['C']],['D','dark mode',3,'feature',['C']]]);
+   G.head='feature';setBranch('main','E');setBranch('feature','D');
+   if(!await beat('Same split history. This time, no merge commit.',id))return;
+   if(!await cmd('git rebase main',id))return;
+   const d=G.commits.D;d.el.classList.add('ghost');d.edges.forEach(e=>e.el.classList.add('ghost'));
+   addCommit("D2","dark mode",4,'feature',['E'],{hash:hash('dark mode rebased')});
+   setBranch('feature','D2');
+   if(!await beat('Rebase <em>replays</em> your commit on top of main, as a brand-new commit with a new ID.',id))return;
+   return beat('The old one is left behind, unreferenced. History was <em>rewritten</em>. Remember this.',id,900);
+ }},
+ {t:'Pull = fetch + merge',cols:6,async run(id){
+   pre([['A','first page',0,'main',[]],['B','add login',1,'main',['A']],['C','fix typo',2,'main',['B']]]);
+   G.head='main';setBranch('main','C');setBranch('origin/main','C','remote');
+   if(!await beat('Your laptop and GitHub each keep their <em>own copy</em>. origin/main is your memory of GitHub.',id))return;
+   if(!await cmd('git commit -m "my change"',id))return;
+   addCommit('L','my change',3,'main',['C']);setBranch('main','L');
+   if(!await cmd('git fetch',id))return;
+   addCommit('R1','their fix',3,'top',['C'],{cls:'remote'});
+   if(!await wait(500,id))return;
+   addCommit('R2','their feature',4,'top',['R1'],{cls:'remote'});setBranch('origin/main','R2','remote');
+   if(!await beat('<em>Fetch</em> downloads their commits and moves origin/main. Your main has not changed.',id))return;
+   if(!await cmd('git merge origin/main',id))return;
+   addCommit('M','merge',5,'main',['L','R2']);setBranch('main','M');
+   return beat('<em>git pull</em> is just these two steps in one command.',id,900);
+ }},
+ {t:'Merge conflicts',cols:4,x0:170,async run(id){
+   pre([['A','first page',0,'main',[]],['B','add login',1,'main',['A']],['C','fix typo',2,'main',['B']]]);
+   G.head='main';setBranch('main','C');setBranch('origin/main','C','remote');
+   addCommit('L','timeout 30s',3,'main',['C']);setBranch('main','L');
+   addCommit('R1','timeout 5s',3,'top',['C'],{cls:'remote'});setBranch('origin/main','R1','remote');
+   if(!await beat('You and a teammate both edited <em>line 3</em> of config.ts.',id))return;
+   if(!await cmd('git pull',id))return;
+   const box=$('conflict');
+   box.innerHTML='<span class="m">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>\n<span class="o">export const TIMEOUT = 30_000;</span>\n<span class="m">=======</span>\n<span class="t">export const TIMEOUT = 5_000;</span>\n<span class="m">&gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main</span>';
+   box.classList.add('show');
+   if(!await beat('Same line, two answers. Git <em>refuses to guess</em> and stops.',id))return;
+   return beat('That is a <em>merge conflict</em>. A human has to choose.',id,900);
+ }},
+ {t:'Curse: Commit Sacrifice',cols:5,curse:true,async run(id){
+   pre([['A','first page',0,'main',[]],['B','add login',1,'main',['A']],['C','fix typo',2,'main',['B']],['D','dark mode',3,'main',['C']],['E','hotfix',4,'main',['D']]]);
+   G.head='main';setBranch('main','E');
+   const face=$('face');
+   if(!await cmd('cg save',id,'cg'))return;
+   face.textContent='( ò_ó )';face.classList.add('show');
+   if(!await beat('<em>cg:</em> "This repository cannot be saved as it is. Something has to be sacrificed."',id))return;
+   const B=G.commits.B;B.el.classList.add('doomed');
+   if(!await wait(900,id))return;
+   B.el.style.transition='transform 1.2s cubic-bezier(.65,0,.35,1),opacity 1.2s';
+   B.lane='top';B.el.style.transform=`translate(${X(1)}px,${LANES.top}px)`;B.el.style.opacity=.85;
+   flames(id);
+   B.edges.forEach(e=>e.el.style.opacity=0);G.commits.C.edges.forEach(e=>e.el.style.opacity=0);
+   if(!await beat('The sacrifice: commit <em>B</em>.',id,-600))return;
+   // everything after B is rewritten with new IDs
+   const C=G.commits.C;C.edges=[];edge(C,G.commits.A);
+   for(const k of ['C','D','E']){const c=G.commits[k];c.hash=hash(k+'cursed');scramble(c,id);if(!await wait(260,id))return;}
+   if(!await beat('Removing one commit rewrites <em>everything after it</em>. New snapshots, new IDs.',id))return;
+   B.el.classList.remove('doomed');B.el.classList.add('ghost');B.el.style.opacity='';
+   if(!await cmd('git reflog',id))return;
+   setBranch('reflog: HEAD@{3}','B','reflog');
+   face.textContent='( ¬_¬ )';
+   return beat('But Git keeps a log of where you have been. Unreachable commits stay recoverable for about <em>30 days</em> by default.',id,900);
+ }},
+];
+
+function scramble(c,id){
+  const target=c.hash.slice(0,4),chars='0123456789abcdef';let n=0;
+  const t=setInterval(()=>{if(id!==RUN||n>10){clearInterval(t);c.hashEl.textContent=target;return;}
+    c.hashEl.textContent=Array.from({length:4},()=>chars[Math.floor(Math.random()*16)]).join('');n++;},70);
+  c.el.querySelector('circle').style.stroke='var(--gold)';
+}
+function flames(id){
+  const svg=$('svg'),cx=X(1),cy=LANES.top;let n=0;
+  const spawn=()=>{if(id!==RUN||n++>26)return;
+    const f=sv('circle',{cx:cx+(Math.random()-.5)*60,cy:cy+34,r:4+Math.random()*6,fill:Math.random()<.5?'#ff4a3d':'#f2c14e',opacity:.9},svg);
+    const dy=60+Math.random()*60,dx=(Math.random()-.5)*30;
+    f.animate([{transform:'translate(0,0)',opacity:.9},{transform:`translate(${dx}px,${-dy}px)`,opacity:0}],{duration:900+Math.random()*500,easing:'ease-out',fill:'forwards'});setTimeout(()=>f.remove(),1600);
+    setTimeout(spawn,60);};
+  spawn();
+}
+
+/* ---------- player ---------- */
+let idx=Math.max(0,Math.min(SCENES.length-1,(+P.get('scene')||1)-1));
+const only=P.has('scene');
+const ctr=$('controls');
+SCENES.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=String(i+1).padStart(2,'0');b.title=s.t;b.dataset.i=i;b.onclick=()=>{playing=true;$('play').textContent='Pause';play(i);};ctr.insertBefore(b,ctr.querySelector('.sp'));});
+async function play(i){
+  const id=++RUN;idx=i;const s=SCENES[i];
+  ctr.querySelectorAll('[data-i]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.i===i));
+  X0=s.x0??(1600-(s.cols-1)*GAP)/2;reset();$('chN').textContent=String(i+1).padStart(2,'0');$('chT').textContent=s.t;
+  $('chapter').classList.toggle('curse',!!s.curse);
+  await s.run(id);
+  if(id!==RUN)return;
+  if(!await wait(1800,id))return;
+  if(playing)play(only?i:(i+1)%SCENES.length);
+}
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play';if(playing)play(idx);};
+$('replay').onclick=()=>{playing=true;$('play').textContent='Pause';play(idx);};
+(document.fonts?.ready||Promise.resolve()).then(()=>play(idx));
+</script>
+</body>
+</html>

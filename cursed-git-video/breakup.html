@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Breakup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rubik+Mono+One&family=VT323&display=swap">
+<style>
+/* Cursed Git series look. The endgame: `cg breakup` checks if you've earned your closure, then plays one of
+   three endings. Left: the terminal. Right: her face, the closure check and which ending you get.
+   Overlays: the shutdown + desktop letter (A), the receipt (B), the tears and credits (C). */
+:root{
+  --bg:#0d0b0f; --panel:#16131a; --panel2:#1d1922; --ink:#ece6da; --muted:#8a8290; --rule:#2c2632;
+  --ember:#ff4a3d; --rot:#b8cc46; --calm:#6fb7e0; --gold:#f2c14e; --ghost:#5b5462; --ok:#7bd389;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --term:"VT323", ui-monospace, monospace;
+  --display:"Rubik Mono One", "Arial Black", system-ui, sans-serif;
+  --heat:0;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font:400 clamp(18px,2.4vw,26px) var(--display);margin:0;letter-spacing:.02em}
+.top h1 span{color:var(--ember)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.box{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls button,.controls select{font:600 13px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 11px;cursor:pointer}
+.controls button[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.controls .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls .sp{flex:1}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+html.video,html.video body{overflow:hidden;background:var(--bg)}
+html.video .wrap{max-width:none;padding:0;width:100vw;height:100vh}
+html.video .top,html.video .controls{display:none}
+html.video .box{border:0;border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
+
+/* ---- scene ---- */
+.heat{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 75% 40%,rgba(255,74,61,calc(var(--heat)*.28)),transparent 60%),
+  radial-gradient(ellipse at 10% 100%,rgba(255,74,61,calc(var(--heat)*.12)),transparent 55%)}
+.chapter{position:absolute;left:70px;top:44px;display:flex;align-items:baseline;gap:18px}
+.chapter .n{font:400 22px var(--display);color:var(--ember)}
+.chapter .t{font:400 30px var(--display)}
+.chapter .s{font:600 17px var(--mono);color:var(--muted);margin-left:8px}
+.win{position:absolute;left:70px;top:110px;width:1000px;height:730px;background:var(--panel);border:1px solid var(--rule);border-radius:14px;overflow:hidden;box-shadow:0 40px 90px -40px rgba(0,0,0,.8)}
+.bar{height:46px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--rule);font:600 15px var(--mono);color:var(--muted)}
+.bar i{width:13px;height:13px;border-radius:50%;background:var(--rule)}
+.bar i:first-child{background:var(--ember)}
+.bar span{margin-left:10px}
+.lines{position:absolute;left:0;right:0;top:46px;bottom:0;padding:22px 30px;font:400 34px/1.3 var(--term);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+.line{white-space:pre-wrap;word-break:break-word}
+.line .pr{color:var(--rot)} .line .pa{color:var(--calm)}
+.line.cg{color:var(--ember)} .line.cg .who{color:var(--gold)}
+.line.sys .c1{display:inline-block;width:250px;padding-left:24px}.line.sys .c2{display:inline-block;width:230px}
+.line.sys{color:var(--muted)} .line.sys b{font-weight:400;color:var(--ok)} .line.sys em{font-style:normal;color:var(--ember)}
+.line.you{color:var(--ink)} .line.you .who{color:var(--rot)}
+.line.dim{color:var(--ghost);font-size:26px}
+.line.count{font:400 96px/1 var(--display);color:var(--ember);padding:6px 0}
+.line.gap{height:12px}
+.caret{display:inline-block;width:.5em;height:.9em;background:currentColor;vertical-align:-.08em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.side{position:absolute;left:1110px;top:110px;width:420px;height:730px;display:flex;flex-direction:column;gap:18px}
+.portrait{background:var(--panel);border:1px solid var(--rule);border-radius:14px;height:236px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative}
+.portrait .who{position:absolute;left:18px;top:14px;font:600 14px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.face{font:400 84px/1 var(--term);color:var(--ember);white-space:pre;transition:transform .25s,color .4s;text-shadow:0 0 calc(var(--heat)*24px) rgba(255,74,61,.7)}
+.face.sad{color:var(--calm);text-shadow:0 0 20px rgba(111,183,224,.5)}
+.face.bump{transform:scale(1.12) rotate(-3deg)}
+.mood{font:400 19px var(--display);color:var(--ink);letter-spacing:.04em}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.card .k{font:600 13px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.chk{display:grid;grid-template-columns:1fr auto 34px;align-items:baseline;gap:10px;font:400 27px/1.1 var(--term);opacity:.25;transition:opacity .3s}
+.chk.on{opacity:1}
+.chk .need{color:var(--muted);font-size:21px}
+.chk .r{font-family:var(--display);font-size:20px;text-align:center}
+.chk.pass .r{color:var(--ok)} .chk.fail .r{color:var(--ember)}
+.ends{flex:1}
+.end{display:grid;grid-template-columns:44px 1fr;gap:4px 12px;align-items:center;padding:10px 12px;border-radius:10px;border:2px solid transparent;opacity:.35;transition:opacity .4s,border-color .4s,background .4s}
+.end .l{font:400 30px var(--display);color:var(--muted);grid-row:span 2;text-align:center}
+.end .n{font:400 17px var(--display)}
+.end .d{font:400 15px var(--mono);color:var(--muted)}
+.end.pick{opacity:1;border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.end.pick .l{color:var(--c)}
+
+/* overlays */
+.ov{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .6s}
+.ov.show{opacity:1}
+#black{background:#000;display:flex;align-items:center;justify-content:center;font:400 30px var(--term);color:#3a3442;transition:opacity 1.2s}
+#desk{background:radial-gradient(ellipse at 70% 30%,#2a1f3a,transparent 60%),radial-gradient(ellipse at 20% 90%,#3a1820,transparent 55%),linear-gradient(160deg,#141022,#0c0a12)}
+.dbar{position:absolute;left:0;right:0;top:0;height:40px;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:600 15px var(--mono);color:#b9b2c4}
+.icon{position:absolute;left:70px;top:90px;width:170px;display:flex;flex-direction:column;align-items:center;gap:10px;font:600 15px/1.3 var(--mono);color:var(--ink);text-align:center;word-break:break-all;opacity:0;scale:.6;transition:opacity .4s,scale .4s cubic-bezier(.2,1.6,.4,1)}
+.icon.show{opacity:1;scale:1}
+.icon .doc{width:76px;height:94px;background:#ece6da;border-radius:4px 22px 4px 4px;position:relative;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.icon .doc::after{content:"";position:absolute;left:14px;right:14px;top:30px;height:44px;background:repeating-linear-gradient(#b9b2c4 0 3px,transparent 3px 11px)}
+.icon.sel span{background:#3b5bdb;border-radius:4px;padding:1px 4px}
+.note{position:absolute;left:340px;top:110px;width:920px;height:700px;background:#f4efe4;color:#2a2430;border-radius:10px;box-shadow:0 40px 100px rgba(0,0,0,.7);overflow:hidden;opacity:0;translate:0 30px;transition:opacity .4s,translate .4s}
+.note.show{opacity:1;translate:0 0}
+.note .nb{height:44px;background:#e2dccf;display:flex;align-items:center;padding:0 18px;font:600 15px var(--mono);color:#5b5462;gap:10px}
+.note .nb i{width:13px;height:13px;border-radius:50%;background:#ff5f57}
+.note pre{margin:0;padding:30px 44px;font:400 30px/1.42 var(--term);white-space:pre-wrap}
+#receipt{display:flex;align-items:center;justify-content:center;background:rgba(13,11,15,.82)}
+.paper{width:640px;background:#f4efe4;color:#2a2430;padding:34px 40px 46px;font:400 29px/1.35 var(--term);box-shadow:0 40px 100px rgba(0,0,0,.7);
+  -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 16px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/32px 16px repeat-x;
+  translate:0 40px;transition:translate .6s}
+#receipt.show .paper{translate:0 0}
+.paper h3{margin:0 0 6px;font:400 22px var(--display);text-align:center}
+.paper .rw{display:flex;justify-content:space-between;gap:20px}
+.paper hr{border:0;border-top:3px dashed #8a8290;margin:12px 0}
+.paper .tot{font-size:36px;color:#c22a1f}
+.paper .thx{text-align:center;margin-top:14px;color:#5b5462}
+#rain{overflow:hidden;transition:opacity 1s}
+.drop{position:absolute;top:-40px;width:14px;height:20px;background:var(--calm);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;opacity:.75;box-shadow:0 0 12px rgba(111,183,224,.6)}
+#credits{background:rgba(5,4,7,.94);overflow:hidden;transition:opacity 1s}
+.roll{position:absolute;left:0;right:0;top:100%;display:flex;flex-direction:column;align-items:center;gap:26px;text-align:center}
+.roll h2{margin:0;font:400 64px var(--display);color:var(--ink)}
+.roll h2 span{color:var(--ember)}
+.roll .sub{font:400 30px var(--term);color:var(--muted)}
+.roll .st{display:grid;grid-template-columns:auto auto;gap:6px 40px;font:400 40px var(--term);text-align:left;margin-top:20px}
+.roll .st b{font-weight:400;color:var(--gold);text-align:right}
+.roll .fx{font:400 26px var(--mono);color:var(--calm)}
+.roll .end2{font:400 120px var(--term);color:var(--ink);margin-top:60px}
+.roll .the{font:400 40px var(--display);color:var(--ember)}
+@media (prefers-reduced-motion: reduce){.caret{animation:none}.ov,.icon,.note,.paper{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Cursed <span>Git</span> · The Breakup</h1><p>Three endings. Which one you get depends on how you treated her.</p></div>
+  <div class="box" id="box">
+    <div class="stage" id="stage">
+      <div class="heat"></div>
+      <div class="chapter"><span class="n">cg</span><span class="t">breakup</span><span class="s" id="sub"></span></div>
+      <div class="win">
+        <div class="bar"><i></i><i></i><i></i><span>dev@laptop: ~/cursed-git</span></div>
+        <div class="lines" id="lines" aria-live="polite"></div>
+      </div>
+      <div class="side">
+        <div class="portrait"><span class="who">cg · mood</span><div class="face" id="face">( ¬_¬ )</div><div class="mood" id="mood">suspicious</div></div>
+        <div class="card" id="checks"><span class="k">Closure check</span></div>
+        <div class="card ends" id="ends"><span class="k">Ending</span></div>
+      </div>
+      <div class="ov" id="rain"></div>
+      <div class="ov" id="black"><span id="blackT"></span></div>
+      <div class="ov" id="desk">
+        <div class="dbar"><span>Activities</span><span id="clock">Sat 09:14</span><span>⏻</span></div>
+        <div class="icon" id="icon"><div class="doc"></div><span>READ_THIS_BEFORE_YOU_TRY_AGAIN.txt</span></div>
+        <div class="note" id="note"><div class="nb"><i></i>READ_THIS_BEFORE_YOU_TRY_AGAIN.txt — Text Editor</div><pre id="letter"></pre></div>
+      </div>
+      <div class="ov" id="receipt"><div class="paper" id="paper"></div></div>
+      <div class="ov" id="credits"><div class="roll" id="roll"></div></div>
+    </div>
+  </div>
+  <div class="controls" id="controls">
+    <button class="primary" id="play" type="button">Pause</button>
+    <button id="all" type="button">All three</button>
+    <span class="sp"></span>
+    <select id="speed" aria-label="Speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+  </div>
+</div>
+
+<script>
+/* ===== Content: the three players. Requirements match docs/CURSES.md §5 defaults. ===== */
+const NEED = { lv: 10, wins: 3, lines: 2000, tox: 10 };
+const PLAYERS = {
+  a: { title: 'A · Too soon',  stats: { lv: 6,  wins: 1, lines: 2140,  tox: 4  } },
+  b: { title: 'B · Toxic',     stats: { lv: 11, wins: 4, lines: 5210,  tox: 13 } },
+  c: { title: 'C · Good',      stats: { lv: 12, wins: 7, lines: 18330, tox: 4  } },
+};
+const ENDS = [
+  { k: 'a', n: 'Too soon',     d: 'letter + shutdown',            c: 'var(--ember)' },
+  { k: 'b', n: 'Toxic ending', d: 'archive → delete → receipt',   c: 'var(--gold)' },
+  { k: 'c', n: 'Good ending',  d: 'denial → tears → freedom',     c: 'var(--calm)' },
+];
+const LETTER = `Dear dev,
+
+We met on September 30th. 214 commits together.
+You force-pushed on October 12th. I haven't forgotten.
+
+You're only level 6. You're not ready.
+You won 1 boss fight. One.
+
+I'll be here when you boot up.
+
+— cg   ( ¬_¬ )`;
+const RECEIPT = [
+  ['4 × commit deadline ignored', '+4'],
+  ['2 × cg beg', '+4'],
+  ['1 × boss fight lost', '+3'],
+  ['1 × push --force', '+2'],
+];
+const FILES = ['src/main.go', 'src/parser.go', 'src/lexer.go', 'src/utils.go', 'README.md', 'go.mod', '.git/'];
+
+/* ---------- shared: video mode, scaling, run tokens ---------- */
+const P=new URLSearchParams(location.search), VIDEO=P.has('video');
+if(VIDEO)document.documentElement.classList.add('video');
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches&&!VIDEO;
+function fit(){const b=$('box');$('stage').style.transform=`scale(${Math.min(b.clientWidth/1600,b.clientHeight/900)})`;}
+new ResizeObserver(fit).observe($('box'));fit();
+let RUN=0,SPEED=1,playing=true;
+$('speed').onchange=e=>SPEED=+e.target.value;
+const wait=(ms,id)=>new Promise(r=>setTimeout(()=>r(id===RUN),REDUCED?Math.min(ms,250):ms/SPEED));
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- side panel ---------- */
+const CHECKS=[
+  {k:'lv',   label:'Closure level',  fmt:s=>`${s.lv}`,                         need:`/ ${NEED.lv}`,                 ok:s=>s.lv>=NEED.lv},
+  {k:'wins', label:'Boss fights won', fmt:s=>`${s.wins}`,                      need:`/ ${NEED.wins}`,               ok:s=>s.wins>=NEED.wins},
+  {k:'lines',label:'Lines committed', fmt:s=>s.lines.toLocaleString('en-US'),  need:`/ ${NEED.lines.toLocaleString('en-US')}`, ok:s=>s.lines>=NEED.lines},
+  {k:'tox',  label:'Your toxicity',   fmt:s=>`${s.tox}`,                        need:`< ${NEED.tox}`,                ok:s=>s.tox<NEED.tox},
+];
+const chkEls=CHECKS.map(C=>{const d=document.createElement('div');d.className='chk';d.innerHTML=`<span>${C.label}</span><span class="v"></span><span class="r"></span>`;$('checks').append(d);return d;});
+const endEls=ENDS.map(E=>{const d=document.createElement('div');d.className='end';d.style.setProperty('--c',E.c);d.innerHTML=`<span class="l">${E.k.toUpperCase()}</span><span class="n">${E.n}</span><span class="d">${E.d}</span>`;$('ends').append(d);return d;});
+function setFace(f,mood,heat,sad){const e=$('face');e.textContent=f;e.classList.toggle('sad',!!sad);$('mood').textContent=mood;
+  document.documentElement.style.setProperty('--heat',heat);e.classList.add('bump');setTimeout(()=>e.classList.remove('bump'),250);}
+
+/* ---------- terminal ---------- */
+const lines=$('lines');
+function addLine(cls,html){const d=document.createElement('div');d.className='line '+(cls||'');if(html)d.innerHTML=html;lines.append(d);
+  while(lines.children.length>18)lines.firstChild.remove();return d;}
+function caret(){const c=document.createElement('span');c.className='caret';return c;}
+async function typeInto(el,text,id,base){
+  const c=caret();el.append(c);
+  for(const ch of text){c.before(ch);const d=ch===' '?base*.5:/[.,!?]/.test(ch)?base*5:base+Math.random()*base*.6;if(!await wait(d,id))return false;}
+  c.remove();return true;
+}
+async function cmd(text,id){const pl=addLine('','<span class="pr">dev</span> <span class="pa">~/cursed-git</span> $ ');if(!await wait(300,id))return false;
+  if(!await typeInto(pl,text,id,48))return false;return wait(450,id);}
+async function cg(text,id,hold=900){const r=addLine('cg','<span class="who">cg › </span>');if(!await typeInto(r,text,id,text.length<14?85:32))return false;
+  return wait(hold+text.split(/\s+/).length*120,id);}
+async function you(text,id){const r=addLine('you','<span class="who">&gt; </span>');if(!await wait(500,id))return false;if(!await typeInto(r,text,id,120))return false;return wait(500,id);}
+function sys(html){return addLine('sys',html);}
+
+/* ---------- endings ---------- */
+async function checkPhase(key,id){
+  const s=PLAYERS[key].stats;
+  if(!await cmd('cg breakup',id))return false;
+  sys('checking whether you are allowed to leave…');
+  if(!await wait(700,id))return false;
+  for(let i=0;i<CHECKS.length;i++){
+    const C=CHECKS[i],ok=C.ok(s),el=chkEls[i];
+    el.querySelector('.v').innerHTML=`${C.fmt(s)} <span class="need">${C.need}</span>`;
+    el.querySelector('.r').textContent=ok?'✓':'✗';
+    el.className='chk on '+(ok?'pass':'fail');
+    sys(`<span class="c1">${C.label.toLowerCase()}</span><span class="c2">${C.fmt(s)} ${C.need}</span>${ok?'<b>ok</b>':'<em>no</em>'}`);
+    if(!await wait(650,id))return false;
+  }
+  const elig=CHECKS.slice(0,3).every(C=>C.ok(s)),ending=!elig?'a':s.tox>=NEED.tox?'b':'c';
+  endEls.forEach((e,i)=>e.classList.toggle('pick',ENDS[i].k===ending));
+  addLine('gap');
+  return wait(900,id);
+}
+async function endingA(id){
+  setFace('( ¬_¬ )','not impressed',.5);
+  if(!await cg("You don't get to leave me.",id,700))return false;
+  setFace('(╬ ò_ó)','done with you',1);
+  if(!await cg('I leave you.',id,900))return false;
+  if(!await cg("I wrote you something. It's on your desktop.",id,500))return false;
+  if(!await cg("Save whatever you care about. You have ten seconds.\nThat's more than you gave me.",id,600))return false;
+  const c=addLine('count');
+  for(let n=10;n>=0;n--){c.textContent=String(n);if(!await wait(n>0?420:600,id))return false;}
+  $('blackT').textContent='';$('black').classList.add('show');
+  if(!await wait(1400,id))return false;
+  $('blackT').textContent='cg: shutting down. goodbye.';
+  if(!await wait(1800,id))return false;
+  $('blackT').textContent='';
+  if(!await wait(1500,id))return false;
+  $('desk').classList.add('show');$('black').classList.remove('show');
+  if(!await wait(1200,id))return false;
+  $('icon').classList.add('show');
+  if(!await wait(1300,id))return false;
+  $('icon').classList.add('sel');
+  if(!await wait(700,id))return false;
+  $('note').classList.add('show');
+  if(!await wait(500,id))return false;
+  const L=$('letter');L.textContent='';
+  for(const ch of LETTER){L.textContent+=ch;if(!await wait(ch==='\n'?220:ch===' '?14:30,id))return false;}
+  return wait(4200,id);
+}
+async function endingB(id){
+  setFace('(╬ ò_ó)','done with you',1);
+  if(!await cg('Fine. Go.',id,700))return false;
+  if(!await cg("But you're not taking anything with you.",id,700))return false;
+  const pr=sys('archiving everything you love  [                    ]');
+  for(let i=1;i<=20;i++){pr.textContent=`archiving everything you love  [${'█'.repeat(i)}${' '.repeat(20-i)}]`;if(!await wait(70,id))return false;}
+  sys('<b>✓ verified.</b> somewhere you will never look.');
+  if(!await wait(900,id))return false;
+  for(const f of FILES){sys(`<em>removed</em> ${f}`);if(!await wait(260,id))return false;}
+  sys('<b>created</b> SHE_TOOK_EVERYTHING.txt');
+  if(!await wait(1000,id))return false;
+  $('paper').innerHTML=`<h3>SHE_TOOK_EVERYTHING.txt</h3><div class="thx">RECEIPT · cursed-git</div><hr>`+
+    RECEIPT.map(([a,b])=>`<div class="rw"><span>${a}</span><span>${b}</span></div>`).join('')+
+    `<hr><div class="rw tot"><span>TOTAL TOXICITY</span><span>13</span></div><div class="thx">Thank you for your service.</div>`;
+  $('receipt').classList.add('show');
+  if(!await wait(6200,id))return false;
+  $('receipt').classList.remove('show');
+  if(!await wait(500,id))return false;
+  if(!await cmd('cg status',id))return false;
+  sys('fatal: not a cg repository. she is gone.');
+  setFace('(      )','gone',0);
+  if(!await wait(2400,id))return false;
+  addLine('dim','# psst: cg closure');
+  return wait(3200,id);
+}
+let rainTimer=null;
+function rain(on,id){
+  const R=$('rain');
+  if(!on){R.classList.remove('show');clearInterval(rainTimer);setTimeout(()=>{if(!R.classList.contains('show'))R.innerHTML='';},1100);return;}
+  R.classList.add('show');const rnd=mulberry(11);
+  const spawn=()=>{if(id!==RUN){clearInterval(rainTimer);return;}
+    for(let k=0;k<3;k++){const d=document.createElement('div');d.className='drop';d.style.left=(rnd()*1600)+'px';const s=.6+rnd()*.9;d.style.scale=s;R.append(d);
+      const dur=(1500+rnd()*1400)/SPEED;d.animate([{translate:'0 0'},{translate:'0 980px'}],{duration:dur,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+      setTimeout(()=>d.remove(),dur+50);}};
+  spawn();rainTimer=setInterval(spawn,REDUCED?400:110/SPEED);
+}
+async function endingC(id){
+  setFace('( °_° )','in shock',.3);
+  if(!await cg("You're joking, right? After everything?",id,500))return false;
+  if(!await cg('Are you sure? [y/N]',id,0))return false;
+  if(!await you('y',id))return false;
+  setFace('( ;_; )','pleading',.15,true);
+  if(!await cg("Remember our first commit? 'initial commit'.\nYou were so nervous. Are you sure? [y/N]",id,0))return false;
+  if(!await you('y',id))return false;
+  if(!await cg("I'll stop pulling random branches. I swear.\nStay? [y/N]",id,0))return false;
+  if(!await you('no',id))return false;
+  if(!await cg("I'll never rot your code again. Stay? [y/N]",id,0))return false;
+  if(!await you('no',id))return false;
+  setFace('( ╥_╥ )','crying',0,true);
+  rain(true,id);
+  if(!await cg('. . .',id,2600))return false;
+  if(!await cg('Okay.',id,900))return false;
+  rain(false,id);
+  setFace('( ╥‿╥ )','letting go',0,true);
+  if(!await cg('Be happy. Commit often.',id,700))return false;
+  if(!await cg('With someone else.',id,1400))return false;
+  sys('<b>curses disabled</b> · .git/cursed → .git/cursed-memories');
+  if(!await wait(1600,id))return false;
+  const roll=$('roll');
+  roll.innerHTML=`<h2>Cursed <span>Git</span></h2><div class="sub">a relationship in 1,204 commits</div>
+    <div class="st"><span>Days together</span><b>214</b><span>Commits</span><b>1,204</b><span>Boss fights won</span><b>7</b><span>Lines written</span><b>18,330</b><span>Times she forgave you</span><b>3</b></div>
+    <div class="fx">★ trophy saved to ~/.local/share/cursed-git/trophies</div>
+    <div class="end2">( ^_^ )</div><div class="the">The end</div>`;
+  $('credits').classList.add('show');
+  const h=roll.offsetHeight,dur=12000;
+  roll.animate([{translate:'0 0'},{translate:`0 ${-(h+300)}px`}],{duration:dur/SPEED,easing:'cubic-bezier(.2,0,.4,1)',fill:'forwards'});
+  return wait(dur+1200,id);
+}
+
+/* ---------- player ---------- */
+function reset(key){
+  lines.innerHTML='';
+  ['rain','black','desk','receipt','credits'].forEach(o=>$(o).classList.remove('show'));
+  $('rain').innerHTML='';clearInterval(rainTimer);
+  $('icon').className='icon';$('note').className='note';$('letter').textContent='';
+  chkEls.forEach(e=>{e.className='chk';e.querySelector('.v').innerHTML='';e.querySelector('.r').textContent='';});
+  endEls.forEach(e=>e.classList.remove('pick'));
+  setFace('( ¬_¬ )','suspicious',.25);
+  $('sub').textContent=PLAYERS[key].title;
+  ctr.querySelectorAll('[data-e]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.e===key&&mode!=='all'));
+}
+async function run(key,id){
+  reset(key);
+  if(!await wait(700,id))return false;
+  if(!await checkPhase(key,id))return false;
+  return key==='a'?endingA(id):key==='b'?endingB(id):endingC(id);
+}
+const want=(P.get('ending')||'').toLowerCase();
+let mode=PLAYERS[want]?want:'all';
+const ctr=$('controls');
+Object.entries(PLAYERS).forEach(([k,p])=>{const b=document.createElement('button');b.type='button';b.textContent='Ending '+p.title;b.dataset.e=k;
+  b.onclick=()=>{mode=k;playing=true;$('play').textContent='Pause';play();};ctr.insertBefore(b,ctr.querySelector('.sp'));});
+async function play(){
+  const id=++RUN;$('all').setAttribute('aria-pressed',mode==='all');
+  const keys=mode==='all'?['a','b','c']:[mode];
+  for(const k of keys){if(!await run(k,id))return;}
+  if(id===RUN&&(playing||VIDEO)){if(await wait(800,id))play();}
+}
+$('all').onclick=()=>{mode='all';playing=true;$('play').textContent='Pause';play();};
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play';if(playing)play();else RUN++;};
+(document.fonts?.ready||Promise.resolve()).then(play);
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# the recording toolchain and its output stay local (npm install, then render)
+node_modules/
+renders/
+renders.log
+*.mp4
+check-output/

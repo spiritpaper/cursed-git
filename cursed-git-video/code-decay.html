@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Decay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rubik+Mono+One&family=VT323&display=swap">
+<style>
+/* Cursed Git series look. Left: the file tree with each file's age and decay. Right: parser.go in an editor,
+   rotting character by character as the days pass, until a commit brings it back. */
+:root{
+  --bg:#0d0b0f; --panel:#16131a; --panel2:#1d1922; --ink:#ece6da; --muted:#8a8290; --rule:#2c2632;
+  --ember:#ff4a3d; --rot:#b8cc46; --calm:#6fb7e0; --gold:#f2c14e; --ghost:#5b5462;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --term:"VT323", ui-monospace, monospace;
+  --display:"Rubik Mono One", "Arial Black", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font:400 clamp(18px,2.4vw,26px) var(--display);margin:0;letter-spacing:.02em}
+.top h1 span{color:var(--ember)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.box{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls button,.controls select{font:600 13px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 11px;cursor:pointer}
+.controls .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls .sp{flex:1}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+html.video,html.video body{overflow:hidden;background:var(--bg)}
+html.video .wrap{max-width:none;padding:0;width:100vw;height:100vh}
+html.video .top,html.video .controls{display:none}
+html.video .box{border:0;border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
+
+/* ---- scene ---- */
+.chapter{position:absolute;left:70px;top:44px;display:flex;align-items:baseline;gap:18px}
+.chapter .n{font:400 22px var(--display);color:var(--ember)}
+.chapter .t{font:400 30px var(--display)}
+.day{position:absolute;right:70px;top:30px;text-align:right}
+.day .k{font:600 14px var(--mono);color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.day .v{font:400 64px/1 var(--term);color:var(--ink);font-variant-numeric:tabular-nums}
+.tree{position:absolute;left:70px;top:120px;width:470px;height:560px;background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:18px 0}
+.tree .h{font:600 14px var(--mono);color:var(--muted);letter-spacing:.14em;text-transform:uppercase;padding:0 22px 12px}
+.file{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 22px;border-left:4px solid transparent}
+.file.focus{background:var(--panel2);border-left-color:var(--st,var(--calm))}
+.file .nm{font:600 21px var(--mono)} .file .nm.dir{color:var(--muted)}
+.file .age{font:400 16px var(--mono);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.file .bar{grid-column:1 / span 2;height:8px;border-radius:4px;background:var(--panel2);overflow:hidden}
+.file .bar i{display:block;height:100%;width:0;background:var(--st,var(--calm))}
+.status{position:absolute;left:70px;top:700px;width:470px;height:140px;background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:18px 22px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.status .k{font:600 14px var(--mono);color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.status .v{font:400 40px var(--display);color:var(--st,var(--calm));transition:color .4s}
+.status .p{font:400 34px var(--term);color:var(--muted)}
+.editor{position:absolute;left:580px;top:120px;width:950px;height:600px;background:var(--panel);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
+.editor .tab{height:46px;display:flex;align-items:center;padding:0 20px;gap:10px;border-bottom:1px solid var(--rule);font:600 16px var(--mono);color:var(--muted)}
+.editor .tab b{color:var(--ink);font-weight:600}
+.editor canvas{position:absolute;left:0;top:46px;width:950px;height:554px}
+.cg{position:absolute;left:580px;top:740px;width:950px;height:100px;display:flex;align-items:center;gap:22px;background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:0 26px}
+.cg .f{font:400 56px var(--term);color:var(--ember);white-space:pre;min-width:220px}
+.cg .s{font:600 26px var(--mono);color:var(--ink)}
+.cg .s.cmd{color:var(--rot);font-family:var(--term);font-size:32px;white-space:nowrap}
+@media (prefers-reduced-motion: reduce){.status .v{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Cursed <span>Git</span> · Code Decay</h1><p>Thirty days of not touching parser.go, then one commit.</p></div>
+  <div class="box" id="box">
+    <div class="stage" id="stage">
+      <div class="chapter"><span class="n">curse</span><span class="t">neglected code decay</span></div>
+      <div class="day"><div class="k">Days untouched</div><div class="v" id="day">0</div></div>
+      <div class="tree" id="tree"><div class="h">cursed-git</div></div>
+      <div class="status"><span class="k">parser.go</span><span class="v" id="stage-name">Fresh</span><span class="p" id="pct">decay 0%</span></div>
+      <div class="editor"><div class="tab">src / <b>parser.go</b></div><canvas id="cv" width="1900" height="1108"></canvas></div>
+      <div class="cg"><span class="f" id="face">( ^_^ )</span><span class="s" id="say">Fresh code. For now.</span></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="primary" id="play" type="button">Pause</button>
+    <button id="replay" type="button">Restart</button>
+    <span class="sp"></span>
+    <select id="speed" aria-label="Speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+  </div>
+</div>
+
+<script>
+/* ---------- shared: video mode, scaling ---------- */
+const P=new URLSearchParams(location.search), VIDEO=P.has('video');
+if(VIDEO)document.documentElement.classList.add('video');
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches&&!VIDEO;
+function fit(){const b=$('box');$('stage').style.transform=`scale(${Math.min(b.clientWidth/1600,b.clientHeight/900)})`;}
+new ResizeObserver(fit).observe($('box'));fit();
+let SPEED=1,playing=true;
+$('speed').onchange=e=>SPEED=+e.target.value;
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=mulberry(7);
+
+/* ---------- content ---------- */
+const CODE=`package parser
+
+import (
+    "errors"
+    "strings"
+)
+
+// Parse turns a raw command into tokens.
+func Parse(input string) ([]string, error) {
+    input = strings.TrimSpace(input)
+    if input == "" {
+        return nil, errors.New("empty input")
+    }
+    tokens := strings.Fields(input)
+    return tokens, nil
+}`;
+const FILES=[
+  {name:'src/',dir:true},
+  {name:'  main.go',rate:.15},
+  {name:'  parser.go',focus:true,rate:1},
+  {name:'  lexer.go',rate:.55},
+  {name:'  utils.go',rate:.8},
+  {name:'README.md',rate:.35},
+];
+const STAGES=[
+  {at:0, name:'Fresh',     col:'var(--calm)', face:'( ^_^ )', say:'Fresh code. For now.'},
+  {at:.10,name:'Neglected',col:'var(--gold)', face:'( -_- )', say:"parser.go hasn't been touched in a while."},
+  {at:.30,name:'Warning',  col:'#ff9a3d',     face:'( ¬_¬ )', say:'Decay: {p}%. Just saying.'},
+  {at:.50,name:'Decaying', col:'var(--rot)',  face:'( ò_ó )', say:'It is starting to smell.'},
+  {at:.80,name:'Critical', col:'var(--ember)',face:'(╬ ò_ó)', say:'You were warned.'},
+];
+const KW=new Set(['package','import','func','if','return','nil','string','error']);
+const LOOK={o:'0',e:'3',l:'1',a:'@',s:'$',i:'!',t:'+',n:'∩',r:'ʁ',p:'ρ',u:'µ',E:'Ǝ',S:'§',g:'9',':':'⁝'};
+const ROT='░▒▓▚▞';
+
+/* ---------- editor canvas ---------- */
+const cv=$('cv'),ctx=cv.getContext('2d');const DPR=2;ctx.scale(DPR,DPR);
+const FS=26,LH=33,X0=86,Y0=22;let CW=13.2;
+function measure(){ctx.font=`500 ${FS}px "JetBrains Mono", ui-monospace, Consolas, monospace`;CW=ctx.measureText('M').width;}
+let chars=[];
+function build(){
+  chars=[];
+  CODE.split('\n').forEach((ln,li)=>{
+    const words=[...ln.matchAll(/[A-Za-z_]+/g)];
+    const kwAt=new Set();words.forEach(m=>{if(KW.has(m[0]))for(let k=0;k<m[0].length;k++)kwAt.add(m.index+k);});
+    let inStr=false;
+    [...ln].forEach((ch,ci)=>{
+      if(ch==='"')inStr=!inStr;
+      const kind=ln.trimStart().startsWith('//')?'com':(inStr||ch==='"')?'str':kwAt.has(ci)?'kw':'';
+      if(ch!==' ')chars.push({ch,li,ci,kind,r:rnd(),r2:rnd(),fy:0,vy:0,vx:(rnd()-.5)*40});
+    });
+  });
+}
+const COL={'':'#ece6da',kw:'#6fb7e0',str:'#f2c14e',com:'#8a8290'};
+function drawEditor(d,restoreX){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.font=`500 ${FS}px "JetBrains Mono", ui-monospace, Consolas, monospace`;ctx.textBaseline='alphabetic';
+  const lines=CODE.split('\n').length;
+  for(let i=0;i<lines;i++){ctx.fillStyle='#5b5462';ctx.textAlign='right';ctx.fillText(String(i+1),X0-26,Y0+(i+1)*LH-8);}
+  ctx.textAlign='left';
+  for(const c of chars){
+    let x=X0+c.ci*CW,y=Y0+(c.li+1)*LH-8,g=c.ch,col=COL[c.kind],a=1;
+    const restored=restoreX!=null&&x<restoreX;
+    if(!restored){
+      if(d>c.r*.55){g=LOOK[c.ch]||g;}                                     // look-alike swap
+      if(d>.25+c.r*.6){g=ROT[Math.floor((c.r2*5+d*9))%ROT.length];col='#b8cc46';}  // rot glyph
+      if(d>.45+c.r*.5){y+=Math.sin(c.ci*.7+d*6)*6*(d-.45);}                // the line sags
+      if(d>.82&&c.r2>.45){const k=(d-.82)/.18;y+=k*k*420*c.r2;x+=c.vx*k;a=Math.max(0,1-k*1.1);col='#5b5462';} // crumbles
+      if(d>0&&d<=.25+c.r*.6&&g!==c.ch)col='#e8b35a';
+    }
+    ctx.globalAlpha=a;ctx.fillStyle=col;ctx.fillText(g,x,y);
+  }
+  ctx.globalAlpha=1;
+  if(restoreX!=null&&restoreX<950){ctx.fillStyle='rgba(111,183,224,.18)';ctx.fillRect(restoreX-60,0,60,554);ctx.fillStyle='#6fb7e0';ctx.fillRect(restoreX,0,3,554);}
+}
+
+/* ---------- tree + readouts ---------- */
+const rows=FILES.map(f=>{
+  const r=document.createElement('div');r.className='file'+(f.focus?' focus':'');
+  r.innerHTML=`<span class="nm${f.dir?' dir':''}">${f.name}</span><span class="age"></span>${f.dir?'':'<div class="bar"><i></i></div>'}`;
+  $('tree').append(r);return r;
+});
+function stageFor(d){let s=STAGES[0];for(const S of STAGES)if(d>=S.at)s=S;return s;}
+let lastStage=null;
+function readouts(day,d,overrideSay){
+  $('day').textContent=Math.floor(day);
+  FILES.forEach((f,i)=>{if(f.dir)return;const fd=Math.min(1,d*f.rate*(f.focus?1:.9));const s=stageFor(fd);
+    rows[i].style.setProperty('--st',s.col);rows[i].querySelector('.age').textContent=Math.floor(day*f.rate)+'d';
+    rows[i].querySelector('.bar i').style.width=(fd*100).toFixed(1)+'%';});
+  const s=stageFor(d);$('stage-name').textContent=s.name;document.querySelector('.status').style.setProperty('--st',s.col);
+  $('pct').textContent=`decay ${Math.round(d*100)}%`;
+  if(overrideSay==null){$('face').textContent=s.face;$('say').textContent=s.say.replace('{p}',Math.round(d*100));$('say').className='s';}
+}
+
+/* ---------- timeline (seconds) ---------- */
+const T={hold:3,decay:22,crit:3.5,type:3,restore:2.2,end:3};
+const TOTAL=Object.values(T).reduce((a,b)=>a+b,0);
+const CMD='$ cg commit -m "refactor parser"';
+let t=0,last=null;
+function frame(now){
+  if(last==null)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(playing)t+=dt*SPEED;
+  if(t>=TOTAL){t=0;}
+  let x=t,day=0,d=0,restore=null,say=null;
+  if(x<T.hold){d=0;day=0;}
+  else if((x-=T.hold)<T.decay){const k=x/T.decay;day=k*30;d=Math.pow(k,1.25);}
+  else if((x-=T.decay)<T.crit){day=30;d=1;}
+  else if((x-=T.crit)<T.type){day=30;d=1;const n=Math.floor(Math.min(1,x/(T.type*.8))*CMD.length);say=CMD.slice(0,n);}
+  else if((x-=T.type)<T.restore){const k=x/T.restore;day=30*(1-k);d=1;restore=86+k*900;say=CMD;}
+  else{day=0;d=0;say='Fine. It lives.';}
+  if(REDUCED&&d>0&&d<1)d=Math.round(d*4)/4;
+  readouts(day,restore!=null?Math.max(0,1-(restore-86)/900):d,say);
+  if(say!=null){
+    const typing=say.startsWith('$');
+    $('face').textContent=typing?'( ò_ó )':'( -_- )';$('say').textContent=say;$('say').className='s'+(typing?' cmd':'');
+    if(!typing){$('stage-name').textContent='Fresh';}
+  }
+  drawEditor(restore!=null?1:d,restore);
+  requestAnimationFrame(frame);
+}
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play';};
+$('replay').onclick=()=>{t=0;playing=true;$('play').textContent='Pause';};
+(document.fonts?.ready||Promise.resolve()).then(()=>{measure();build();requestAnimationFrame(frame);});
+</script>
+</body>
+</html>

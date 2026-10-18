@@ -8,6 +8,3 @@ check-output/
 dist/
 *.mp4
 
-# Animations are committed at the end of the project (see docs/ROADMAP.md)
-/cursed-git-video/
-/code-animations-kit-v2/

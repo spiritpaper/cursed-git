@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merge Conflict Boss Fight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&family=Rubik+Mono+One&display=swap">
+<style>
+/* Cursed Git series, arcade chapter. A pixel-art battle screen in the classic monster-RPG layout:
+   boss top-right, you bottom-left, a dialog box and a move menu along the bottom. */
+:root{
+  --bg:#0d0b0f; --panel:#16131a; --ink:#ece6da; --muted:#8a8290; --rule:#2c2632;
+  --ember:#ff4a3d; --rot:#b8cc46; --calm:#6fb7e0; --gold:#f2c14e;
+  --pixel:"Press Start 2P", ui-monospace, monospace;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --display:"Rubik Mono One", "Arial Black", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font:400 clamp(18px,2.4vw,26px) var(--display);margin:0;letter-spacing:.02em}
+.top h1 span{color:var(--ember)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.box{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls button,.controls select{font:600 13px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 11px;cursor:pointer}
+.controls .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls .sp{flex:1}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+html.video,html.video body{overflow:hidden;background:var(--bg)}
+html.video .wrap{max-width:none;padding:0;width:100vw;height:100vh}
+html.video .top,html.video .controls{display:none}
+html.video .box{border:0;border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
+
+/* ---- battle ---- */
+canvas{position:absolute;left:0;top:0;width:1600px;height:900px;image-rendering:pixelated}
+.pbox{position:absolute;background:#16131a;border:6px solid var(--ink);box-shadow:inset 0 0 0 4px #16131a,inset 0 0 0 8px #3a3442;font-family:var(--pixel);color:var(--ink)}
+.hud{padding:22px 26px;display:flex;flex-direction:column;gap:14px;transition:opacity .3s}
+.hud .nm{display:flex;justify-content:space-between;font-size:24px;gap:20px}
+.hud .nm small{font-size:18px;color:var(--gold)}
+.hp{display:flex;align-items:center;gap:12px;font-size:16px;color:var(--gold)}
+.hp .t{flex:1;height:18px;background:#2a2430;border:4px solid #0d0b0f;outline:3px solid #3a3442}
+.hp .t i{display:block;height:100%;width:100%;background:#7bd389;transition:width .6s steps(12),background .3s}
+.hud .sub{font-size:14px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.pip{width:18px;height:18px;background:var(--ember);border:3px solid #0d0b0f;outline:2px solid #3a3442}
+.pip.off{background:#2a2430}
+#bossHud{left:70px;top:60px;width:620px;opacity:0}
+#youHud{right:70px;top:420px;width:620px}
+#dialog{left:40px;right:40px;bottom:36px;height:210px;padding:34px 40px;font-size:28px;line-height:1.7}
+#menu{right:40px;bottom:36px;height:210px;width:560px;padding:28px 30px;display:grid;grid-template-columns:1fr 1fr;gap:18px 20px;font-size:22px;align-content:center;opacity:0;transition:opacity .2s}
+#menu.show{opacity:1}
+#menu span{position:relative;padding-left:34px;white-space:nowrap}
+#menu span.sel::before{content:"";position:absolute;left:0;top:50%;translate:0 -50%;border:10px solid transparent;border-left:14px solid var(--ink)}
+#dialog.narrow{right:620px}
+.next{display:inline-block;margin-left:10px;width:0;height:0;border:9px solid transparent;border-top:12px solid var(--ink);vertical-align:-6px;animation:bob .6s steps(2) infinite}
+@keyframes bob{50%{translate:0 5px}}
+.dmg{position:absolute;font-family:var(--pixel);font-size:34px;color:var(--ink);text-shadow:4px 4px 0 #0d0b0f;pointer-events:none}
+.banner{position:absolute;inset:0;display:flex;align-items:flex-start;padding-top:150px;justify-content:center;font-family:var(--pixel);font-size:72px;color:var(--gold);
+  text-shadow:6px 6px 0 #0d0b0f;opacity:0;letter-spacing:.04em;pointer-events:none}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.next{animation:none}.hp .t i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Cursed <span>Git</span> · Boss Fight</h1><p>cg uses Random Pull. A merge conflict appears.</p></div>
+  <div class="box" id="box">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="320" height="180"></canvas>
+      <div class="pbox hud" id="bossHud">
+        <div class="nm"><span>MERGE CONFLICT</span><small>Lv99</small></div>
+        <div class="hp"><span>HP</span><span class="t"><i id="bossHp"></i></span></div>
+        <div class="sub">HUNKS <span class="pip" id="h1"></span><span class="pip" id="h2"></span><span class="pip" id="h3"></span></div>
+      </div>
+      <div class="pbox hud" id="youHud">
+        <div class="nm"><span>DEV</span><small>Lv2</small></div>
+        <div class="hp"><span>SANITY</span><span class="t"><i id="youHp"></i></span></div>
+        <div class="sub" id="youSub">config.ts · line 3</div>
+      </div>
+      <div class="pbox" id="dialog"><span id="text"></span></div>
+      <div class="pbox" id="menu"><span data-m="0">RESOLVE</span><span data-m="1">OURS</span><span data-m="2">THEIRS</span><span data-m="3">RUN</span></div>
+      <div class="banner" id="banner">RANDOM PULL!</div>
+      <div class="flash" id="flash"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="primary" id="play" type="button">Pause</button>
+    <button id="replay" type="button">Restart</button>
+    <span class="sp"></span>
+    <select id="speed" aria-label="Speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+  </div>
+</div>
+
+<script>
+/* ---------- shared: video mode, scaling, run tokens ---------- */
+const P=new URLSearchParams(location.search), VIDEO=P.has('video');
+if(VIDEO)document.documentElement.classList.add('video');
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches&&!VIDEO;
+function fit(){const b=$('box');$('stage').style.transform=`scale(${Math.min(b.clientWidth/1600,b.clientHeight/900)})`;}
+new ResizeObserver(fit).observe($('box'));fit();
+let RUN=0,SPEED=1,playing=true;
+$('speed').onchange=e=>SPEED=+e.target.value;
+const wait=(ms,id)=>new Promise(r=>setTimeout(()=>r(id===RUN),REDUCED?Math.min(ms,300):ms/SPEED));
+
+/* ---------- pixel art (320×180, drawn ×5) ---------- */
+const cv=$('cv'),ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+const C={K:'#1a0f1f',B:'#6fb7e0',b:'#3f7fa8',G:'#f2c14e',g:'#b88a2a',W:'#ece6da',R:'#ff4a3d',r:'#a82a22',S:'#e0b48c',H:'#3a2a24',V:'#5b4a7a',v:'#3e3256',L:'#8fd3ff',D:'#0d0b0f',F:'#2a2234',f:'#221b2b',T:'#b8cc46'};
+// Build sprites as pixel maps from drawing commands
+function sprite(w,h,draw){const m=Array.from({length:h},()=>Array(w).fill(null));const px=(x,y,c)=>{x|=0;y|=0;if(x>=0&&y>=0&&x<w&&y<h)m[y][x]=c;};draw(px,w,h);return {w,h,m};}
+const BOSS=sprite(76,62,(px,w,h)=>{
+  const cx=38,cy=36,RX=30,RY=24;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const dx=(x-cx)/RX,dy=(y-cy)/RY;let inside=dx*dx+dy*dy<=1;
+    if(y<cy-12&&(Math.abs(x-18)<4-(cy-12-y)*.2||Math.abs(x-58)<4-(cy-12-y)*.2)&&y>2)inside=true; // horns
+    if(!inside)continue;
+    const edge=(()=>{for(const[ax,ay]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=(x+ax-cx)/RX,Y=(y+ay-cy)/RY;let ins=X*X+Y*Y<=1;const yy=y+ay,xx=x+ax;if(yy<cy-12&&(Math.abs(xx-18)<4-(cy-12-yy)*.2||Math.abs(xx-58)<4-(cy-12-yy)*.2)&&yy>2)ins=true;if(!ins)return true;}return false;})();
+    if(edge){px(x,y,'K');continue;}
+    const left=x<cx;let c=left?'B':'G';
+    if((left&&(x+y)%7===0)||(!left&&(x*3+y)%9===0))c=left?'b':'g';
+    px(x,y,c);
+  }
+  for(let x=10;x<67;x++)if(x%3!==2){px(x,cy,'W');px(x,cy+1,'W');}           // the ======= seam
+  const eye=(ex,dir)=>{for(let i=0;i<7;i++){for(const o of[0,1]){px(ex+dir*(i+o),cy-14+i,'R');px(ex+dir*(i+o),cy-2-i,'R');}}};
+  eye(30,-1);eye(46,1);                                                    // < and > eyes
+  for(let x=20;x<56;x+=4){px(x,cy+10,'W');px(x+1,cy+11,'W');px(x+2,cy+10,'W');px(x+1,cy+10,'W');} // teeth
+  for(let x=19;x<57;x++)px(x,cy+9,'K');
+});
+const DEV=sprite(30,34,(px)=>{
+  // back view: hood, shoulders, glowing laptop edge
+  for(let y=2;y<14;y++)for(let x=8;x<22;x++){const dx=(x-15)/7,dy=(y-8)/6;if(dx*dx+dy*dy<=1)px(x,y,(dx*dx+dy*dy>.75)?'K':'H');}
+  for(let y=12;y<34;y++)for(let x=2;x<28;x++){const w=Math.min(13,6+(y-12)*1.2);if(Math.abs(x-15)<=w){px(x,y,Math.abs(x-15)>=w-1?'K':(y<16&&Math.abs(x-15)<5)?'v':'V');}}
+  for(let y=14;y<24;y++){px(15,y,'v');}
+  for(let x=4;x<27;x++){px(x,30,'L');px(x,31,'K');}
+});
+function blit(s,x,y,opts={}){
+  for(let j=0;j<s.h;j++)for(let i=0;i<s.w;i++){let c=s.m[j][i];if(!c)continue;
+    if(opts.dissolve&&((i*7+j*13)%17)/17<opts.dissolve)continue;
+    ctx.fillStyle=opts.flash?'#ffffff':C[c];ctx.fillRect(x+i,y+j,1,1);}
+}
+/* background: dusk sky bands, two battle platforms */
+function bg(){
+  const bands=['#120d18','#160f1e','#1b1224','#21152b','#281832','#2f1b37'];
+  bands.forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(0,i*14,320,14);});
+  ctx.fillStyle='#1a1420';ctx.fillRect(0,84,320,96);
+  for(let i=0;i<40;i++){ctx.fillStyle=i%3?'#3a2a4a':'#4a3560';ctx.fillRect((i*53)%320,(i*29)%70,1,1);}  // stars
+  const plat=(cx,cy,rx,ry,c1,c2)=>{for(let y=-ry;y<=ry;y++)for(let x=-rx;x<=rx;x++){if((x*x)/(rx*rx)+(y*y)/(ry*ry)<=1){ctx.fillStyle=(y<-ry*.3)?c1:c2;ctx.fillRect(cx+x,cy+y,1,1);}}};
+  plat(232,72,54,9,'#3a2e48','#2a2236');
+  plat(75,127,50,8,'#3a2e48','#2a2236');
+}
+const S={boss:{x:330,y:12,flash:0,dissolve:0,shake:0,show:false},dev:{x:60,y:94,flash:0,shake:0},t:0};
+let lastT=null;
+function render(now){
+  if(lastT==null)lastT=now;const dt=(now-lastT)/1000;lastT=now;S.t+=dt;
+  ctx.clearRect(0,0,320,180);bg();
+  const b=S.boss,bob=REDUCED?0:Math.round(Math.sin(S.t*2.2)*1.5),sx=b.shake?Math.round((Math.random()-.5)*b.shake):0;
+  if(b.show)blit(BOSS,Math.round(b.x)+sx,b.y+bob,{flash:b.flash>0&&Math.floor(S.t*16)%2===0,dissolve:b.dissolve});
+  const d=S.dev,dbob=REDUCED?0:Math.round(Math.sin(S.t*2.2+1)*1),dsx=d.shake?Math.round((Math.random()-.5)*d.shake):0;
+  blit(DEV,d.x+dsx,d.y+dbob,{flash:d.flash>0&&Math.floor(S.t*16)%2===0});
+  b.flash=Math.max(0,b.flash-dt);d.flash=Math.max(0,d.flash-dt);b.shake=Math.max(0,b.shake-dt*20);d.shake=Math.max(0,d.shake-dt*20);
+  requestAnimationFrame(render);
+}
+
+/* ---------- UI helpers ---------- */
+async function say(text,id,hold=1400){
+  const el=$('text');el.textContent='';
+  for(const ch of text){el.textContent+=ch;if(!await wait(ch===' '?10:26,id))return false;}
+  const n=document.createElement('span');n.className='next';el.append(n);
+  return wait(hold+text.length*22,id);
+}
+async function menu(pick,id){
+  const m=$('menu'),items=[...m.children];$('dialog').classList.add('narrow');m.classList.add('show');
+  let cur=0;items.forEach((s,i)=>s.classList.toggle('sel',i===cur));
+  if(!await wait(700,id))return false;
+  while(cur!==pick){cur=(cur+1)%4;items.forEach((s,i)=>s.classList.toggle('sel',i===cur));if(!await wait(380,id))return false;}
+  if(!await wait(500,id))return false;
+  m.classList.remove('show');$('dialog').classList.remove('narrow');return true;
+}
+function hp(el,v){el.style.width=v+'%';el.style.background=v>50?'#7bd389':v>20?'#f2c14e':'#ff4a3d';}
+function pop(text,x,y,color){const d=document.createElement('div');d.className='dmg';d.textContent=text;d.style.left=x+'px';d.style.top=y+'px';d.style.color=color||'#ece6da';$('stage').append(d);
+  d.animate([{translate:'0 0',opacity:1},{translate:'0 -90px',opacity:0}],{duration:1300,easing:'ease-out',fill:'forwards'});setTimeout(()=>d.remove(),1400);}
+function flash(){$('flash').animate([{opacity:.85},{opacity:0}],{duration:350,fill:'forwards'});}
+function banner(text,color){const b=$('banner');b.textContent=text;b.style.color=color||'var(--gold)';
+  b.animate([{opacity:0,scale:.6},{opacity:1,scale:1.05,offset:.2},{opacity:1,scale:1,offset:.8},{opacity:0,scale:1.1}],{duration:1600,fill:'forwards'});}
+const hunks=n=>['h1','h2','h3'].forEach((h,i)=>$(h).classList.toggle('off',i>=n));
+async function tween(ms,f,id){const t0=performance.now();return new Promise(res=>{const step=()=>{if(id!==RUN)return res(false);const k=Math.min(1,(performance.now()-t0)/(ms/SPEED));f(k);k<1?requestAnimationFrame(step):res(true);};requestAnimationFrame(step);});}
+
+/* ---------- the fight ---------- */
+async function fight(id){
+  Object.assign(S.boss,{x:330,show:false,dissolve:0,flash:0});$('bossHud').style.opacity=0;hp($('bossHp'),100);hp($('youHp'),100);hunks(3);
+  $('menu').classList.remove('show');$('dialog').classList.remove('narrow');
+  if(!await say('You were coding peacefully.',id,600))return;
+  flash();banner('RANDOM PULL!');
+  if(!await say('cg used RANDOM PULL!',id,700))return;
+  S.boss.show=true;
+  if(!await tween(1100,k=>{S.boss.x=330-(330-194)*(1-Math.pow(1-k,3));},id))return;
+  $('bossHud').style.opacity=1;
+  if(!await say('A wild MERGE CONFLICT appeared!',id))return;
+  if(!await say('It has 3 conflicting hunks.',id,600))return;
+  // RUN
+  if(!await menu(3,id))return;
+  if(!await say('You tried git merge --abort.',id,500))return;
+  if(!await say("cg disabled it. You can't run.",id))return;
+  // THEIRS
+  if(!await menu(2,id))return;
+  if(!await say('You used ACCEPT THEIRS!',id,300))return;
+  S.dev.flash=.6;S.dev.shake=6;hp($('youHp'),55);pop('-45',1250,380,'#ff4a3d');
+  if(!await say('Your 30s timeout was overwritten. It hurt you instead.',id))return;
+  // RESOLVE x3
+  const hits=['You read both versions carefully.','You kept the parts that matter.','You ran the tests. They pass!'];
+  for(let i=0;i<3;i++){
+    if(!await menu(0,id))return;
+    if(!await say(hits[i],id,300))return;
+    S.boss.flash=.6;S.boss.shake=8;hp($('bossHp'),[66,33,0][i]);hunks(2-i);pop(i===2?'CRIT -34':'-33',1040,150,i===2?'#f2c14e':'#ece6da');
+    if(!await say(i===2?"It's super effective!":['Hunk 1 resolved.','Hunk 2 resolved.'][i],id,500))return;
+  }
+  if(!await tween(1400,k=>{S.boss.dissolve=k;},id))return;
+  S.boss.show=false;$('bossHud').style.opacity=0;
+  if(!await say('MERGE CONFLICT fainted!',id,500))return;
+  banner('+50 XP','#b8cc46');
+  if(!await say('You gained 50 XP.',id,400))return;
+  if(!await say('cg is disappointed anyway.  ( -_- )',id,1800))return;
+  return true;
+}
+async function play(){const id=++RUN;const ok=await fight(id);if(ok&&id===RUN&&(playing||VIDEO)){if(await wait(1000,id))play();}}
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play';if(playing)play();else RUN++;};
+$('replay').onclick=()=>{playing=true;$('play').textContent='Pause';play();};
+requestAnimationFrame(render);
+(document.fonts?.ready||Promise.resolve()).then(play);
+</script>
+</body>
+</html>

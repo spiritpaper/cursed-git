@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inside cg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rubik+Mono+One&family=VT323&display=swap">
+<style>
+/* Cursed Git series look. One fixed map for every command, so viewers learn it once:
+   left = your files, middle = what cg does, right = the .git folder. Object types keep one color each. */
+:root{
+  --bg:#0d0b0f; --panel:#16131a; --panel2:#1d1922; --ink:#ece6da; --muted:#8a8290; --rule:#2c2632;
+  --ember:#ff4a3d; --rot:#b8cc46; --calm:#6fb7e0; --gold:#f2c14e; --ghost:#5b5462;
+  --blob:#6fb7e0; --tree:#b8cc46; --commit:#f2c14e; --ref:#c792ea;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --term:"VT323", ui-monospace, monospace;
+  --display:"Rubik Mono One", "Arial Black", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font:400 clamp(18px,2.4vw,26px) var(--display);margin:0;letter-spacing:.02em}
+.top h1 span{color:var(--ember)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.box{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden}
+.controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.controls button,.controls select{font:600 13px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 10px;cursor:pointer}
+.controls button[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.controls .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls .grp{font:600 11px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin:0 2px 0 8px}
+.controls .sp{flex:1}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+html.video,html.video body{overflow:hidden;background:var(--bg)}
+html.video .wrap{max-width:none;padding:0;width:100vw;height:100vh}
+html.video .top,html.video .controls{display:none}
+html.video .box{border:0;border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
+
+/* ---- header + terminal ---- */
+.chapter{position:absolute;left:70px;top:30px;display:flex;align-items:center;gap:18px}
+.chapter .n{font:400 22px var(--display);color:var(--ember)}
+.chapter .t{font:400 30px var(--display)}
+.chapter .tag{font:600 14px var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:6px;border:1px solid var(--rule);color:var(--muted)}
+.chapter .tag.plumbing{color:var(--calm);border-color:color-mix(in srgb,var(--calm) 45%,transparent)}
+.chapter .tag.porcelain{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.chapter .tag.remote{color:var(--ref);border-color:color-mix(in srgb,var(--ref) 45%,transparent)}
+.term{position:absolute;left:70px;right:70px;top:86px;height:108px;background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:10px 22px;
+  font:400 32px/1.3 var(--term);overflow:hidden;white-space:pre}
+.term .p{color:var(--rot)} .term .c{color:var(--ink)} .term .o{color:var(--muted)}
+.caret{display:inline-block;width:.5em;height:.9em;background:currentColor;vertical-align:-.08em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ---- panels ---- */
+.panel{position:absolute;top:212px;height:520px;background:var(--panel);border:1px solid var(--rule);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+#pL{left:70px;width:340px} #pM{left:430px;width:630px} #pR{left:1080px;width:450px}
+.stage.remote #pL{width:450px} .stage.remote #pM{left:540px;width:520px}
+.ph{padding:13px 18px 11px;font:600 14px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);display:flex;justify-content:space-between}
+.pb{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:4px;overflow:hidden;align-content:flex-start}
+.pb.compact{flex-direction:row;flex-wrap:wrap;gap:6px}
+.pb.compact>.r{flex:0 0 100%}
+.pb.compact>.r.obj{flex:0 0 auto;padding:4px 8px 4px 6px!important;min-height:0;font-size:17px;border:1px solid var(--rule)}
+.pb.compact>.r.obj .lb{display:none}
+
+.r{display:flex;align-items:center;gap:10px;padding:4px 8px;border-radius:8px;font:400 18px var(--mono);min-height:32px;position:relative;white-space:nowrap}
+.r .nm{font-weight:600}
+.r.dir .nm{color:var(--muted);font-weight:400}
+.r.file{flex-direction:column;align-items:stretch;gap:4px;padding:8px 10px;background:var(--panel2)}
+.r.file .nm::before{content:"▤ ";color:var(--muted)}
+.r.file pre{margin:0;font:400 16px/1.45 var(--mono);color:#cfc7ba;white-space:pre;padding:6px 8px;border-radius:6px;background:var(--bg);overflow:hidden}
+.r.file .meta{position:absolute;right:10px;top:8px;font:600 13px var(--mono);letter-spacing:.06em}
+.badge{font:700 13px var(--mono);padding:2px 7px;border-radius:5px;color:#0d0b0f;letter-spacing:.02em}
+.badge.blob{background:var(--blob)} .badge.tree{background:var(--tree)} .badge.commit{background:var(--commit)}
+.r.obj .h{font-weight:700}
+.r.obj .lb{color:var(--muted);font-size:16px;overflow:hidden;text-overflow:ellipsis}
+.r.ref .nm{color:var(--ref)}
+.r.ref .v{color:var(--ink);font-weight:700}
+.r.ref .v.sym{color:var(--muted);font-weight:400}
+.r.ref .arrow{color:var(--muted)}
+.r.idx{font-size:17px;gap:14px}
+.r.idx .m{color:var(--muted)} .r.idx .h{color:var(--blob);font-weight:700}
+.r.note{font-size:16px;color:var(--muted);white-space:normal}
+.r.new{animation:rin .55s ease-out}
+@keyframes rin{from{opacity:0;transform:translateX(16px);background:color-mix(in srgb,var(--gold) 30%,transparent)}to{opacity:1;transform:none}}
+.r.flash{animation:rflash 1.4s ease-out}
+@keyframes rflash{0%{background:color-mix(in srgb,var(--gold) 40%,transparent)}100%{background:transparent}}
+.r.file.flash{animation:rflashf 1.4s ease-out}
+@keyframes rflashf{0%{background:color-mix(in srgb,var(--gold) 35%,var(--panel2))}100%{background:var(--panel2)}}
+.hl{box-shadow:inset 0 0 0 2px var(--hc,var(--gold));background:color-mix(in srgb,var(--hc,var(--gold)) 14%,transparent)}
+.r.file.hl{background:color-mix(in srgb,var(--hc,var(--gold)) 14%,var(--panel2))}
+.r.gone{opacity:.35}
+
+/* machine steps */
+.st{display:flex;flex-direction:column;gap:3px;padding:9px 14px;background:var(--panel2);border-radius:10px;border-left:4px solid var(--sc,var(--gold));animation:rin .5s ease-out}
+.st .k{font:600 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.st .v{font:400 20px/1.4 var(--mono);white-space:pre-wrap;word-break:break-all}
+.st .v.code{font-size:16px;line-height:1.5;white-space:pre;word-break:normal;overflow:hidden;tab-size:2}
+.st .v.code.sm{font-size:14px}
+.st .v.big{font-size:24px;font-weight:700}
+.st .v b{color:var(--gold);font-weight:700}
+.st .v .dim{color:var(--muted)}
+.st .v .nul{color:var(--ember);font-weight:700}
+.st.fade{opacity:.5}
+.dn{align-self:center;color:var(--muted);font-size:18px;line-height:1;margin:-2px 0}
+.tbl{display:grid;grid-template-columns:150px repeat(3,1fr);gap:4px 10px;font:400 17px var(--mono);align-items:center}
+.tbl .hd{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.tbl .p{font-weight:600}
+.tbl .x{color:var(--muted)}
+.tbl .d{color:var(--ember);font-weight:700}
+.tbl .s{color:var(--rot);font-weight:700}
+
+.caption{position:absolute;left:70px;right:70px;top:752px;min-height:96px;font:600 31px/1.35 var(--mono);color:var(--ink);text-wrap:balance}
+.caption em{font-style:normal;color:var(--gold)}
+.caption code{font-family:var(--mono);color:var(--calm)}
+.fly{position:absolute;z-index:30;font:700 17px var(--mono);padding:5px 11px;border-radius:7px;color:#0d0b0f;background:var(--fc,var(--gold));box-shadow:0 10px 30px -8px rgba(0,0,0,.7);white-space:nowrap;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.caret{animation:none}.r.new,.st,.r.flash,.r.file.flash{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Cursed <span>Git</span> · Inside cg</h1><p>Every hash and byte here comes from a real repository.</p></div>
+  <div class="box" id="box">
+    <div class="stage" id="stage">
+      <div class="chapter"><span class="n" id="chN">01</span><span class="t" id="chT"></span><span class="tag" id="chTag"></span></div>
+      <div class="term" id="term"></div>
+      <div class="panel" id="pL"><div class="ph"><span id="hL"></span></div><div class="pb" id="bL"></div></div>
+      <div class="panel" id="pM"><div class="ph"><span id="hM">what cg does</span></div><div class="pb" id="bM"></div></div>
+      <div class="panel" id="pR"><div class="ph"><span id="hR"></span></div><div class="pb" id="bR"></div></div>
+      <div class="caption" id="caption" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="controls" id="controls">
+    <button class="primary" id="play" type="button">Pause</button>
+    <button id="replay" type="button">Replay</button>
+    <span class="sp"></span>
+    <select id="speed" aria-label="Speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+  </div>
+</div>
+
+<script>
+/* ===================================================================
+   Real data, captured from an actual git 2.43 repository.
+   =================================================================== */
+const H={
+  r1:'acca208c2431912c8ea918ac5bd7aad06c471ccc', // blob  README.md  "# cursed-git\n" (13 bytes)
+  g1:'06ab7d0f9a35a7d1070711496d6ca1cb892a258f', // blob  src/cg.go  "package main\n"
+  s1:'164b7e98663f9012bdc063cb9d97cca2c731fd86', // tree  src/
+  t1:'7031a0bc2b367f35dbeddd63f160a1ce7ab8b617', // tree  root (67 bytes)
+  c1:'fe16bf536cf7d3f2f1769fb62c58265dd13d4c74', // commit "first curse" (152 bytes)
+  r2:'d22b9e4aa7d100b87cc923e0c2fbe6b0461c1e67', // blob  README.md v2 (31 bytes)
+  t2:'31d6f1ce2adca6dc30bb2a851f075692739703c7', // tree  root v2
+  c2:'dd70c3fceecb3edee8065a3b71fbd64a3eae8a2e', // commit "add warning"
+  r3:'3daf328cf04e2d576be31975937fd8291b441f77', // blob  README.md v3 (status scene)
+  g3:'38dd16da61accb1a8de6ac8709d2e65ef4a51a4a', // blob  src/cg.go v2 (teammate)
+  s3:'dc120cc3f9d37be98d60b19054f53dc4ba9c3359', // tree  src/ v2
+  t3:'cdf52eec22ff46d931fafecc2b43eb490014c8fb', // tree  root v3
+  c3:'9386a2742647502e40da98ab7a1576a76c852966', // commit "add main" by teammate
+};
+const s7=h=>h.slice(0,7);
+const AUTH='dev <dev@cursed.git> 1759500000 +0330';
+const README1='# cursed-git', README2='# cursed-git\n\ncg has opinions.', README3='# cursed-git\n\ncg has opinions.\ncg remembers.';
+const CG1='package main', CG2='package main\n\nfunc main() {}';
+
+/* ---------- shared: video mode, scaling, run tokens ---------- */
+const P=new URLSearchParams(location.search), VIDEO=P.has('video');
+if(VIDEO)document.documentElement.classList.add('video');
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches&&!VIDEO;
+let SCALE=1;
+function fit(){const b=$('box');SCALE=Math.min(b.clientWidth/1600,b.clientHeight/900);$('stage').style.transform=`scale(${SCALE})`;}
+new ResizeObserver(fit).observe($('box'));fit();
+let RUN=0,SPEED=1,playing=true;
+$('speed').onchange=e=>SPEED=+e.target.value;
+const sleep=ms=>new Promise(r=>setTimeout(r,REDUCED?Math.min(ms,250):ms/SPEED));
+const STOP={};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ---------- rows ---------- */
+const F=(id,name,body,meta)=>({id,kind:'file',name,body,meta});
+const D=(id,name,depth=0)=>({id,kind:'dir',name,depth});
+const O=(id,type,hash,label,depth=1)=>({id,kind:'obj',type,hash,label,depth});
+const RF=(id,name,value,depth=1,sym=false)=>({id,kind:'ref',name,value,depth,sym});
+const IX=(id,hash,path)=>({id,kind:'idx',mode:'100644',hash,path,depth:1});
+const NT=(id,text,depth=1)=>({id,kind:'note',text,depth});
+const LISTS={L:[],R:[]};
+function rowHTML(r){
+  switch(r.kind){
+    case 'file':return `<span class="nm">${esc(r.name)}</span>${r.body!=null?`<pre>${esc(r.body)}</pre>`:''}${r.meta?`<span class="meta" style="color:${r.metaColor||'var(--gold)'}">${esc(r.meta)}</span>`:''}`;
+    case 'dir':return `<span class="nm">${esc(r.name)}</span>`;
+    case 'obj':return `<span class="badge ${r.type}">${r.type}</span><span class="h">${s7(r.hash)}</span><span class="lb">${esc(r.label||'')}</span>`;
+    case 'ref':return `<span class="nm">${esc(r.name)}</span><span class="arrow">→</span><span class="v${r.sym?' sym':''}">${esc(r.sym?r.value:s7(r.value))}</span>`;
+    case 'idx':return `<span class="m">${r.mode}</span><span class="h">${s7(r.hash)}</span><span>${esc(r.path)}</span>`;
+    case 'note':return esc(r.text);
+  }
+}
+function render(key,newIds=new Set(),flashIds=new Set()){
+  const body=$('b'+key),list=LISTS[key],keep=new Set(list.map(r=>r.id));
+  [...body.children].forEach(el=>{if(!keep.has(el.dataset.id))el.remove();});
+  list.forEach(r=>{
+    let el=body.querySelector(`:scope>[data-id="${r.id}"]`);
+    const html=rowHTML(r);
+    if(!el){el=document.createElement('div');el.dataset.id=r.id;}
+    el.className=`r ${r.kind}`+(r.gone?' gone':'');
+    el.style.paddingLeft=r.kind==='file'?'':(8+(r.depth||0)*20)+'px';
+    if(el.__html!==html){el.innerHTML=html;el.__html=html;}
+    body.append(el);
+    if(newIds.has(r.id)){el.classList.remove('new');void el.offsetWidth;el.classList.add('new');}
+    if(flashIds.has(r.id)){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
+  });
+  if(body.scrollHeight>body.clientHeight+2)body.classList.add('compact');   // too many rows: objects become chips
+}
+
+/* ---------- context: everything a scene can do ---------- */
+function ctx(id){
+  const chk=()=>{if(id!==RUN)throw STOP;};
+  const x={
+    async wait(ms){await sleep(ms);chk();},
+    async cmd(text){
+      const t=$('term');t.innerHTML='<span class="p">dev ~/cursed-git $</span> <span class="c"></span><span class="caret"></span>';
+      const c=t.querySelector('.c');
+      for(const ch of text){c.textContent+=ch;await x.wait(ch===' '?22:34+Math.random()*24);}
+      await x.wait(380);
+    },
+    out(text){const t=$('term');t.querySelector('.caret')?.remove();t.insertAdjacentHTML('beforeend','\n<span class="o">'+esc(text)+'</span>');},
+    say(html){$('caption').innerHTML=html;},
+    async beat(html,extra=0){x.say(html);await x.wait(1500+html.replace(/<[^>]+>/g,'').split(/\s+/).length*220+extra);},
+    head(key,title){$('h'+key).textContent=title;},
+    compact(key,on){$('b'+key).classList.toggle('compact',on);},
+    add(key,row,opt={}){
+      const L=LISTS[key];let i=L.length;
+      if(opt.first)i=0;
+      else if(opt.in){const s=L.findIndex(r=>r.id===opt.in);if(s>=0){const d=L[s].depth||0;i=s+1;while(i<L.length&&(L[i].depth||0)>d)i++;}}
+      else if(opt.after){const s=L.findIndex(r=>r.id===opt.after);if(s>=0)i=s+1;}
+      L.splice(i,0,row);render(key,opt.instant?new Set():new Set([row.id]));
+    },
+    set(key,id,patch,flash=true){const r=LISTS[key].find(r=>r.id===id);Object.assign(r,patch);render(key,new Set(),flash?new Set([id]):new Set());},
+    del(key,id){LISTS[key]=LISTS[key].filter(r=>r.id!==id);render(key);},
+    el(id){return $('stage').querySelector(`[data-id="${id}"]`);},
+    hl(id,color){const e=x.el(id);if(!e)return;e.style.setProperty('--hc',color||'var(--gold)');e.classList.add('hl');},
+    unhl(id){const e=id?x.el(id):null;(e?[e]:$('stage').querySelectorAll('.hl')).forEach(n=>n.classList.remove('hl'));},
+    step(k,v,opt={}){
+      const b=$('bM');
+      if(b.children.length&&!opt.noArrow)b.insertAdjacentHTML('beforeend','<div class="dn">↓</div>');
+      const s=document.createElement('div');s.className='st';if(opt.id)s.dataset.id=opt.id;
+      if(opt.color)s.style.setProperty('--sc',opt.color);
+      s.innerHTML=`<span class="k">${k}</span><span class="v ${opt.cls||''}">${v}</span>`;b.append(s);
+      while(b.scrollHeight>b.clientHeight+2&&b.children.length>1)b.firstElementChild.remove();
+      if(b.firstElementChild?.classList.contains('dn'))b.firstElementChild.remove();
+      return s;
+    },
+    raw(html){const b=$('bM');const d=document.createElement('div');d.innerHTML=html;b.append(d);return d;},
+    clearM(){$('bM').innerHTML='';},
+    async fly(from,to,text,color,ms=800){
+      const a=x.el(from),b=x.el(to);if(!a||!b){return;}
+      const S=$('stage').getBoundingClientRect(),ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();
+      const p=r=>({x:(r.left-S.left+r.width/2)/SCALE,y:(r.top-S.top+r.height/2)/SCALE});
+      const A=p(ra),B=p(rb);
+      const f=document.createElement('div');f.className='fly';f.textContent=text;if(color)f.style.setProperty('--fc',color);
+      $('stage').append(f);const w=f.offsetWidth,h=f.offsetHeight;
+      f.style.left=(A.x-w/2)+'px';f.style.top=(A.y-h/2)+'px';
+      f.animate([{transform:'translate(0,0) scale(.85)',opacity:0},{transform:'translate(0,0) scale(1)',opacity:1,offset:.12},{transform:`translate(${B.x-A.x}px,${B.y-A.y}px) scale(1)`,opacity:1,offset:.88},{transform:`translate(${B.x-A.x}px,${B.y-A.y}px) scale(.9)`,opacity:0}],
+        {duration:REDUCED?1:ms/SPEED,easing:'cubic-bezier(.65,0,.35,1)',fill:'forwards'});
+      await x.wait(ms);f.remove();
+    },
+  };
+  return x;
+}
+
+/* ---------- reusable starting states ---------- */
+const WD={
+  v1(x){x.head('L','working directory');x.add('L',F('wReadme','README.md',README1),{instant:true});x.add('L',F('wCg','src/cg.go',CG1),{instant:true});},
+};
+function gitBase(x,{index=[],objects=[],main=null,extraRefs=[]}={}){
+  x.head('R','.git/');
+  x.add('R',RF('head','HEAD','ref: refs/heads/main',0,true),{instant:true});
+  x.add('R',D('index','index',0),{instant:true});
+  index.forEach(r=>x.add('R',{...r,depth:1},{in:'index',instant:true}));
+  x.add('R',D('objs','objects/',0),{instant:true});
+  objects.forEach(o=>x.add('R',{...o,depth:1},{in:'objs',instant:true}));
+  x.add('R',D('refs','refs/heads/',0),{instant:true});
+  if(main)x.add('R',RF('main','main',main,1),{in:'refs',instant:true});
+  extraRefs.forEach(r=>x.add('R',r,{instant:true}));
+}
+const OB={
+  r1:()=>O('o_r1','blob',H.r1,'README.md'), g1:()=>O('o_g1','blob',H.g1,'src/cg.go'),
+  s1:()=>O('o_s1','tree',H.s1,'src/'), t1:()=>O('o_t1','tree',H.t1,'(root)'), c1:()=>O('o_c1','commit',H.c1,'first curse'),
+  r2:()=>O('o_r2','blob',H.r2,'README.md'), t2:()=>O('o_t2','tree',H.t2,'(root)'), c2:()=>O('o_c2','commit',H.c2,'add warning'),
+  r3:()=>O('o_r3','blob',H.r3,'README.md'),
+  g3:()=>O('o_g3','blob',H.g3,'src/cg.go'), s3:()=>O('o_s3','tree',H.s3,'src/'), t3:()=>O('o_t3','tree',H.t3,'(root)'), c3:()=>O('o_c3','commit',H.c3,'add main'),
+};
+const C1SET=['r1','g1','s1','t1','c1'], C2SET=[...C1SET,'r2','t2','c2'];
+const objs=keys=>keys.map(k=>OB[k]());
+
+/* ===================================================================
+   Scenes
+   =================================================================== */
+const SCENES=[
+/* 1 ---------------------------------------------------------------- */
+{t:'cg init',tag:'setup',async run(x){
+  WD.v1(x);x.head('R','.git/');
+  await x.beat('Two files, no repository yet. Git knows nothing about them.');
+  await x.cmd('cg init');
+  x.add('R',NT('n0','creating .git/ …',0));
+  await x.wait(500);x.del('R','n0');
+  x.step('make a folder','.git/',{color:'var(--ink)'});
+  await x.beat('init creates one hidden folder: <em>.git</em>. That folder <em>is</em> the repository.');
+  x.add('R',D('objs','objects/',0));x.step('mkdir','.git/objects/',{color:'var(--blob)'});
+  await x.beat('<code>objects/</code> will hold every version of every file, forever.');
+  x.add('R',D('refs','refs/heads/',0));x.step('mkdir','.git/refs/heads/',{color:'var(--ref)'});
+  await x.beat('<code>refs/heads/</code> holds branches. It stays empty until the first commit.');
+  x.add('R',RF('head','HEAD','ref: refs/heads/main',0,true),{first:true});
+  x.step('write .git/HEAD','ref: refs/heads/main<span class="dim">\\n</span>',{color:'var(--ref)'});
+  await x.beat('<em>HEAD</em> is a text file saying which branch you are on. main does not exist yet: it is born with the first commit.');
+  x.add('R',D('config','config',0),{after:'head'});x.step('write .git/config','[core]\n    repositoryformatversion = 0',{color:'var(--muted)'});
+  x.out('Initialized empty cg repository in ~/cursed-git/.git/');
+  await x.beat('That is all cg needs. Real git also adds hooks/, info/ and a description file.',600);
+}},
+/* 2 ---------------------------------------------------------------- */
+{t:'hash-object',tag:'plumbing',async run(x){
+  WD.v1(x);gitBase(x);
+  await x.cmd('cg hash-object -w README.md');
+  x.hl('wReadme');
+  x.step('1 · read the file','# cursed-git<span class="dim">\\n</span>   <span class="dim">(13 bytes)</span>',{id:'m1',color:'var(--blob)'});
+  await x.fly('wReadme','m1','13 bytes','var(--blob)');
+  await x.beat('cg reads the raw bytes. The file name is not part of the object, only the content.');
+  x.step('2 · add a header','<b>blob 13</b><span class="nul">\\0</span># cursed-git<span class="dim">\\n</span>',{color:'var(--gold)'});
+  await x.beat('In front goes a header: the <em>type</em>, the <em>size</em> in bytes, and a null byte.');
+  x.step('3 · SHA-1 of header + content',`<b>${H.r1.slice(0,2)}</b>${H.r1.slice(2)}`,{id:'m3',color:'var(--ember)'});
+  await x.beat('The SHA-1 of all of it becomes the object\'s name. Same content, same hash, on every computer in the world.');
+  x.step('4 · zlib compress','78 01 4b ca c9 4f 52 30 34 66 50 56 48 2e 2d 2a 4e 4d d1 4d cf 2c e1 02 00 45 56 06 68',{color:'var(--muted)'});
+  await x.beat('Then zlib compresses it. 21 bytes in, 29 out: tiny files get bigger. Git does not care.');
+  x.step('5 · write to',`.git/objects/<b>${H.r1.slice(0,2)}</b>/${H.r1.slice(2)}`,{id:'m5',color:'var(--blob)'});
+  await x.beat('The first two hex characters become a folder name, the other 38 the file name.');
+  await x.fly('m5','objs',s7(H.r1),'var(--blob)');
+  x.add('R',OB.r1(),{in:'objs'});x.unhl();
+  x.out(H.r1);
+  await x.beat('A <em>blob</em> is born. Without <code>-w</code>, hash-object only prints the hash and writes nothing.',600);
+}},
+/* 3 ---------------------------------------------------------------- */
+{t:'cat-file',tag:'plumbing',async run(x){
+  WD.v1(x);gitBase(x,{objects:objs(['r1'])});
+  await x.cmd('cg cat-file -t acca208');
+  x.hl('o_r1');
+  x.step('1 · find the file','.git/objects/<b>ac</b>/ca208…  <span class="dim">(any file starting with ca208)</span>',{id:'m1',color:'var(--blob)'});
+  await x.fly('o_r1','m1','acca208','var(--blob)');
+  await x.beat('A short hash is enough. cg opens the folder <code>ac/</code> and looks for a file starting with <code>ca208</code>.');
+  x.step('2 · inflate (zlib)','blob 13<span class="nul">\\0</span># cursed-git<span class="dim">\\n</span>',{color:'var(--muted)'});
+  await x.beat('Decompress, and the original bytes come back exactly.');
+  x.step('3 · split at the first null byte','header  <b>blob 13</b>\ncontent # cursed-git',{color:'var(--gold)'});
+  x.out('blob');
+  await x.beat('<code>-t</code> prints the type from the header.');
+  await x.cmd('cg cat-file -s acca208');x.out('13');
+  await x.beat('<code>-s</code> prints the size.');
+  await x.cmd('cg cat-file -p acca208');x.out('# cursed-git');
+  await x.beat('<code>-p</code> prints the content. hash-object goes in, cat-file comes back out. Build these two first.',600);
+}},
+/* 4 ---------------------------------------------------------------- */
+{t:'update-index · ls-files',tag:'plumbing',async run(x){
+  WD.v1(x);gitBase(x,{objects:objs(['r1'])});
+  await x.beat('A commit needs to know which files go in it. That list is the <em>index</em>, the staging area.');
+  await x.cmd('cg update-index --add README.md');
+  x.hl('wReadme');
+  x.step('1 · hash + store the file',`blob <b>${s7(H.r1)}</b>  <span class="dim">(already in objects/)</span>`,{color:'var(--blob)'});
+  await x.wait(900);
+  x.step('2 · add an entry',`100644  ${s7(H.r1)}  README.md`,{id:'m2',color:'var(--gold)'});
+  await x.fly('m2','index','README.md','var(--gold)');
+  x.add('R',IX('i_r',H.r1,'README.md'),{in:'index'});x.unhl();
+  await x.beat('An entry is a file <em>mode</em>, a <em>blob hash</em> and a <em>path</em>. Plus timestamps and size, so status can be fast later.');
+  await x.cmd('cg update-index --add src/cg.go');
+  x.hl('wCg');
+  x.step('hash + store',`blob <b>${s7(H.g1)}</b>  <span class="dim">(new object)</span>`,{id:'m3',color:'var(--blob)'});
+  await x.fly('wCg','m3','src/cg.go','var(--blob)');
+  x.add('R',OB.g1(),{in:'objs'});
+  x.step('add an entry',`100644  ${s7(H.g1)}  src/cg.go`,{id:'m4',color:'var(--gold)'});
+  await x.fly('m4','index','src/cg.go','var(--gold)');
+  x.add('R',IX('i_g',H.g1,'src/cg.go'),{in:'index'});x.unhl();
+  await x.beat('Note the full path <code>src/cg.go</code>. The index is <em>flat</em>: folders only appear when you write a tree.');
+  await x.cmd('cg ls-files --stage');
+  x.clearM();
+  x.step('ls-files --stage',`100644 ${H.r1} 0\tREADME.md\n100644 ${H.g1} 0\tsrc/cg.go`,{cls:'code sm',color:'var(--gold)'});
+  x.step('the file .git/index starts with','<b>44 49 52 43</b> 00 00 00 02 00 00 00 02\n<span class="dim">"DIRC"      version 2   2 entries</span>',{cls:'code',color:'var(--muted)'});
+  await x.beat('On disk it is one binary file, sorted by path. The 0 in the listing is the merge stage. It matters during conflicts.',600);
+}},
+/* 5 ---------------------------------------------------------------- */
+{t:'write-tree · ls-tree',tag:'plumbing',async run(x){
+  WD.v1(x);gitBase(x,{index:[IX('i_r',H.r1,'README.md'),IX('i_g',H.g1,'src/cg.go')],objects:objs(['r1','g1'])});
+  await x.cmd('cg write-tree');
+  x.step('1 · group index entries by folder','src/   →  cg.go\n(root) →  README.md, src/',{color:'var(--muted)'});
+  x.hl('i_r','var(--tree)');x.hl('i_g','var(--tree)');
+  await x.beat('A tree is a folder listing. cg splits the flat index into one listing per folder.');
+  x.unhl();x.hl('i_g','var(--tree)');
+  x.step('2 · deepest folder first: src/',`100644 blob ${s7(H.g1)}  cg.go`,{id:'m2',color:'var(--tree)'});
+  await x.wait(1200);
+  x.step('header + SHA-1',`tree 33<span class="nul">\\0</span>…  →  <b>${s7(H.s1)}</b>`,{id:'m3',color:'var(--tree)'});
+  await x.fly('m3','objs',s7(H.s1),'var(--tree)');
+  x.add('R',OB.s1(),{in:'objs'});x.unhl();
+  await x.beat('The src tree has one entry, so it becomes object <em>164b7e9</em>.');
+  x.step('3 · then the root, pointing at src',`100644 blob ${s7(H.r1)}  README.md\n040000 tree ${s7(H.s1)}  src`,{cls:'code',color:'var(--tree)'});
+  await x.wait(1400);
+  x.step('header + SHA-1',`tree 67<span class="nul">\\0</span>…  →  <b>${s7(H.t1)}</b>`,{id:'m5',color:'var(--tree)'});
+  await x.fly('m5','objs',s7(H.t1),'var(--tree)');
+  x.add('R',OB.t1(),{in:'objs'});x.out(H.t1);
+  await x.beat('The root tree points to a blob <em>and</em> to another tree. That is how folders nest.');
+  await x.beat('On disk, each entry is the mode, the name, a null byte and the 20 <em>raw</em> bytes of the hash. Entries are sorted by name.');
+  await x.cmd('cg ls-tree 7031a0b');
+  x.clearM();
+  x.step('ls-tree prints it readable',`100644 blob ${H.r1}\tREADME.md\n040000 tree ${H.s1}\tsrc`,{cls:'code sm',color:'var(--tree)'});
+  await x.beat('ls-tree reads a tree back, like cat-file but formatted. Raw format writes 40000; ls-tree pads it to 040000.',600);
+}},
+/* 6 ---------------------------------------------------------------- */
+{t:'commit-tree',tag:'plumbing',async run(x){
+  WD.v1(x);gitBase(x,{index:[IX('i_r',H.r1,'README.md'),IX('i_g',H.g1,'src/cg.go')],objects:objs(['r1','g1','s1','t1'])});
+  await x.beat('A tree is a snapshot, but it has no author, no date and no message. A commit wraps it.');
+  await x.cmd('cg commit-tree 7031a0b -m "first curse"');
+  x.hl('o_t1','var(--commit)');
+  const st=x.step('the commit object, as text','',{cls:'code',color:'var(--commit)'});const v=st.querySelector('.v');
+  const lines=[[`tree ${H.t1}`,'<em>tree</em>: the snapshot of the whole project.'],
+    [`author ${AUTH}`,'<em>author</em>: name, email, Unix timestamp, time zone.'],
+    [`committer ${AUTH}`,'<em>committer</em>: usually the same person. It differs after rebases and cherry-picks.'],
+    ['',null],['first curse','A blank line, then the <em>message</em>.']];
+  for(const [l,cap] of lines){v.textContent+=(v.textContent?'\n':'')+l;if(cap)await x.beat(cap,-300);else await x.wait(300);}
+  await x.beat('No <em>parent</em> line: this is the very first commit.');
+  x.step('header + SHA-1',`commit 152<span class="nul">\\0</span>…  →  <b>${s7(H.c1)}</b>`,{id:'m2',color:'var(--commit)'});
+  await x.fly('m2','objs',s7(H.c1),'var(--commit)');
+  x.add('R',OB.c1(),{in:'objs'});x.unhl();x.out(H.c1);
+  await x.beat('Change anything, even one second of the timestamp, and the hash changes completely.');
+  await x.beat('But nothing points to this commit yet. <em>main still does not exist.</em>',600);
+}},
+/* 7 ---------------------------------------------------------------- */
+{t:'update-ref · symbolic-ref',tag:'plumbing',async run(x){
+  WD.v1(x);gitBase(x,{index:[IX('i_r',H.r1,'README.md'),IX('i_g',H.g1,'src/cg.go')],objects:objs(C1SET)});
+  await x.cmd('cg update-ref refs/heads/main fe16bf5');
+  x.hl('o_c1','var(--ref)');
+  x.step('write .git/refs/heads/main',`${H.c1}<span class="dim">\\n</span>`,{id:'m1',color:'var(--ref)'});
+  await x.fly('o_c1','m1',s7(H.c1),'var(--commit)');
+  await x.fly('m1','refs','main','var(--ref)');
+  x.add('R',RF('main','main',H.c1,1),{in:'refs'});x.unhl();
+  await x.beat('A branch is a text file of <em>41 bytes</em>: a hash and a newline. That is why branches are free.');
+  await x.cmd('cg symbolic-ref HEAD');x.out('refs/heads/main');
+  x.hl('head','var(--ref)');
+  await x.beat('HEAD does not hold a hash. It holds the <em>name</em> of a branch. symbolic-ref reads or changes that name.');
+  await x.cmd('cg rev-parse HEAD');
+  x.clearM();
+  x.step('1 · read HEAD','ref: refs/heads/main',{color:'var(--ref)'});await x.wait(700);
+  x.hl('main','var(--ref)');
+  x.step('2 · read refs/heads/main',s7(H.c1),{color:'var(--ref)'});await x.wait(700);
+  x.hl('o_c1','var(--commit)');
+  x.step('3 · that is a commit…',`tree ${s7(H.t1)}  first curse`,{color:'var(--commit)'});await x.wait(700);
+  x.hl('o_t1','var(--tree)');x.hl('o_r1','var(--blob)');x.hl('o_s1','var(--tree)');x.hl('o_g1','var(--blob)');
+  x.step('4 · …which points to the whole project','trees → blobs',{color:'var(--tree)'});
+  x.out(H.c1);
+  await x.beat('rev-parse turns any name into a full hash. Every porcelain command starts by following this chain.',800);
+}},
+/* 8 ---------------------------------------------------------------- */
+{t:'cg add',tag:'porcelain',async run(x){
+  x.head('L','working directory');
+  x.add('L',{...F('wReadme','README.md',README2,'modified'),metaColor:'var(--ember)'},{instant:true});
+  x.add('L',F('wCg','src/cg.go',CG1),{instant:true});
+  gitBase(x,{index:[IX('i_r',H.r1,'README.md'),IX('i_g',H.g1,'src/cg.go')],objects:objs(C1SET),main:H.c1});
+  await x.beat('README.md changed since the first commit. The index still has the old version.');
+  await x.cmd('cg add README.md');
+  x.hl('wReadme');
+  x.step('1 · hash-object -w README.md',`blob 31<span class="nul">\\0</span>…  →  <b>${s7(H.r2)}</b>`,{id:'m1',color:'var(--blob)'});
+  await x.fly('wReadme','m1','31 bytes','var(--blob)');
+  await x.fly('m1','objs',s7(H.r2),'var(--blob)');
+  x.add('R',OB.r2(),{in:'objs'});
+  await x.beat('Step one is just <code>hash-object -w</code>: a new blob for the new content.');
+  x.hl('i_r');
+  x.step('2 · update-index README.md',`README.md  ${s7(H.r1)}  →  <b>${s7(H.r2)}</b>`,{id:'m2',color:'var(--gold)'});
+  await x.fly('m2','i_r',s7(H.r2),'var(--gold)');
+  x.set('R','i_r',{hash:H.r2});x.set('L','wReadme',{meta:'staged',metaColor:'var(--rot)'});x.unhl();
+  await x.beat('Step two is <code>update-index</code>: point the README entry at the new blob.');
+  x.hl('o_r1','var(--muted)');
+  await x.beat('The old blob <em>acca208</em> is still there. Git never edits an object. It only adds new ones.');
+  await x.beat('So <em>add</em> = hash-object + update-index. <code>cg add .</code> runs that for every changed file.',600);
+}},
+/* 9 ---------------------------------------------------------------- */
+{t:'cg commit',tag:'porcelain',async run(x){
+  x.head('L','working directory');
+  x.add('L',{...F('wReadme','README.md',README2,'staged'),metaColor:'var(--rot)'},{instant:true});x.add('L',F('wCg','src/cg.go',CG1),{instant:true});
+  gitBase(x,{index:[IX('i_r',H.r2,'README.md'),IX('i_g',H.g1,'src/cg.go')],objects:objs([...C1SET,'r2']),main:H.c1});
+  await x.cmd('cg commit -m "add warning"');
+  x.hl('index','var(--tree)');
+  x.step('1 · write-tree',`root tree  →  <b>${s7(H.t2)}</b>  <span class="dim">(src/ → ${s7(H.s1)}, reused)</span>`,{id:'m1',color:'var(--tree)'});
+  await x.fly('m1','objs',s7(H.t2),'var(--tree)');
+  x.add('R',OB.t2(),{in:'objs'});x.unhl();x.hl('o_s1','var(--tree)');
+  await x.beat('src/ did not change, so its tree hashes to the same <em>164b7e9</em>. It is reused, not copied.');
+  x.unhl();x.hl('head','var(--ref)');x.hl('main','var(--ref)');
+  x.step('2 · parent = what HEAD points to now',`HEAD → main → <b>${s7(H.c1)}</b>`,{color:'var(--ref)'});
+  await x.wait(1300);x.unhl();
+  x.step('3 · commit-tree',`tree ${s7(H.t2)}…\nparent ${s7(H.c1)}…\nauthor ${AUTH}\n\nadd warning`,{id:'m3',cls:'code',color:'var(--commit)'});
+  await x.beat('This time the commit has a <em>parent</em> line. That single line is what makes history.');
+  await x.fly('m3','objs',s7(H.c2),'var(--commit)');
+  x.add('R',OB.c2(),{in:'objs'});
+  x.step('4 · update-ref refs/heads/main',`${s7(H.c1)}  →  <b>${s7(H.c2)}</b>`,{id:'m4',color:'var(--ref)'});
+  await x.fly('m4','main',s7(H.c2),'var(--ref)');
+  x.set('R','main',{value:H.c2});x.set('L','wReadme',{meta:null});
+  x.out(`[main ${s7(H.c2)}] add warning`);
+  await x.beat('commit = write-tree + commit-tree + update-ref. Three plumbing commands, one porcelain.');
+  await x.beat('Per commit: new blobs for changed files, new trees along the changed path, one commit. Everything else is shared.',600);
+}},
+/* 10 --------------------------------------------------------------- */
+{t:'cg log',tag:'porcelain',async run(x){
+  WD.v1(x);x.set('L','wReadme',{body:README2},false);
+  gitBase(x,{index:[IX('i_r',H.r2,'README.md'),IX('i_g',H.g1,'src/cg.go')],objects:objs(C2SET),main:H.c2});
+  await x.beat('History is not saved anywhere as a list. log rebuilds it every time.');
+  await x.cmd('cg log');
+  x.hl('main','var(--ref)');
+  x.step('1 · start at HEAD',`HEAD → main → <b>${s7(H.c2)}</b>`,{color:'var(--ref)'});
+  await x.wait(1000);x.hl('o_c2','var(--commit)');
+  x.step('2 · read the commit, print it',`commit ${H.c2}\nAuthor: dev &lt;dev@cursed.git&gt;\nDate:   Fri Oct 3 17:30:00 2025 +0330\n\n    add warning`,{cls:'code',color:'var(--commit)'});
+  await x.beat('Read the commit with the cat-file code you already wrote, then print it.');
+  x.step('3 · follow its parent',`parent  →  <b>${s7(H.c1)}</b>`,{id:'m3',color:'var(--commit)'});
+  await x.fly('o_c2','o_c1','parent','var(--commit)');x.hl('o_c1','var(--commit)');
+  x.step('4 · read, print',`commit ${H.c1}\nAuthor: dev &lt;dev@cursed.git&gt;\nDate:   Fri Oct 3 17:30:00 2025 +0330\n\n    first curse`,{cls:'code',color:'var(--commit)'});
+  await x.beat('Then follow <em>parent</em> to the commit before it, and repeat.');
+  x.step('5 · no parent line','stop',{color:'var(--muted)'});
+  await x.beat('No parent means the first commit. Done. Merge commits have two parents: follow the first one to start.',600);
+}},
+/* 11 --------------------------------------------------------------- */
+{t:'cg status',tag:'porcelain',async run(x){
+  x.head('L','working directory');
+  x.add('L',F('wReadme','README.md',README3),{instant:true});
+  x.add('L',F('wCg','src/cg.go',CG2),{instant:true});
+  x.add('L',F('wNotes','notes.txt','todo: apologize to cg'),{instant:true});
+  gitBase(x,{index:[IX('i_r',H.r3,'README.md'),IX('i_g',H.g1,'src/cg.go')],objects:objs([...C2SET,'r3']),main:H.c2});
+  await x.beat('status compares <em>three</em> snapshots: the last commit, the index, and the files on disk.');
+  await x.cmd('cg status');
+  const tb=x.raw(`<div class="st" style="--sc:var(--gold)"><span class="k">compare blob hashes, file by file</span><div class="tbl" id="tbl">
+    <span class="hd">path</span><span class="hd">HEAD tree</span><span class="hd">index</span><span class="hd">disk</span></div></div>`);
+  const T=$('tbl');
+  const rows=[['README.md',s7(H.r2),s7(H.r3),s7(H.r3)],['src/cg.go',s7(H.g1),s7(H.g1),s7(H.g3)],['notes.txt','—','—','new']];
+  x.hl('main','var(--ref)');x.hl('index');
+  for(const r of rows){T.insertAdjacentHTML('beforeend',`<span class="p">${r[0]}</span><span class="x">${r[1]}</span><span class="x">${r[2]}</span><span class="x">${r[3]}</span>`);await x.wait(800);}
+  x.unhl();
+  const cells=[...T.children].slice(4);
+  cells[1].className='d';cells[2].className='s';x.hl('i_r','var(--rot)');
+  await x.beat('README: HEAD and index differ. That change is <em>staged</em>.');
+  cells[6].className='s';cells[7].className='d';x.hl('wCg','var(--ember)');
+  await x.beat('cg.go: index and disk differ. It is <em>modified</em>, but not staged.');
+  cells[11].className='d';x.hl('wNotes','var(--muted)');
+  await x.beat('notes.txt is not in the index at all. It is <em>untracked</em>.');
+  x.step('output','Changes to be committed:\n\tmodified:   README.md\n\nChanges not staged for commit:\n\tmodified:   src/cg.go\n\nUntracked files:\n\tnotes.txt',{cls:'code',color:'var(--gold)'});
+  await x.beat('Real git checks file timestamps first so it can skip hashing. cg can hash everything: slower, much simpler.',800);
+}},
+/* 12 --------------------------------------------------------------- */
+{t:'cg push',tag:'remote',async run(x){
+  x.head('L','local .git/');x.compact('L',true);
+  x.add('L',RF('lmain','refs/heads/main',H.c2,0),{instant:true});
+  x.add('L',RF('lorig','refs/remotes/origin/main',H.c1,0),{instant:true});
+  x.add('L',D('lobjs','objects/',0),{instant:true});
+  C2SET.forEach(k=>x.add('L',{...OB[k](),id:'l_'+k,depth:1},{instant:true}));
+  x.head('R','origin .git/');x.compact('R',true);
+  x.add('R',RF('rmain','refs/heads/main',H.c1,0),{instant:true});
+  x.add('R',D('robjs','objects/',0),{instant:true});
+  C1SET.forEach(k=>x.add('R',{...OB[k](),id:'r_'+k,depth:1},{instant:true}));
+  await x.beat('Left: your repository. Right: the remote, origin. You have one commit it has never seen.');
+  await x.cmd('cg push origin main');
+  x.step('1 · ask origin: where is your main?',`<b>${s7(H.c1)}</b>`,{id:'m1',color:'var(--ref)'});
+  await x.fly('rmain','m1',s7(H.c1),'var(--ref)');
+  x.step('2 · ancestor of my main? = fast-forward',`${s7(H.c2)} → parent ${s7(H.c1)}  ✓`,{color:'var(--rot)'});
+  await x.beat('Walk back from your main. If you reach origin\'s commit, the push is safe: nobody\'s work gets lost.');
+  ['c2','t2','r2'].forEach(k=>x.hl('l_'+k,'var(--gold)'));
+  x.step('3 · objects origin is missing',`commit ${s7(H.c2)}\ntree   ${s7(H.t2)}\nblob   ${s7(H.r2)}`,{id:'m3',cls:'code',color:'var(--gold)'});
+  await x.beat('Only three objects are missing. The src tree and cg.go blob are already over there.');
+  x.step('4 · send them',`real git: one packfile · cg: copy the files`,{id:'m4',color:'var(--gold)'});
+  for(const k of ['c2','t2','r2']){x.fly('l_'+k,'robjs',s7(H[k]),`var(--${OB[k]().type})`);await x.wait(260);}
+  await x.wait(700);
+  ['c2','t2','r2'].forEach(k=>x.add('R',{...OB[k](),id:'r_'+k,depth:1}));x.unhl();
+  x.step('5 · update origin\'s main',`${s7(H.c1)}  →  <b>${s7(H.c2)}</b>`,{id:'m5',color:'var(--ref)'});
+  await x.fly('m5','rmain',s7(H.c2),'var(--ref)');x.set('R','rmain',{value:H.c2});
+  await x.fly('rmain','lorig',s7(H.c2),'var(--ref)');x.set('L','lorig',{value:H.c2});
+  x.out(`   ${s7(H.c1)}..${s7(H.c2)}  main -> main`);
+  await x.beat('Then origin moves its main, and you update <code>origin/main</code>, your memory of it.');
+  await x.beat('If origin\'s main is <em>not</em> an ancestor, someone pushed first: push is rejected. Pull, then try again.',600);
+}},
+/* 13 --------------------------------------------------------------- */
+{t:'cg pull',tag:'remote',async run(x){
+  x.head('L','local');x.compact('L',true);
+  x.add('L',F('wCg','src/cg.go',CG1),{instant:true});
+  x.add('L',RF('lmain','refs/heads/main',H.c2,0),{instant:true});
+  x.add('L',RF('lorig','refs/remotes/origin/main',H.c2,0),{instant:true});
+  x.add('L',D('lobjs','objects/',0),{instant:true});
+  C2SET.forEach(k=>x.add('L',{...OB[k](),id:'l_'+k,depth:1},{instant:true}));
+  x.head('R','origin .git/');x.compact('R',true);
+  x.add('R',RF('rmain','refs/heads/main',H.c3,0),{instant:true});
+  x.add('R',D('robjs','objects/',0),{instant:true});
+  [...C2SET,'g3','s3','t3','c3'].forEach(k=>x.add('R',{...OB[k](),id:'r_'+k,depth:1},{instant:true}));
+  ['c3','t3','s3','g3'].forEach(k=>x.hl('r_'+k,'var(--ref)'));
+  await x.beat('A teammate pushed commit <em>9386a27</em>: they added a main function to cg.go.');
+  x.unhl();
+  await x.cmd('cg pull');
+  x.step('1 · fetch: ask for origin\'s main',`<b>${s7(H.c3)}</b>  <span class="dim">(mine: ${s7(H.c2)})</span>`,{id:'m1',color:'var(--ref)'});
+  await x.fly('rmain','m1',s7(H.c3),'var(--ref)');
+  x.step('download what I am missing',`commit ${s7(H.c3)}  tree ${s7(H.t3)}\ntree   ${s7(H.s3)}  blob ${s7(H.g3)}`,{cls:'code',color:'var(--gold)'});
+  for(const k of ['c3','t3','s3','g3']){x.fly('r_'+k,'lobjs',s7(H[k]),`var(--${OB[k]().type})`);await x.wait(240);}
+  await x.wait(700);
+  ['c3','t3','s3','g3'].forEach(k=>x.add('L',{...OB[k](),id:'l_'+k,depth:1}));
+  x.set('L','lorig',{value:H.c3});
+  await x.beat('<em>fetch</em> downloads the four new objects and moves <code>origin/main</code>. Your own main has not moved yet.');
+  x.step('2 · merge: mine an ancestor of theirs? = fast-forward',`${s7(H.c3)} → parent ${s7(H.c2)}  ✓`,{color:'var(--rot)'});
+  await x.beat('Their commit sits directly on top of yours, so there is nothing to combine. Just move the label.');
+  x.step('move main',`${s7(H.c2)}  →  <b>${s7(H.c3)}</b>`,{id:'m3',color:'var(--ref)'});
+  await x.fly('m3','lmain',s7(H.c3),'var(--ref)');x.set('L','lmain',{value:H.c3});
+  x.step('3 · checkout: rewrite files that changed',`src/cg.go  ←  blob ${s7(H.g3)}`,{id:'m4',color:'var(--blob)'});
+  await x.fly('l_g3','wCg',s7(H.g3),'var(--blob)');
+  x.set('L','wCg',{body:CG2});
+  x.out(`Updating ${s7(H.c2)}..${s7(H.c3)}   Fast-forward   src/cg.go | 2 ++`);
+  await x.beat('Finally, compare the old and new trees and rewrite only the files that changed. pull = fetch + merge.');
+  await x.beat('If <em>both</em> sides have new commits, it is not a fast-forward. That needs a real merge, and that is where conflicts live.',600);
+}},
+];
+
+/* ---------- player ---------- */
+let idx=Math.max(0,Math.min(SCENES.length-1,(+P.get('scene')||1)-1));
+const only=P.has('scene');
+const ctr=$('controls'),GROUPS={setup:'setup',plumbing:'plumbing',porcelain:'porcelain',remote:'remote'};
+let lastTag=null;
+SCENES.forEach((s,i)=>{
+  if(s.tag!==lastTag){const g=document.createElement('span');g.className='grp';g.textContent=GROUPS[s.tag];ctr.insertBefore(g,ctr.querySelector('.sp'));lastTag=s.tag;}
+  const b=document.createElement('button');b.type='button';b.textContent=s.t.replace(/^cg /,'');b.dataset.i=i;
+  b.onclick=()=>{playing=true;$('play').textContent='Pause';play(i);};ctr.insertBefore(b,ctr.querySelector('.sp'));
+});
+function resetStage(){
+  LISTS.L=[];LISTS.R=[];['L','R'].forEach(k=>{$('b'+k).innerHTML='';$('b'+k).classList.remove('compact');});
+  $('bM').innerHTML='';$('caption').innerHTML='';$('term').innerHTML='<span class="p">dev ~/cursed-git $</span> <span class="caret"></span>';
+  document.querySelectorAll('.fly').forEach(f=>f.remove());
+}
+async function play(i){
+  const id=++RUN;idx=i;const s=SCENES[i];
+  ctr.querySelectorAll('[data-i]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.i===i));
+  resetStage();
+  $('stage').classList.toggle('remote',s.tag==='remote');
+  $('chN').textContent=String(i+1).padStart(2,'0');$('chT').textContent=s.t;
+  const tg=$('chTag');tg.textContent=s.tag;tg.className='tag '+s.tag;
+  try{await s.run(ctx(id));await ctx(id).wait(2200);}
+  catch(e){if(e!==STOP)console.error(e);return;}
+  document.documentElement.dataset.done=i+1;
+  if(P.has('noloop'))return;
+  if(id===RUN&&(playing||VIDEO))play(only?i:(i+1)%SCENES.length);
+}
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play';if(playing)play(idx);else RUN++;};
+$('replay').onclick=()=>{playing=true;$('play').textContent='Pause';play(idx);};
+(document.fonts?.ready||Promise.resolve()).then(()=>play(idx));
+</script>
+</body>
+</html>

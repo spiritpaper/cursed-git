@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Her Tier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rubik+Mono+One&family=VT323&display=swap">
+<style>
+/* Cursed Git series look. How her live tier is computed: base + temper + grudge, clamped between a floor and the
+   safety cap. Top: the formula as tiles. Left: the tier ladder with the cap and floor lines. Right: what just happened. */
+:root{
+  --bg:#0d0b0f; --panel:#16131a; --panel2:#1d1922; --ink:#ece6da; --muted:#8a8290; --rule:#2c2632;
+  --ember:#ff4a3d; --rot:#b8cc46; --calm:#6fb7e0; --gold:#f2c14e; --ghost:#5b5462;
+  --t0:#6fb7e0; --t1:#f2c14e; --t2:#ff9a3d; --t3:#ff4a3d; --t4:#ff2350;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --term:"VT323", ui-monospace, monospace;
+  --display:"Rubik Mono One", "Arial Black", system-ui, sans-serif;
+  --heat:0; --tc:var(--t3);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font:400 clamp(18px,2.4vw,26px) var(--display);margin:0;letter-spacing:.02em}
+.top h1 span{color:var(--ember)}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.box{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls button,.controls select{font:600 13px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 11px;cursor:pointer}
+.controls button[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.controls .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls .sp{flex:1}
+.controls .hint{color:var(--muted);font-size:12px}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+html.video,html.video body{overflow:hidden;background:var(--bg)}
+html.video .wrap{max-width:none;padding:0;width:100vw;height:100vh}
+html.video .top,html.video .controls{display:none}
+html.video .box{border:0;border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
+
+/* ---- scene ---- */
+.heat{position:absolute;inset:0;pointer-events:none;transition:opacity 1s;opacity:var(--heat);
+  background:radial-gradient(ellipse at 30% 30%,rgba(255,35,80,.32),transparent 55%),radial-gradient(ellipse at 90% 100%,rgba(255,74,61,.2),transparent 55%)}
+.chapter{position:absolute;left:70px;top:40px;display:flex;align-items:baseline;gap:18px}
+.chapter .n{font:400 22px var(--display);color:var(--ember)}
+.chapter .t{font:400 30px var(--display)}
+.chapter .s{font:600 17px var(--mono);color:var(--muted);margin-left:8px}
+
+/* formula */
+.formula{position:absolute;left:70px;top:104px;width:1460px;height:150px;display:flex;align-items:center;gap:14px}
+.tile{background:var(--panel);border:2px solid var(--rule);border-radius:14px;height:150px;padding:16px 20px;display:flex;flex-direction:column;justify-content:space-between;transition:border-color .4s,background .4s}
+.tile .k{font:600 14px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.tile .v{font:400 76px/1 var(--term);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tile .d{font:400 15px var(--mono);color:var(--muted);white-space:nowrap}
+.tile.hot{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--panel))}
+.tile.base{width:210px}.tile.temper{width:230px}.tile.grudge{width:220px}.tile.clamp{width:300px}.tile.live{flex:1;border-color:var(--tc)}
+.tile.live .v{color:var(--tc);display:flex;align-items:baseline;gap:18px}
+.tile.live .v small{font:400 26px var(--display);color:var(--ink)}
+.op{font:400 54px var(--term);color:var(--muted);width:28px;text-align:center}
+.tile.clamp .v{font-size:58px}
+.tile.clamp .v b{color:var(--calm);font-weight:400}.tile.clamp .v i{color:var(--ember);font-style:normal}
+.v.bump{animation:bump .45s ease-out}
+@keyframes bump{30%{scale:1.18}}
+
+/* ladder */
+.ladder{position:absolute;left:70px;top:290px;width:900px;height:560px}
+.rung{position:absolute;left:0;right:0;height:92px;border-radius:12px;background:var(--panel);border:2px solid var(--rule);display:flex;align-items:center;gap:24px;padding:0 230px 0 24px;
+  transition:border-color .5s,background .5s,opacity .5s}
+.rung .num{font:400 44px var(--display);color:var(--muted);width:58px;text-align:center;transition:color .5s}
+.rung .name{font:400 24px var(--display);width:250px}
+.rung .ex{font:400 16px/1.35 var(--mono);color:var(--muted);flex:1}
+.rung.lit{border-color:var(--c);background:linear-gradient(90deg,color-mix(in srgb,var(--c) 16%,var(--panel)),var(--panel) 70%)}
+.rung.lit .num{color:var(--c)}
+.rung.locked{opacity:.28;background:repeating-linear-gradient(135deg,var(--panel) 0 14px,#1f1a24 14px 28px)}
+.rung.under{opacity:.4}
+.limit{position:absolute;left:-12px;right:-12px;height:0;border-top:3px dashed var(--ember);transition:top 1s cubic-bezier(.65,0,.35,1)}
+.limit span{position:absolute;right:0;top:-30px;font:600 15px var(--mono);color:var(--ember);background:var(--bg);padding:2px 8px;border-radius:6px;letter-spacing:.06em}
+.limit.floor{border-color:var(--calm)}
+.limit.floor span{color:var(--calm);top:6px}
+.marker{position:absolute;right:26px;height:92px;display:flex;align-items:center;font:400 50px var(--term);color:var(--tc);white-space:pre;
+  transition:top 1s cubic-bezier(.65,0,.35,1),color .5s;text-shadow:0 0 18px color-mix(in srgb,var(--tc) 60%,transparent);z-index:2}
+.marker.jump{animation:bump .5s ease-out}
+.stage.quake{animation:quake .5s steps(4) 1}
+@keyframes quake{25%{translate:-8px 5px}50%{translate:7px -4px}75%{translate:-4px -6px}100%{translate:0 0}}
+
+/* side */
+.side{position:absolute;left:1010px;top:290px;width:520px;height:560px;display:flex;flex-direction:column;gap:18px}
+.log{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:18px 22px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;gap:4px}
+.log .k{font:600 13px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:auto}
+.ev{font:400 27px/1.15 var(--term);white-space:nowrap;animation:in .35s ease-out}
+.ev .t{color:var(--muted)} .ev .up{color:var(--ember)} .ev .dn{color:var(--calm)} .ev .g{color:var(--gold)}
+@keyframes in{from{opacity:0;translate:0 10px}}
+.tox{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:16px 22px;display:flex;flex-direction:column;gap:10px}
+.tox .lbl{display:flex;justify-content:space-between;font:600 14px var(--mono);color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.tox .lbl b{color:var(--ink);font-variant-numeric:tabular-nums}
+.track{height:20px;border-radius:4px;background:var(--panel2);display:flex;gap:3px;padding:3px;position:relative}
+.track i{flex:1;border-radius:2px;background:var(--gold);transition:opacity .3s,background .3s}
+.track i.off{opacity:.12}
+.say{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:18px 22px;min-height:132px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.say .k{font:600 13px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.say .v{font:400 23px/1.25 var(--display);color:var(--gold);text-wrap:balance}
+@media (prefers-reduced-motion: reduce){.marker,.limit{transition:none}.marker.jump,.v.bump,.stage.quake,.ev{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Cursed <span>Git</span> · Her Tier</h1><p>Difficulty and safety in one dial. Base + temper + grudge, clamped between her floor and your cap.</p></div>
+  <div class="box" id="box">
+    <div class="stage" id="stage">
+      <div class="heat"></div>
+      <div class="chapter"><span class="n">cg</span><span class="t">her tier</span><span class="s" id="preset">preset: psycho</span></div>
+      <div class="formula">
+        <div class="tile base" id="tBase"><span class="k">Base</span><span class="v" id="vBase">3</span><span class="d">difficulty</span></div>
+        <span class="op">+</span>
+        <div class="tile temper" id="tTemper"><span class="k">Temper</span><span class="v" id="vTemper">0</span><span class="d">−2 … +2 · mood swings</span></div>
+        <span class="op">+</span>
+        <div class="tile grudge" id="tGrudge"><span class="k">Grudge</span><span class="v" id="vGrudge">0</span><span class="d">+1 if you're toxic</span></div>
+        <span class="op">→</span>
+        <div class="tile clamp" id="tClamp"><span class="k">Clamp</span><span class="v" id="vClamp"><b>1</b> … <i>4</i></span><span class="d">floor … maxTier (safety)</span></div>
+        <span class="op">=</span>
+        <div class="tile live"><span class="k">Live tier</span><span class="v" id="vLive">3 <small id="vName">Dangerous</small></span><span class="d" id="vMode">$ cg --evil</span></div>
+      </div>
+      <div class="ladder" id="ladder">
+        <div class="limit" id="cap"><span id="capT">maxTier 4 · safety protocol</span></div>
+        <div class="limit floor" id="floor"><span id="floorT">floor 1 · she never calms down further</span></div>
+        <div class="marker" id="marker">( ò_ó )</div>
+      </div>
+      <div class="side">
+        <div class="log" id="log"><span class="k">What happened</span></div>
+        <div class="tox"><div class="lbl"><span>Your toxicity</span><b id="toxN">2 / 10</b></div><div class="track" id="toxT"></div></div>
+        <div class="say"><span class="k">cg</span><span class="v" id="say">I'm in a good mood. Don't ruin it.</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="controls" id="controls">
+    <button class="primary" id="play" type="button">Pause</button>
+    <button id="all" type="button">Whole story</button>
+    <span class="hint">Chapter:</span>
+    <span class="sp"></span>
+    <select id="speed" aria-label="Speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.6">Fast</option></select>
+  </div>
+</div>
+
+<script>
+/* ===== Content. Tier names and faces match curse-tiers.html and cg-montage.html. ===== */
+const TIERS = [
+  { name: 'Safe',         face: '( ^_^ )', ex: 'opinions only' },
+  { name: 'Annoying',     face: '( -_- )', ex: 'refusals · silent treatment · jealousy' },
+  { name: 'Hostile',      face: '( ¬_¬ )', ex: 'commit deadline · random pull' },
+  { name: 'Dangerous',    face: '( ò_ó )', ex: 'code decay · sacrifice · boss fights' },
+  { name: 'Catastrophic', face: '(╬ ò_ó)', ex: 'instant wipes · phase 2 · full-force endings' },
+];
+const THRESHOLD = 10;
+/* Each chapter is a list of beats. A beat changes the state, logs a line and lets her speak. */
+const CHAPTERS = [
+  { title: 'Default', start: { base: 3, temper: 0, tox: 2, cap: 4, preset: 'psycho' }, beats: [
+    { say: "Default preset: psycho. I start at Tier 3. One below the top.", hold: 3200 },
+    { say: "Tier 4 is never where I start. You have to earn it.", hold: 2600 },
+  ]},
+  { title: 'Ignore her', start: { base: 3, temper: 0, tox: 2, cap: 4, preset: 'psycho' }, beats: [
+    { log: ['commit deadline warning', 'ignored'], say: "It's been 30 minutes.", hold: 1300 },
+    { log: ['commit deadline warning', 'ignored'], say: "45 minutes.", hold: 1300 },
+    { log: ['commit deadline warning', 'ignored'], d: { temper: +1 }, tag: ['temper +1', 'up'], say: "Fine. You want to see Tier 4?", hold: 3400 },
+  ]},
+  { title: 'Treat her well', start: { base: 3, temper: 1, tox: 2, cap: 4, preset: 'psycho' }, beats: [
+    { log: ['3 good commits in a row', ''], d: { temper: -1 }, tag: ['temper −1', 'dn'], say: "...okay. That was nice.", hold: 2200 },
+    { log: ['3 more good commits', ''], d: { temper: -1 }, tag: ['temper −1', 'dn'], say: "Who are you and what did you do with my dev?", hold: 2400 },
+    { log: ['boss fight won', ''], d: { temper: -1 }, tag: ['temper −1', 'dn'], say: "I love you. ♥  (Tier 1. That's as sweet as I get.)", hold: 2600 },
+    { log: ['7 good commits in a row', ''], d: { temper: -1 }, tag: ['temper stays −2', 'dn'], say: "Don't push it. I calm down two tiers. Never more.", hold: 3200 },
+  ]},
+  { title: 'Your toxicity', start: { base: 3, temper: -2, tox: 7, cap: 4, preset: 'psycho' }, beats: [
+    { log: ['push --force', ''], d: { tox: +2 }, tag: ['toxicity +2', 'g'], say: "Interesting choice.", hold: 1600 },
+    { log: ['cg beg', ''], d: { tox: +2 }, tag: ['toxicity 11 · grudge +1', 'up'], say: "You crossed the line. Permanently.", hold: 2000 },
+    { say: "I learned it from you. One tier worse. Forever.", hold: 3200 },
+  ]},
+  { title: 'Safety cap', start: { base: 3, temper: 0, tox: 2, cap: 4, preset: 'psycho' }, beats: [
+    { log: ['cg curse on --preset clingy', ''], d: { cap: -2, base: -2 }, tag: ['maxTier 2', 'dn'], say: "Clingy preset. A repo you actually care about.", hold: 2600 },
+    { log: ['commit deadline warning', 'ignored ×3'], d: { temper: +1 }, tag: ['temper +1', 'up'], say: "I'm so angry right now.", hold: 1800 },
+    { log: ['commit deadline warning', 'ignored ×3'], d: { temper: +1 }, tag: ['temper +2', 'up'], say: "Furious. And I'm still not allowed past Tier 2.", hold: 2400 },
+    { say: "The cap is the safety protocol. I can be angry. I can't be dangerous.", hold: 3600 },
+  ]},
+];
+
+/* ---------- shared: video mode, scaling, run tokens ---------- */
+const P=new URLSearchParams(location.search), VIDEO=P.has('video');
+if(VIDEO)document.documentElement.classList.add('video');
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches&&!VIDEO;
+function fit(){const b=$('box');$('stage').style.transform=`scale(${Math.min(b.clientWidth/1600,b.clientHeight/900)})`;}
+new ResizeObserver(fit).observe($('box'));fit();
+let RUN=0,SPEED=1,playing=true;
+$('speed').onchange=e=>SPEED=+e.target.value;
+const wait=(ms,id)=>new Promise(r=>setTimeout(()=>r(id===RUN),REDUCED?Math.min(ms,250):ms/SPEED));
+
+/* ---------- ladder ---------- */
+const RH=92,RG=14,rungTop=t=>(4-t)*(RH+RG)+6;
+const rungs=TIERS.map((T,t)=>{const r=document.createElement('div');r.className='rung';r.style.top=rungTop(t)+'px';r.style.setProperty('--c',`var(--t${t})`);
+  r.innerHTML=`<span class="num">${t}</span><span class="name">${T.name}</span><span class="ex">${T.ex}</span>`;$('ladder').append(r);return r;});
+for(let i=0;i<10;i++)$('toxT').append(document.createElement('i'));
+
+/* ---------- state + render ---------- */
+let S={};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const calc=s=>{const grudge=s.tox>=THRESHOLD?1:0,floor=Math.max(0,s.base-2);return {grudge,floor,live:clamp(s.base+s.temper+grudge,floor,s.cap)};};
+function bump(id){const e=$(id);e.classList.remove('bump');e.offsetWidth;e.classList.add('bump');}
+function render(prev,instant){
+  const {grudge,floor,live}=calc(S),old=prev?calc(prev):null;
+  const sign=n=>(n>0?'+':n<0?'−':'')+Math.abs(n);
+  $('vBase').textContent=S.base;$('vTemper').textContent=sign(S.temper);$('vGrudge').textContent=sign(grudge);
+  $('vClamp').innerHTML=`<b>${floor}</b> … <i>${S.cap}</i>`;
+  $('vLive').firstChild.textContent=live+' ';$('vName').textContent=TIERS[live].name;
+  $('vMode').textContent=live>=3?'$ cg --evil':'$ cg --safe';
+  $('preset').textContent='preset: '+S.preset;
+  if(old&&!instant){
+    if(old.live!==live)bump('vLive');
+    if(prev.temper!==S.temper)bump('vTemper');
+    if(old.grudge!==grudge)bump('vGrudge');
+    if(prev.base!==S.base)bump('vBase');
+    if(prev.cap!==S.cap||old.floor!==floor)bump('vClamp');
+  }
+  [['tTemper',S.temper!==0],['tGrudge',grudge>0],['tClamp',S.base+S.temper+grudge!==live]].forEach(([id,on])=>$(id).classList.toggle('hot',on));
+  const root=document.documentElement;root.style.setProperty('--tc',`var(--t${live})`);root.style.setProperty('--heat',(live/4).toFixed(2));
+  rungs.forEach((r,i)=>{r.classList.toggle('lit',i===live);r.classList.toggle('locked',i>S.cap);r.classList.toggle('under',i<floor);});
+  const L=[[$('cap'),rungTop(S.cap)-RG/2-1],[$('floor'),rungTop(floor)+RH+RG/2-1],[$('marker'),rungTop(live)]];
+  L.forEach(([el,top])=>{if(instant){el.style.transition='none';el.style.top=top+'px';el.offsetHeight;el.style.transition='';}else el.style.top=top+'px';});
+  $('capT').textContent=`maxTier ${S.cap} · safety protocol`;$('floorT').textContent=`floor ${floor} · she never calms down further`;
+  const m=$('marker');m.textContent=TIERS[live].face;
+  if(old&&!instant&&old.live!==live){m.classList.remove('jump');m.offsetWidth;m.classList.add('jump');
+    if(live===4){const st=$('stage');st.classList.remove('quake');st.offsetWidth;st.classList.add('quake');}}
+  [...$('toxT').children].forEach((s,i)=>{s.classList.toggle('off',i>=S.tox);s.style.background=S.tox>=THRESHOLD?'var(--ember)':'var(--gold)';});
+  $('toxN').textContent=`${S.tox} / ${THRESHOLD}`;
+}
+function log(what,tag){
+  const lg=$('log'),d=document.createElement('div');d.className='ev';
+  d.innerHTML=`<span>${what[0]}</span>${what[1]?` <span class="t">${what[1]}</span>`:''}${tag?` <span class="${tag[1]}">→ ${tag[0]}</span>`:''}`;
+  lg.append(d);while(lg.querySelectorAll('.ev').length>9)lg.querySelector('.ev').remove();
+}
+async function say(text,id){const el=$('say');el.textContent='';
+  for(const ch of text){el.textContent+=ch;if(!await wait(ch===' '?12:24,id))return false;}return true;}
+
+/* ---------- player ---------- */
+async function chapter(c,id){
+  const C=CHAPTERS[c];S={...C.start};
+  ctr.querySelectorAll('[data-c]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.c===c&&mode!=='all'));
+  $('log').querySelectorAll('.ev').forEach(e=>e.remove());$('say').textContent='';render(null,true);
+  log([`<span class="g">${C.title}</span>`,'']);
+  if(!await wait(900,id))return false;
+  for(const B of C.beats){
+    const prev={...S};
+    if(B.d)for(const k in B.d)S[k]+=B.d[k];
+    S.temper=clamp(S.temper,-2,2);
+    if(B.d&&'cap' in B.d)S.preset='clingy';
+    if(B.log)log(B.log,B.tag);
+    render(prev);
+    if(!await say(B.say,id))return false;
+    if(!await wait(B.hold,id))return false;
+  }
+  return true;
+}
+const want=P.get('chapter');
+let mode=want!=null&&CHAPTERS[+want-1]?+want-1:'all';
+const ctr=$('controls');
+CHAPTERS.forEach((C,i)=>{const b=document.createElement('button');b.type='button';b.textContent=`${i+1} · ${C.title}`;b.dataset.c=i;
+  b.onclick=()=>{mode=i;playing=true;$('play').textContent='Pause';play();};ctr.insertBefore(b,ctr.querySelector('.sp'));});
+async function play(){
+  const id=++RUN;$('all').setAttribute('aria-pressed',mode==='all');
+  if(mode==='all'){for(let c=0;c<CHAPTERS.length;c++){if(!await chapter(c,id))return;}}
+  else if(!await chapter(mode,id))return;
+  if(id===RUN&&(playing||VIDEO)){if(await wait(1200,id))play();}
+}
+$('all').onclick=()=>{mode='all';playing=true;$('play').textContent='Pause';play();};
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play';if(playing)play();else RUN++;};
+(document.fonts?.ready||Promise.resolve()).then(play);
+</script>
+</body>
+</html>
