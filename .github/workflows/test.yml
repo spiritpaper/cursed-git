@@ -19,6 +19,9 @@ jobs:
           cache: false # no dependencies, no go.sum
       - run: git --version
       - run: go vet ./...
+      - name: install.sh
+        shell: bash
+        run: CG_INSTALL_DIR="$RUNNER_TEMP/cgbin" sh install.sh && "$RUNNER_TEMP/cgbin/cg" version
       - name: go test
         shell: bash
         run: go test ./... 2>&1 | tee test.log; exit ${PIPESTATUS[0]}
@@ -44,3 +47,10 @@ jobs:
           cache: false
       - run: go vet ./...
       - run: go build ./...
+      # the one-line installer, against the latest release
+      - name: install.ps1
+        shell: pwsh
+        run: |
+          $env:CG_INSTALL_DIR = "$env:RUNNER_TEMP\cgbin"
+          ./install.ps1
+          & "$env:RUNNER_TEMP\cgbin\cg.exe" version

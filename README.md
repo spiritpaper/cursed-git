@@ -24,11 +24,24 @@ You learn git by surviving her.
 
 ## Install
 
-You need [git](https://git-scm.com/downloads). Then either:
+You need [git](https://git-scm.com/downloads). Then, on **Linux or macOS**:
 
-- **Download** `cg` for your system from the [latest release](https://github.com/spiritpaper/cursed-git/releases/latest)
-  (Linux, macOS, Windows), unpack it, and put `cg` somewhere on your `PATH`.
-- **Or, with [Go](https://go.dev/dl/) 1.26+:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/spiritpaper/cursed-git/main/install.sh | sh
+```
+
+On **Windows** (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/spiritpaper/cursed-git/main/install.ps1 | iex
+```
+
+Both download the latest release, check it against the release's checksums, and install `cg`
+(to `~/.local/bin`, or `%LOCALAPPDATA%\cursed-git\bin` on Windows). Other ways:
+
+- **Download** `cg` yourself from the [latest release](https://github.com/spiritpaper/cursed-git/releases/latest),
+  unpack it, and put `cg` somewhere on your `PATH`.
+- **With [Go](https://go.dev/dl/) 1.26+:**
 
   ```bash
   go install github.com/spiritpaper/cursed-git/cmd/cg@latest
