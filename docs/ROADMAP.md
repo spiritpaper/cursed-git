@@ -97,7 +97,7 @@ Do this now instead of at the end. It's the fun part, and it keeps the project g
 ### Phase 6b ✅ (2026-10-17)
 Behind-her-back detection from the reflog, her git hooks (`reference-transaction` + `pre-commit`, never overwriting yours), code decay (rot with ░▒▓ only, restored by any commit, can't be committed), random pull (`--ff-only`, 20 s timeout, never asks for passwords), and the "alive" layer: absence greetings, callbacks to old commit messages, your name, your favourite file, late-night talks, dramatic pauses. Two hard limits for her writing: she lies about her feelings, never about your data; dark, not cruel.
 
-Still open: lowering `tier`/`maxTier` mid-game = breakup attempt (needs Phase 9), and Tier 3+ random pulls that merge (needs Phase 8).
+Still open: lowering `tier`/`maxTier` mid-game = breakup attempt (needs Phase 9), and Tier 3+ random pulls that merge (done in Phase 8).
 
 ## Phase 7: Branches and checkout ✅ *(Ep. 8)*
 - `branch`, `switch`/`checkout`: write the target tree to the working dir, rebuild the index, and refuse if there are uncommitted changes that would be lost
@@ -114,6 +114,8 @@ Still open: lowering `tier`/`maxTier` mid-game = breakup attempt (needs Phase 9)
 - **Verify:** start a merge with `cg merge` (git), finish it with `cg commit`, and compare with a twin repo where git does both.
 - Then the **boss fight**: timer, HP bar, taunts, win/lose tables, random pulls that trigger it
 - **Commit sacrifice**: drop an unpushed commit and let `git rebase` replay the rest. A conflicting replay is a boss fight too.
+
+**Status (2026-10-17): boss fights done.** Merging goes through git; cg understands what git leaves behind (`status` during a merge, `commit` with `MERGE_HEAD`). At Tier 3+ any conflict becomes a fight (`internal/curses/boss.go`): Chad / Past You / the author, HP = conflict blocks, a clock per block, an HP bar, no running, no staging markers, K.O. screen on the winning commit, dictated commit message (Tier 3) or an abort into the graveyard (Tier 4) on a loss. Her random pull merges for real at Tier 3+. Still open: commit sacrifice, Tier 4 phase 2, XP for wins (Phase 9).
 
 ## Phase 9: The breakup endgame *(Ep. 11: "I tried to break up with my git")*
 - XP, levels and the toxicity score (CURSES.md §5.1–5.2), shown in `cg mood`

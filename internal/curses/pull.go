@@ -1,8 +1,8 @@
 // internal/curses/pull.go
 //
 // Random pull ("bringing other guys home"): every now and then, at Tier 2+, she runs
-// `git pull --ff-only` without asking. Fast-forward only for now: it can never create a
-// merge or a conflict. (Merges that start a boss fight come with Phase 8.)
+// `git pull` without asking. At Tier 2 only fast-forwards (nothing to merge, so no conflict).
+// At Tier 3+ she lets git merge, and if that conflicts, it's a boss fight.
 package curses
 
 import (
@@ -38,9 +38,19 @@ func (e *Engine) randomPull(cmd string, tier int) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	pull := exec.CommandContext(ctx, "git", "-C", e.workTree, "pull", "--ff-only", "-q")
+	how := []string{"--ff-only"}
+	if tier >= 3 {
+		how = []string{"--no-rebase", "--no-edit"} // a real merge, conflicts and all
+	}
+	pull := exec.CommandContext(ctx, "git", append([]string{"-C", e.workTree, "pull", "-q"}, how...)...)
 	pull.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0", "CG_VIA=1") // never ask for passwords, never trigger her own hook
-	if pull.Run() != nil {
+	err = pull.Run()
+	if len(e.unmerged()) > 0 {
+		e.say("fight_pull", map[string]string{"upstream": remote + "/" + name})
+		e.startFight(e.env.Now(), tier)
+		return
+	}
+	if err != nil {
 		return // offline, diverged, dirty: she tried, nothing happened, nobody needs to know
 	}
 	after, _ := refs.Resolve(e.gitDir, "HEAD")

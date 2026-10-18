@@ -46,6 +46,11 @@ type State struct {
 	Graveyard     []string // refs she took that you haven't begged back yet
 	LovebombAt    int64
 	OnSince       int64
+	Fight         *Fight // the boss fight going on right now, if any
+	LastFight     *Fight // the last one that ended
+	BossWon       int
+	BossLost      int
+	Apology       string // a commit message she dictated after you lost (used by your next commit)
 }
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
@@ -82,6 +87,21 @@ func Replay(events []Event) *State {
 		case "commit":
 			s.LastCommitAt, s.DeadlineWarns, s.LastWarnAt = e.T, 0, 0
 			s.Commits++
+			s.Apology = ""
+		case "fight":
+			if e.Fight != nil {
+				f := *e.Fight
+				f.Start = e.T
+				s.Fight = &f
+			}
+		case "fight_won":
+			s.LastFight, s.Fight = s.Fight, nil
+			s.BossWon++
+		case "fight_lost":
+			s.LastFight, s.Fight = s.Fight, nil
+			s.BossLost++
+		case "apology":
+			s.Apology = e.Text
 		case "good":
 			s.GoodStreak++
 		case "lazy":

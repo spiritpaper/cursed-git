@@ -10,7 +10,7 @@
 
 ## Status
 
-Built so far (Phases 6 and 6b): the diary and heart, the tier engine, the graveyard and `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, every Tier 0–2 curse in §3, the Tier 3/4 commit-deadline wipe, **code decay**, **random pull** (fast-forward only), and the anti-cheat: reflog-based "behind her back" detection, her hooks (`reference-transaction`: she answers inside git's output and blocks forged changes to her refs; `pre-commit`: no committing rot), "you changed the locks", and the deleted-graveyard check. She also *remembers*: absence greetings, your name, your old commit messages, your favourite file, late-night talks. Not yet: commit sacrifice, boss fights, the breakup. Her lines live in `internal/curses/lines/default.json`.
+Built so far (Phases 6 and 6b): the diary and heart, the tier engine, the graveyard and `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, every Tier 0–2 curse in §3, the Tier 3/4 commit-deadline wipe, **code decay**, **random pull** (fast-forward at Tier 2, a real merge at Tier 3+), **boss fights** (§4), and the anti-cheat: reflog-based "behind her back" detection, her hooks (`reference-transaction`: she answers inside git's output and blocks forged changes to her refs; `pre-commit`: no committing rot), "you changed the locks", and the deleted-graveyard check. She also *remembers*: absence greetings, your name, your old commit messages, your favourite file, late-night talks. Not yet: commit sacrifice, boss fight phase 2, XP, the breakup. Her lines live in `internal/curses/lines/default.json`.
 
 ## 0. Meet her
 
@@ -251,21 +251,26 @@ The most extreme thing she can do, and the one most likely to cost someone real 
 When a merge (yours or one of her random pulls) produces conflicts at Tier 3+, `cg` enters **boss-fight mode**. Below Tier 3 a conflict is just a normal git conflict.
 
 **Start:**
-- She writes `active_boss_fight` into the state: the conflicted files, the start time, a deadline, and the boss's HP (the number of conflict hunks).
-- She prints a boss intro. The boss is named after the branch author, or after "Chad" from `origin`.
-- The time limit is the number of hunks × the per-hunk timer for her tier (§2.2).
-- `git merge --abort` is the RUN option, and *"cg disabled it. You can't run."* During a fight, `cg merge --abort` is refused, and plain `git merge --abort` counts as cheating (§6.3).
+- Git does the merge (`cg merge`, `cg pull`, `cg rebase`, `cg cherry-pick` all pass through). After any command, if the index has conflict stages and she's at Tier 3+, she writes a `fight` event into her diary: the boss, the conflicted files, HEAD at the start, the HP and the time limit.
+- The boss: **Chad from origin** if it came from a remote, **Past You** if you're merging your own commits, otherwise the other author's first name.
+- HP = conflict blocks (`<<<<<<<` lines) in the conflicted files, plus 1 for each conflicted file with no blocks (deleted on one side).
+- The time limit is HP × the per-block timer for her tier (§2.2: 3 min at Tier 3, 90 s at Tier 4).
+- The intro teaches the fight: what the markers mean, `cg add` per file, `cg commit` to finish, and `cg ls-files -s` to see git's three copies (stages 1/2/3).
 
 **During:**
-- `cg status` shows a **health bar**: every conflict hunk that no longer has `<<<<<<<` / `=======` / `>>>>>>>` markers counts as one hit.
-- `cg add <file>` on a fully resolved file deals damage, because it clears stages 1–3 from the index (see GIT.md §4).
-- Taunts on every command: *"You can't even handle a 3-way merge? He could."*
+- `cg status` (and `add`, `rm`, `diff`, `ls-files`) shows a **health bar** on stderr, so stdout stays identical to git: `⚔  Past You  HP ██████░░░░ 3/5  ⏳ 7:12`.
+- Resolving a block (removing its markers) is a hit; `cg add` says so.
+- Running is refused: `--abort`, `--quit` or `--skip` on merge/rebase/cherry-pick/revert, and `reset --hard/--merge/--keep`. *"Running? cg disabled that."*
+- `cg add` on a file that still has markers is refused. It's the classic beginner mistake: git would happily stage the markers.
+- Taunts, sometimes: *"You can't even handle a 3-way merge? He could."*
+- Her other file-touching curses (deadline wipe, decay, random pull) stay out of the way while git is mid-merge.
 
-**Win:** all stages are cleared and you commit before the deadline. You get +250 XP, −1 temper, a victory screen, and a record in `.git/cursed/trophies`. At Tier 4, phase 2 starts.
+**Win:** git isn't in the middle of anything any more and HEAD has a new commit (via `cg commit`, `merge --continue`, anything), before the deadline. −1 temper, −1 toxicity if more than half the time is left, a K.O. screen, and the win in `cg mood`. (XP and Tier 4 phase 2 come with Phase 9.)
 
-**Lose:** the deadline passes. She picks a punishment from a table scaled by her tier:
-- Tier 3: a mandatory "apology commit" with a message she dictates, or she hides the file you spent the most time on
-- Tier 4: she aborts the merge and throws away your resolution work (graveyard it first), or "Phase 2": she pulls again and brings *more* conflicts
+**Lose:** the deadline passes (noticed at your next command), or the conflict disappears without a commit (you ran, with plain git). +3 toxicity, a grudge, and:
+- Tier 3: she dictates your next commit message ("I lost to Chad and I am sorry").
+- Tier 4: she graveyards the conflicted files as they are (your resolution work), then runs `git merge --abort` (or rebase/cherry-pick/revert). `cg beg` gives the work back.
+After a loss the conflict is still there, as a normal conflict: she doesn't start a second fight over it.
 
 **Detecting conflicts properly:** a file is conflicted if it has index entries at stage 1/2/3. Don't rely only on scanning for markers, because a file can legitimately contain `=======`.
 

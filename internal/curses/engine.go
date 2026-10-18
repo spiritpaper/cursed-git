@@ -56,6 +56,7 @@ type commitInfo struct {
 	staged        int
 	onlyDeletions bool
 	unrotted      int
+	hp            int // boss HP before a `cg add`, to see if it was a hit
 }
 
 // Open loads her for a repository. It returns nil (and no error) if this repo never opted in.
@@ -176,6 +177,9 @@ func (e *Engine) Before(cmd string, args []string) ([]string, bool) {
 	e.checkLocks()
 	e.missingGraves()
 	e.greet(now, last, known)
+	if e.fightBefore(cmd, args, now, exempt[cmd]) {
+		return args, true
+	}
 	if exempt[cmd] {
 		return args, false
 	}
@@ -184,10 +188,13 @@ func (e *Engine) Before(cmd string, args []string) ([]string, bool) {
 	if cmd == "add" || cmd == "commit" {
 		e.pre.unrotted = e.unrot() // rot never gets staged
 	}
-	if !love {
+	// in the middle of a merge, nothing touches your files but you (and git)
+	if !love && !e.inProgress() {
 		e.decay(now, tier, last)
 		e.randomPull(cmd, tier)
 		e.commitDeadline(now, tier)
+	}
+	if !love {
 		if tier >= 1 && now.Unix()-e.st.LastRefusalAt > 600 && e.chance(0.03) {
 			e.say("arbitrary_refusal", nil)
 			e.log(Event{Type: "refusal"})
@@ -233,6 +240,7 @@ func (e *Engine) After(cmd string, args []string, code int) {
 	if e.pre.unrotted > 0 && (cmd == "add" || cmd == "commit") {
 		e.say("decay_restored", map[string]string{"n": fmt.Sprint(e.pre.unrotted)})
 	}
+	e.fightAfter(cmd, now)
 	switch {
 	case cmd == "commit" && code == 0:
 		e.afterCommit(now)
@@ -311,6 +319,19 @@ func (e *Engine) beforeCommit(args []string, now time.Time, tier int, love bool)
 	pos, msg := messageArg(args)
 	if pos < 0 {
 		return args, false // no message yet: git opens the editor, we judge nothing
+	}
+	if e.st.Apology != "" {
+		// you lost a fight: this commit says what she wants it to say
+		out := append([]string(nil), args...)
+		if strings.HasPrefix(out[pos], "-m") && out[pos] != "-m" {
+			out[pos] = "-m" + e.st.Apology
+		} else {
+			out[pos] = e.st.Apology
+		}
+		e.say("apology_applied", nil)
+		fmt.Fprintf(e.env.Out, "         → %q\n", e.st.Apology)
+		e.pre.msg = e.st.Apology
+		return out, false
 	}
 	if !love && tier >= 1 && e.lateOrFriday(now) && !e.weNeedToTalk(now) {
 		return args, true

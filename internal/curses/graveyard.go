@@ -107,7 +107,14 @@ func Bury(gitDir, workTree string, paths []string, why string, now time.Time) (s
 	if err != nil {
 		return "", err
 	}
-	ref := fmt.Sprintf("refs/cursed/graveyard/%d", now.UnixNano())
+	stamp := now.UnixNano()
+	for { // two burials in the same instant (a frozen test clock, a fast machine) get different graves
+		if _, _, err := refs.Read(gitDir, fmt.Sprintf("refs/cursed/graveyard/%d", stamp)); err != nil {
+			break
+		}
+		stamp++
+	}
+	ref := fmt.Sprintf("refs/cursed/graveyard/%d", stamp)
 	return ref, refs.Update(gitDir, ref, hash, refs.Zero, refs.Who(sig.String()), "graveyard: "+why)
 }
 

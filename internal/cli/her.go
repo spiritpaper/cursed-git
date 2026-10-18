@@ -194,6 +194,12 @@ func printMood(w io.Writer, her *curses.Engine, now time.Time) {
 	if n := len(st.Graveyard); n > 0 {
 		fmt.Fprintf(w, "She has %d of your things. (`cg beg`)\n", n)
 	}
+	if st.BossWon+st.BossLost > 0 {
+		fmt.Fprintf(w, "Boss fights: %d won, %d lost\n", st.BossWon, st.BossLost)
+	}
+	if bar := her.FightBar(now); bar != "" {
+		fmt.Fprintln(w, bar)
+	}
 }
 
 func plural(n int, word string) string {

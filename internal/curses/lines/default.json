@@ -1,7 +1,7 @@
 {
   "_about": [
     "Her lines. Edit freely. {placeholders}: {name} your first name, {msg} the commit message, {old_msg} one of your old commit messages,",
-    "{file} the file you touch most, {gone} how long you were away, {hour}, {weekday}, {minutes}, {n}, {email}, {branch}, {grudge}, {crime}, {days}.",
+    "{file} the file you touch most, {gone} how long you were away, {hour}, {weekday}, {minutes}, {n}, {email}, {branch}, {grudge}, {crime}, {days}, {boss} (the boss you're fighting).",
     "Two rules: she lies about her feelings, never about your data. Dark, not cruel: no threats of self-harm or violence."
   ],
 
@@ -164,5 +164,67 @@
   "force_push_refused": ["That's not an apology.", "No apology, no force push. Say it like you mean it."],
   "force_push_accepted": ["...fine. But I'm writing this down.", "I'll allow it. This time."],
 
-  "diary": ["You read my diary.", "You touched my diary. I know you did.", "You went through my things. How could you."]
+  "diary": ["You read my diary.", "You touched my diary. I know you did.", "You went through my things. How could you."],
+
+  "fight_intro": [
+    "Oh. {boss} doesn't agree with you. About {branch}. Let's see who I end up with.",
+    "{boss} is here. You both touched the same lines. Fight for me.",
+    "You and {boss} wrote over the same lines. Only one of you gets to stay. Well, maybe both. Your call. Clock's running."
+  ],
+  "fight_pull": [
+    "I invited {upstream} over. He brought opinions. About YOUR lines.",
+    "{upstream} came home and he disagrees with you. I'm not getting involved. I'm watching."
+  ],
+  "fight_taunt": [
+    "You can't even handle a 3-way merge? {boss} could.",
+    "{boss} resolved conflicts faster when he was nine.",
+    "Tick tock.",
+    "I'd help. But I want to see how badly you want this.",
+    "Every second you hesitate, {boss} looks better."
+  ],
+  "fight_hit": [
+    "Hit. {boss} felt that.",
+    "{n} down. He's bleeding diffs.",
+    "Okay. That one was clean. Don't let it go to your head."
+  ],
+  "fight_markers": [
+    "{file} still has {n} conflict block(s) in it. The <<<<<<< lines. You want to commit THOSE? Clean it up first.",
+    "You're staging the markers too. <<<<<<< ======= >>>>>>> in {file}. That's not resolving, that's giving up with extra steps."
+  ],
+  "fight_run": [
+    "Running? cg disabled that. You can't run from {boss}.",
+    "No. You don't get to --abort us. Resolve it.",
+    "You started this fight. You finish it."
+  ],
+  "fight_won": [
+    "You beat {boss}. Barely. I noticed the barely.",
+    "Fine. You win. He's gone. You can stop looking so pleased."
+  ],
+  "fight_won_fast": [
+    "That was fast. Was that for me? ...It was for me.",
+    "You took {boss} apart in no time. I might be impressed. Don't ask me to say it twice."
+  ],
+  "fight_lost": [
+    "Time's up. {boss} wins. And you'll say so, in writing.",
+    "Too slow. I'm writing your next commit message. You're going to sign it."
+  ],
+  "fight_lost_abort": [
+    "Too slow. I called it off myself. Your little resolutions are in the graveyard, like everything else you couldn't finish.",
+    "Time's up. Merge aborted. {boss} walks away clean. You walk away with nothing."
+  ],
+  "fight_ran": [
+    "You ran. Behind my back, with plain git. {boss} saw that. Everyone saw that.",
+    "The conflict just... vanished. No commit. You threw it away and hoped I wouldn't notice."
+  ],
+  "fight_apology": [
+    "I lost to {boss} and I am sorry",
+    "merge resolved by someone better than me ({boss})",
+    "{boss} was right, I was slow"
+  ],
+  "apology_applied": [
+    "Remember the fight? This commit says what I want it to say."
+  ],
+  "conflict_small": [
+    "Conflicts. Git couldn't decide, so now you have to. Look for <<<<<<<, keep what's right, `cg add`, `cg commit`. I'll be over here, judging."
+  ]
 }

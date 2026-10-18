@@ -176,6 +176,19 @@ Commits made while she was quiet (from a script) never reached her diary, so `cg
 **Never overwrite someone's hook.**
 If `.git/hooks/pre-commit` exists and isn't hers (no marker comment), she leaves it alone. People's own hooks run their linters and tests.
 
+**My boss-fight tests were too polite.**
+The fight starts at Tier 3, and every test failed with "no fight". The setup made three commits with nice messages, three good commits in a row lowered her temper, and she was at Tier 2 by the time I merged. The game was right; my test had been *too good to her*.
+→ Test fixtures use neutral messages ("song v1"): long enough not to be lazy, too short to count as good.
+
+**Losing a fight started a new one.**
+After a loss the conflict is still there, so the very next check saw "conflict, no fight, Tier 3" and started another. She remembers the last fight now, and a conflict on the same HEAD stays a normal conflict.
+
+**A frozen clock buried two things in the same grave.**
+Graveyard refs are named after the time in nanoseconds. In a test the clock doesn't move, so losing a fight and then `cg beg` (which saves what's on disk first) both wanted the same ref. Real clocks would almost never collide, but "almost" isn't how you keep someone's work. `Bury` now takes the next free name.
+
+**A pull's merge message names a URL, not the remote.**
+`git pull` writes "Merge branch 'main' of /path/to/repo". To call the boss "Chad from origin" she looks the URL up in `remote.*.url`.
+
 ## Branches, checkout, diff
 
 **Twin repos are the best test I've written.**
