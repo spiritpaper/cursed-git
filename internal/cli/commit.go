@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"cursedgit.com/internal/commands"
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/refs"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/commands"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // commitCmd: cg commit -m <msg> [-m <paragraph>]...

@@ -21,9 +21,9 @@ import (
 	"strings"
 	"time"
 
-	"cursedgit.com/internal/commands"
-	"cursedgit.com/internal/config"
-	"cursedgit.com/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/commands"
+	"github.com/spiritpaper/cursed-git/internal/config"
+	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
 //go:embed lines/default.json

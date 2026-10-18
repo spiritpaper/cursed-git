@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"cursedgit.com/internal/curses"
+	"github.com/spiritpaper/cursed-git/internal/curses"
 )
 
 // TestMain keeps her quiet in every test, no matter how `go test` was started (from a
@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	bin := filepath.Join(dir, "cg")
-	if out, err := exec.Command("go", "build", "-o", bin, "cursedgit.com").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "build", "-o", bin, "github.com/spiritpaper/cursed-git/cmd/cg").CombinedOutput(); err != nil {
 		fmt.Printf("building cg for the hook tests: %v\n%s", err, out)
 		os.RemoveAll(dir)
 		os.Exit(1)

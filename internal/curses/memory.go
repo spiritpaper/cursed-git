@@ -17,8 +17,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"cursedgit.com/internal/commands"
-	"cursedgit.com/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/commands"
+	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
 type memory struct {

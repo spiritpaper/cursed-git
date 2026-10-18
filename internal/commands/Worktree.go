@@ -23,9 +23,9 @@ import (
 	"strconv"
 	"strings"
 
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
 // commitFiles lists every file in a commit's tree ("" = no commit = no files).

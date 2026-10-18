@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"cursedgit.com/internal/curses"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/curses"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // curseEnv connects her to the real world. Tests replace it with a fake clock, a seeded

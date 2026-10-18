@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"cursedgit.com/internal/commands"
-	"cursedgit.com/internal/curses"
-	"cursedgit.com/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/commands"
+	"github.com/spiritpaper/cursed-git/internal/curses"
+	"github.com/spiritpaper/cursed-git/internal/object"
 )
 
 const usage = `cg: Cursed GIT. Like git, but she has feelings.

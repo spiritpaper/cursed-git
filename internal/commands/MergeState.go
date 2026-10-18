@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // MergeHead returns the commit being merged in, or "" if no merge is in progress.

@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"cursedgit.com/internal/commands"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/commands"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // statusCmd: cg status [-s|--short] [--porcelain] [-b|--branch]

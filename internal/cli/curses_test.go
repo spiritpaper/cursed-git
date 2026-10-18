@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"cursedgit.com/internal/curses"
+	"github.com/spiritpaper/cursed-git/internal/curses"
 )
 
 // her controls her world in a test: the clock, her luck and what you type.

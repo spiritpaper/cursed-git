@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"cursedgit.com/internal/refs"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // ErrNoSuchBranch lets the CLI hand unusual cases (like a branch that only exists on a

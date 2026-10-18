@@ -50,7 +50,7 @@ func mustRun(t *testing.T, args ...string) string {
 var projectLike = map[string]string{
 	".gitignore":                      "/cg\nnode_modules/\ncheck-output/\ndist/\n*.mp4\n/cursed-git-video/\n",
 	"main.go":                         "package main\n",
-	"go.mod":                          "module cursedgit.com\n",
+	"go.mod":                          "module github.com/spiritpaper/cursed-git\n",
 	"internal/cli/cli.go":             "package cli\n",
 	"internal/object/object.go":       "package object\n",
 	"docs/GIT.md":                     "# git\n",

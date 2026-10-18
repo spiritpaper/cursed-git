@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 func dirExists(path string) (bool, error) {

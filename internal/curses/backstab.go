@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cursedgit.com/internal/config"
-	"cursedgit.com/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/config"
+	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
 // crime names a reflog message in plain words: "git reset", "git commit --amend", ...

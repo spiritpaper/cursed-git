@@ -1,10 +1,10 @@
-// main.go
+// cmd/cg/main.go
 package main
 
 import (
 	"os"
 
-	"cursedgit.com/internal/cli"
+	"github.com/spiritpaper/cursed-git/internal/cli"
 )
 
 func main() {

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // ErrMissing is what `cat-file -e` returns for a missing object: exit 1, print nothing.

@@ -7,11 +7,11 @@ import (
 	"os"
 	"strings"
 
-	"cursedgit.com/internal/config"
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/refs"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/config"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 var (

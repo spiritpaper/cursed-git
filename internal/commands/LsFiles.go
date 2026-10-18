@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // LsFiles prints the index. Like git, from a subfolder it only shows files under that

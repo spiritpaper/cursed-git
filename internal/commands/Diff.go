@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 	"sort"
 
-	"cursedgit.com/internal/diff"
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/diff"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // version is one side of a file in a diff: what it was, or what it is now.

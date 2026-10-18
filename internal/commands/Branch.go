@@ -7,8 +7,8 @@ import (
 	"io"
 	"strings"
 
-	"cursedgit.com/internal/refs"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // ValidBranchName follows the important parts of `git check-ref-format`.

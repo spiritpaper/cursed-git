@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cursedgit.com/internal/ignore"
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/ignore"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // IgnoredError lists explicitly named paths that .gitignore excludes (git refuses those without -f).

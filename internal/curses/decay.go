@@ -25,10 +25,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"cursedgit.com/internal/commands"
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/commands"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
 type rot struct {

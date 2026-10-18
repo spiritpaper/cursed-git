@@ -26,10 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"cursedgit.com/internal/commands"
-	"cursedgit.com/internal/config"
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/commands"
+	"github.com/spiritpaper/cursed-git/internal/config"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
 // Fight is one boss fight, as written in her diary when it starts.

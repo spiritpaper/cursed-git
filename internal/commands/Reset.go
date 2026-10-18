@@ -9,10 +9,10 @@ import (
 	"sort"
 	"strings"
 
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/refs"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // Reset moves the current branch to rev:

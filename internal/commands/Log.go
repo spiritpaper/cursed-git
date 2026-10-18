@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/refs"
-	"cursedgit.com/internal/repo"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/repo"
 )
 
 // ReadCommit loads and parses a commit object.

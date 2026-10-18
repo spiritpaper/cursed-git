@@ -347,7 +347,7 @@ You reached the level, but you were just as bad as her.
 4. The receipt does **not** say where the archive is. The recovery is a secret: `cg closure` restores the archive, so recovery is a hidden command you can tease in a video. It's still documented in this file so you never actually lose work.
 5. The curses end, because she's gone.
 
-Refuse to start ending B if the repo is not inside your home directory, or if it's the project's own source repo (detect the `cursedgit.com` module in `go.mod`). She should never be able to delete *herself*.
+Refuse to start ending B if the repo is not inside your home directory, or if it's the project's own source repo (detect the `github.com/spiritpaper/cursed-git` module in `go.mod`). She should never be able to delete *herself*.
 
 #### Ending C: "Good ending" 😢 (eligible and `toxicity < toxicThreshold`)
 You played well and treated her better than she treated you.

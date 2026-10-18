@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
 const heartRef = "refs/cursed/heart"

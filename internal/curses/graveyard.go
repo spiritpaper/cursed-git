@@ -17,11 +17,11 @@ import (
 	"strings"
 	"time"
 
-	"cursedgit.com/internal/commands"
-	"cursedgit.com/internal/ignore"
-	"cursedgit.com/internal/index"
-	"cursedgit.com/internal/object"
-	"cursedgit.com/internal/refs"
+	"github.com/spiritpaper/cursed-git/internal/commands"
+	"github.com/spiritpaper/cursed-git/internal/ignore"
+	"github.com/spiritpaper/cursed-git/internal/index"
+	"github.com/spiritpaper/cursed-git/internal/object"
+	"github.com/spiritpaper/cursed-git/internal/refs"
 )
 
 // changedFiles lists what she could take: modified tracked files and untracked files

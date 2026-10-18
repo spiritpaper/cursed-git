@@ -255,7 +255,10 @@ My global `~/.gitconfig` (name, email, default branch, hooks…) leaks into test
 
 **The binary in the repo was older than the code.**
 `./cg log` said "unknown command" right after I implemented `log` and all the tests passed. The tests build fresh code; `./cg` was the binary from the last phase.
-→ `go build -o cg .` after every change I want to try by hand, or just use `go run . <command>`.
+→ `go build -o cg ./cmd/cg` after every change I want to try by hand, or just use `go run ./cmd/cg <command>`.
+
+**`go install` names the binary after the folder.**
+To publish, the module became `github.com/spiritpaper/cursed-git` (a made-up domain like `cursedgit.com` can't be `go install`ed unless the domain serves a redirect page). But with `main.go` at the root, `go install` would have produced a command called `cursed-git`. The fix everyone uses: `cmd/cg/main.go`, and the folder name becomes the binary name.
 
 **Standard library first.**
 In one sitting I hand-wrote an octal formatter and an insertion sort. `fmt.Sprintf("%o")` and `sort.Strings` were right there. (And later an `itoa`. `strconv.Itoa` has existed since Go 1.0.)
