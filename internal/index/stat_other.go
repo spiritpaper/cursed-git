@@ -1,4 +1,4 @@
-//go:build !linux
+//go:build !linux && !darwin
 
 // internal/index/stat_other.go
 package index

@@ -202,6 +202,10 @@ Phase 2 (she pulls again after a Tier 4 win) never started: the win's temper −
 **Her cross-project memory leaked between tests.**
 Once she remembered projects, test B saw test A's repo: "You were in 001 while I waited here." Every test now gets its own data folder.
 
+**CI on a Mac found what months on Linux couldn't.**
+On macOS, cg filled the index's stat data with a "portable" fallback: ctime copied from mtime, no inode, no uid. `git status` re-hashes files whose stat data looks off, so it never showed. But `git diff-files` trusts the stat data, and said every file I'd staged was modified. Now macOS reads its real stat struct (`Ctimespec`, `Mtimespec`), like Linux does. The other macOS failure was my test: `Foo` and `foo` are the same file on a case-insensitive disk.
+→ CI on every OS I claim to support, and make CI print the failures somewhere public: the logs need admin rights, annotations don't.
+
 **On Windows, "is this a terminal?" is GetConsoleMode.**
 The Unix check (an ioctl only a terminal answers) has a Windows twin: `GetConsoleMode` only succeeds on a real console. Her face and screen clearing use ANSI escapes, which old Windows consoles only understand after `SetConsoleMode(... ENABLE_VIRTUAL_TERMINAL_PROCESSING)`. Git Bash's mintty talks to programs through pipes, so there she can't tell it's a person, and stays quiet. Better quiet than cursing a script. (Written and cross-compiled on Linux, so it needs a real Windows test.)
 

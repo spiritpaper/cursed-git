@@ -87,7 +87,7 @@ func TestTreeOrderMatchesGit(t *testing.T) {
 	pinIdentity(t)
 	dir := t.TempDir()
 	t.Chdir(dir)
-	write(t, dir, map[string]string{"foo.txt": "a\n", "foo/bar": "b\n", "foo-bar": "c\n", "foo0": "d\n", "Foo": "e\n"})
+	write(t, dir, map[string]string{"foo.txt": "a\n", "foo/bar": "b\n", "foo-bar": "c\n", "foo0": "d\n", "Zoo": "e\n"}) // Zoo: uppercase sorts first (and doesn't collide with foo on macOS)
 	mustRun(t, "init", "-q")
 	mustRun(t, "add", ".")
 	got := strings.TrimSpace(mustRun(t, "write-tree"))
