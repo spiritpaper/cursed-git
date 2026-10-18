@@ -104,7 +104,7 @@ so you never have to switch back.
 ```bash
 cg mood          # how she feels about you right now
 cg card          # your relationship on one screen: screenshot it
-cg achievements  # 24 to collect: First Blood, Speedrun, Chad Slayer... and some shameful ones
+cg achievements  # 27 to collect: First Blood, Speedrun, Chad Slayer... and some shameful ones
 cg quest         # learn git: a task, checked against your repo, paid in XP
 cg rivals        # a team repo? her scoreboard of everyone who commits, and her favourite
 ```
@@ -277,6 +277,12 @@ Playable. Playable from start to finish: the git core, her (about 20 curses, the
 her memory, the anti-cheat), boss fights, commit sacrifice, XP, `cg breakup` with three
 endings, Death March, achievements, quests, the hackathon preset and leaderboard, rivals,
 and two characters (Miranda and Juniper). Coming: more characters.
+
+## Contributing
+
+Contributions are welcome: bug fixes, sharper lines for Miranda, new characters, quests, event
+tools, docs. Start with [CONTRIBUTING.md](CONTRIBUTING.md) (the rules that don't bend, how the
+tests work, how to write lines), and be kind ([CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)).
 
 ## Feedback and support
 
