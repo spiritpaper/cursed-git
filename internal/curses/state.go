@@ -67,6 +67,8 @@ type State struct {
 	LetterPending      string           // ending A's letter, until she's mentioned it
 	Unlocked           map[string]int64 // achievement -> when (achievements.go)
 	winStreak, begs    int
+	burials, fights    int // for her ledger (ledger.go)
+	lazies, waited     int
 	Quest              *QuestStart      // the quest you're on
 	QuestsDone         map[string]int64 // finished or skipped
 	questsFinished     int              // finished for real (not skipped)
@@ -122,6 +124,7 @@ func Replay(events []Event) *State {
 			s.Commits++
 			s.Apology = ""
 		case "fight":
+			s.fights++
 			if e.Fight != nil {
 				f := *e.Fight
 				f.Start = e.T
@@ -205,6 +208,7 @@ func Replay(events []Event) *State {
 			s.GoodStreak++
 		case "lazy":
 			s.GoodStreak = 0
+			s.lazies++
 		case "offense":
 			s.Offenses[e.Text] = e.T
 		case "warning":
@@ -217,6 +221,9 @@ func Replay(events []Event) *State {
 			s.LastCommitAt, s.DeadlineWarns, s.LastWarnAt = e.T, 0, 0
 		case "graveyard":
 			s.Graveyard = append(s.Graveyard, e.Text)
+			s.burials++
+		case "waited":
+			s.waited += e.Delta
 		case "sacrifice":
 			s.Sacrificed = append(s.Sacrificed, e.Text)
 		case "beg":

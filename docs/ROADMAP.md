@@ -166,7 +166,7 @@ In order. Pick the top one, plan it, ship it.
 4. ✅ **Her new lines:** the tactics, five faces and the arc from MIRANDA.md, and the hook (push and pull: rare charm after real wins, then withdrawal). *(Done 2026-10-18: `internal/curses/hook.go`, MIRANDA.md §8–9.)*
 5. ✅ **Red Flag Bingo:** tactics are logged quietly, never named in the game; the card shows 🚩 n/11; the names live in MIRANDA.md; spotting them all is an achievement. *(Done 2026-10-18; 8 of 11 have lines, the last 3 come with the ledger and the texts.)*
 6. ✅ **Texts from her:** after an absence, and as the hoover after a breakup, a stack of timestamped messages. *(Done 2026-10-18: `internal/curses/texts.go`; "is typing… / is deleting…"; four costumes, `no` blocks her, Juniper's there after; achievement Seen Them All.)*
-7. **The guilt ledger and the receipts:** what she says you owe (`cg mood`), her claims next to the real numbers (`cg card`).
+7. ✅ **The guilt ledger and the receipts:** what she says you owe (`cg mood`), her claims next to the real numbers (`cg card`). *(Done 2026-10-18: `internal/curses/ledger.go`; the invoice after `cg beg`; all 11 red flags now have a moment.)*
 
 **Reach**
 8. **Package managers:** a Homebrew tap and a Scoop bucket (`brew install spiritpaper/tap/cg`, `scoop install cg`).

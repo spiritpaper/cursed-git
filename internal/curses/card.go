@@ -66,6 +66,9 @@ func (e *Engine) Card(now time.Time) []string {
 		ach += " · latest: " + latest
 	}
 	rows = append(rows, ach)
+	if r := e.receipts(); r != "" && !e.Gentle() {
+		rows = append(rows, r)
+	}
 	if n := len(st.Flags); n > 0 && !e.Gentle() {
 		rows = append(rows, fmt.Sprintf("Red flags  🚩 %d/%d", n, RedFlags))
 	}
@@ -81,7 +84,7 @@ func (e *Engine) Card(now time.Time) []string {
 	out := []string{"┌" + strings.Repeat("─", cardWidth+2) + "┐"}
 	for _, r := range rows {
 		for _, line := range wrap(r, cardWidth) {
-			out = append(out, "│ "+line+strings.Repeat(" ", cardWidth-utf8.RuneCountInString(line))+" │")
+			out = append(out, "│ "+line+strings.Repeat(" ", max(0, cardWidth-displayWidth(line)))+" │")
 		}
 	}
 	return append(out, "└"+strings.Repeat("─", cardWidth+2)+"┘")
@@ -89,7 +92,7 @@ func (e *Engine) Card(now time.Time) []string {
 
 // wrap breaks a line at spaces so it fits the card.
 func wrap(s string, width int) []string {
-	if utf8.RuneCountInString(s) <= width {
+	if displayWidth(s) <= width {
 		return []string{s}
 	}
 	var lines []string
@@ -98,7 +101,7 @@ func wrap(s string, width int) []string {
 		switch {
 		case line == "":
 			line = w
-		case utf8.RuneCountInString(line)+1+utf8.RuneCountInString(w) <= width:
+		case displayWidth(line)+1+displayWidth(w) <= width:
 			line += " " + w
 		default:
 			lines = append(lines, line)
@@ -161,4 +164,17 @@ func fightsLine(st *State) string {
 		line += fmt.Sprintf(" · best %s", clock(int64(st.FastestFight)))
 	}
 	return line
+}
+
+// displayWidth is how many terminal columns a string takes: emoji like 🚩 take two.
+func displayWidth(s string) int {
+	n := 0
+	for _, r := range s {
+		if r >= 0x1F000 {
+			n += 2
+		} else {
+			n++
+		}
+	}
+	return n
 }

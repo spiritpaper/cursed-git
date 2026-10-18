@@ -87,6 +87,8 @@ func (e *Engine) smallTalk(tier int) bool {
 		e.say("triangle", nil)
 	case tier >= 2 && e.chance(0.02):
 		e.say("void", nil)
+	case tier >= 1 && e.chance(0.02):
+		e.say("claim", nil)
 	default:
 		return false
 	}

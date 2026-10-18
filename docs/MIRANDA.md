@@ -174,7 +174,8 @@ you, tells you you can do anything you want, that you're great at what you do, a
 | The Judge | her Tier 3–4 variants of warnings, rewrites, rejections, taunts | tier `when` rules |
 | The hoover | after the toxic or good ending, days later, in any project: four costumes (therapy, blame, tired, declaration), one at a time; `no` blocks her | `hoover_*` (Miranda's pack, wherever you are) |
 | Texts from her | after an absence: a stack of timestamped messages, sometimes "is typing… / is deleting…" | `texts_1`–`texts_3` |
-| The guilt debt, the love that costs nothing | coming next: the ledger | |
+| The guilt debt | after `cg beg` gives your files back: the invoice; `cg mood` keeps the ledger ("You owe her: …", counted from her diary) | `invoice` |
+| The love that costs nothing | rare: a grand claim ("I gave you everything"); from then on the card shows *She claims everything. Receipts: 0 commits.* | `claim` |
 
 **Red Flag Bingo (implemented):** a line can carry `"flag": "<tactic>"` in its pack. When she
 says one, it's quietly logged, once per tactic; `cg card` shows 🚩 n/11 and `--json` has

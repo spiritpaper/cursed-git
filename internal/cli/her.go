@@ -233,6 +233,7 @@ func herCmd(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintf(stdout, "restored %s\n", p)
 		}
 		her.Say("beg", map[string]string{"n": fmt.Sprint(len(paths))})
+		her.Invoice() // and now, the bill
 		return 0
 
 	case "graveyard":
@@ -312,6 +313,9 @@ func printMood(w io.Writer, her *curses.Engine, now time.Time) {
 	}
 	if n := len(st.Graveyard); n > 0 {
 		fmt.Fprintf(w, "She has %d of your things. (`cg beg`)\n", n)
+	}
+	if owed := her.OwedLine(); owed != "" {
+		fmt.Fprintln(w, owed)
 	}
 	fmt.Fprintln(w, her.ClosureLine())
 	if left, ok := her.EventLeft(now); ok {

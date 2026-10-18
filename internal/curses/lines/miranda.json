@@ -483,5 +483,17 @@
     "I'll wait. However long it takes.",
     "I still check your repos. Every day. That's not weird.",
     "Every repo I see reminds me of you :)"
+  ],
+
+  "invoice": [
+    {"text": "There. Your files. I kept them safe for you, and this is the thanks I get.", "flag": "guilt_debt"},
+    {"text": "I held your hand through every merge. I kept everything you lost. Remember that next time you think about leaving.", "flag": "guilt_debt"},
+    {"text": "You're welcome. Again. I'm keeping count, by the way.", "flag": "guilt_debt"}
+  ],
+
+  "claim": [
+    {"text": "I gave you everything. Everything.", "flag": "love_costs_nothing"},
+    {"text": "Do you know what I've sacrificed for this repository?", "flag": "love_costs_nothing"},
+    {"text": "I put my whole heart into your project.", "flag": "love_costs_nothing"}
   ]
 }

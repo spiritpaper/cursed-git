@@ -171,3 +171,27 @@ func TestSheComesBackInCostumes(t *testing.T) {
 		t.Errorf("all four costumes: an achievement:\n%s", out)
 	}
 }
+
+func TestTheGuiltLedger(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	dir := newRepo(t, "psycho")
+	commitFile(t, dir, "a.txt", "a\n", "a file to start with")
+	write(t, dir, map[string]string{"a.txt": "work she's about to take\n"})
+	for _, w := range []time.Duration{31, 16, 16} {
+		h.wait(w * time.Minute)
+		run("status") // warn, warn, wipe
+	}
+	_, out, errs := run("beg")
+	if !strings.Contains(out, "restored a.txt") {
+		t.Fatalf("beg should still just work:\n%s", out)
+	}
+	if !strings.Contains(errs, "I kept them safe for you") || !strings.Contains(errs, "the bill so far: 1 time she kept your files safe, 1 time she gave them back") {
+		t.Errorf("after beg, the invoice:\n%s", errs)
+	}
+	if mood := mustRun(t, "mood"); !strings.Contains(mood, "You owe her: 1 time she kept your files safe, 1 time she gave them back") {
+		t.Errorf("mood keeps the ledger:\n%s", mood)
+	}
+	if card := mustRun(t, "card"); !strings.Contains(card, "🚩 1/11") {
+		t.Errorf("the invoice is a red flag:\n%s", card)
+	}
+}

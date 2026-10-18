@@ -133,3 +133,35 @@ func TestBingo(t *testing.T) {
 		t.Error("eleven red flags should unlock Bingo")
 	}
 }
+
+func TestReceiptsOnlyAfterAClaim(t *testing.T) {
+	e := testEngine(t, `{"_name": ["Miranda"]}`, tuesday)
+	e.workTree = e.gitDir
+	if strings.Contains(strings.Join(e.Card(tuesday), "\n"), "receipts") {
+		t.Error("no claim, no receipts")
+	}
+	e.st.Flags["love_costs_nothing"] = true
+	if card := strings.Join(e.Card(tuesday), "\n"); !strings.Contains(card, "She claims everything. Receipts: 0 commits.") {
+		t.Errorf("after a claim, the receipts:\n%s", card)
+	}
+}
+
+// every red flag has at least one line in Miranda's pack: Bingo is reachable
+func TestEveryRedFlagHasALine(t *testing.T) {
+	pack, ok := readPack("miranda")
+	if !ok {
+		t.Fatal("no miranda pack")
+	}
+	flags := map[string]bool{}
+	for _, lines := range pack {
+		for _, l := range lines {
+			if l.Flag != "" {
+				flags[l.Flag] = true
+			}
+		}
+	}
+	flags["hoover"] = true // raised by the hoover itself (texts.go), not by a line
+	if len(flags) != RedFlags {
+		t.Errorf("%d red flags have lines, want %d: %v", len(flags), RedFlags, flags)
+	}
+}
