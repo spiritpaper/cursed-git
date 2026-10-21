@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // teamRepo: your repo with her in it, one commit, pushed to a bare remote without an upstream
@@ -109,19 +110,77 @@ func TestTier2ClosesPullRequestsThatConflict(t *testing.T) {
 	}
 }
 
-func TestNoPullRequestOnTopOfUncommittedWork(t *testing.T) {
+// Uncommitted work in files the pull request doesn't touch: she merges, and your work stays.
+func TestPullRequestLeavesYourOtherWorkAlone(t *testing.T) {
 	h := withHer(t, tuesday, lucky)
 	dir, remote := teamRepo(t, h, "psycho")
 	teammate(t, remote, "login", map[string]string{"login.go": "package core\n"})
-	write(t, dir, map[string]string{"core.go": "package core\n// not committed yet\n"})
+	write(t, dir, map[string]string{"core.go": "package core\n// not committed yet\n", "idea.txt": "new\n"})
 
 	h.luck = 0.01
 	_, _, errs := run("ls-files")
 	h.luck = lucky
-	if strings.Contains(errs, "Pull request") || readFile(t, dir, "login.go") != "<missing>" {
-		t.Errorf("she merged on top of uncommitted work:\n%s", errs)
+	if readFile(t, dir, "login.go") == "<missing>" {
+		t.Fatalf("she should merge a pull request that doesn't touch your work:\n%s", errs)
 	}
 	if got := readFile(t, dir, "core.go"); got != "package core\n// not committed yet\n" {
-		t.Errorf("your work changed: %q", got)
+		t.Errorf("your uncommitted work changed: %q", got)
+	}
+	if got := readFile(t, dir, "idea.txt"); got != "new\n" {
+		t.Errorf("your new file changed: %q", got)
+	}
+	if strings.Contains(errs, "(+25 XP") && !strings.Contains(errs, "reset --keep ORIG_HEAD") {
+		t.Errorf("the undo hint must keep uncommitted work (--keep, never --hard):\n%s", errs)
+	}
+}
+
+// A pull request that touches a file you're still working on waits for your commit.
+func TestPullRequestWaitsForYourCommit(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	dir, remote := teamRepo(t, h, "psycho")
+	teammate(t, remote, "login", map[string]string{"core.go": "package core\n\nfunc Love() string { return \"never\" }\n"})
+	mine := "package core\n\nfunc Love() string { return \"always\" }\n"
+	write(t, dir, map[string]string{"core.go": mine})
+
+	h.luck = 0.01
+	_, _, errs := run("ls-files")
+	h.luck = lucky
+	if !strings.Contains(errs, "core.go") || strings.Contains(errs, "BOSS FIGHT") {
+		t.Fatalf("she should tell you it waits for core.go, and start nothing:\n%s", errs)
+	}
+	if got := readFile(t, dir, "core.go"); got != mine {
+		t.Errorf("your uncommitted work changed: %q", got)
+	}
+	mustRun(t, "add", ".")
+	_, _, errs = run("commit", "-m", "a small change of heart")
+	if !strings.Contains(errs, "Pull request #1 from Sam") || !strings.Contains(errs, "BOSS FIGHT: Sam") {
+		t.Errorf("right after your commit, the waiting pull request comes in (and conflicts):\n%s", errs)
+	}
+}
+
+// At Tier 4 a lost fight aborts the merge: your work in other files must survive that too.
+func TestLostPullRequestFightKeepsYourOtherWork(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	dir, remote := teamRepo(t, h, "psycho")
+	teammate(t, remote, "login", map[string]string{"core.go": "package core\n\nfunc Love() string { return \"never\" }\n"})
+	write(t, dir, map[string]string{"core.go": "package core\n\nfunc Love() string { return \"always\" }\n"})
+	mustRun(t, "add", ".")
+	mustRun(t, "commit", "-m", "a small change of heart")
+	mustRun(t, "reset", "--hard") // +1 temper: Tier 4
+	write(t, dir, map[string]string{"notes.txt": "uncommitted notes\n"})
+
+	h.luck = 0.01
+	_, _, errs := run("ls-files")
+	h.luck = lucky
+	if !strings.Contains(errs, "BOSS FIGHT: Sam") {
+		t.Fatalf("no fight:\n%s", errs)
+	}
+	h.wait(2 * time.Minute) // the fight clock runs out (90 s), long before the deadline (15 min)
+	_, _, errs = run("status")
+	if _, err := os.Stat(filepath.Join(dir, ".git", "MERGE_HEAD")); err == nil {
+		t.Fatalf("at Tier 4 a lost fight aborts the merge:\n%s", errs)
+	}
+	if got := readFile(t, dir, "notes.txt"); got != "uncommitted notes\n" {
+		t.Errorf("your other work didn't survive the abort: %q", got)
 	}
 }

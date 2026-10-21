@@ -41,6 +41,7 @@ type State struct {
 	Grudges            []string
 	GoodStreak         int
 	LastCommitAt       int64 // also reset after a deadline punishment
+	DirtySince         int64 // when she first saw uncommitted work (0: none since the last commit)
 	Commits            int   // commits she has seen
 	DeadlineWarns      int   // warnings since the last commit
 	LastWarnAt         int64
@@ -79,6 +80,7 @@ type State struct {
 	Promise            *promise         // a deal she offered (she won't keep it)
 	Flags              map[string]bool  // red flags she's raised (Red Flag Bingo)
 	PullRequests       int              // pull requests she's opened for you (pr.go)
+	PRWaiting          string           // a pull request waiting for you to commit the file it touches
 }
 
 // RedFlags is how many kinds of red flag there are to spot (docs/MIRANDA.md §3).
@@ -121,7 +123,7 @@ func Replay(events []Event) *State {
 		case "grudge":
 			s.Grudges = append(s.Grudges, e.Text)
 		case "commit":
-			s.LastCommitAt, s.DeadlineWarns, s.LastWarnAt = e.T, 0, 0
+			s.LastCommitAt, s.DeadlineWarns, s.LastWarnAt, s.DirtySince = e.T, 0, 0, 0
 			s.Commits++
 			s.Apology = ""
 		case "fight":
@@ -219,7 +221,11 @@ func Replay(events []Event) *State {
 				s.IgnoredWarns++
 			}
 		case "punished":
-			s.LastCommitAt, s.DeadlineWarns, s.LastWarnAt = e.T, 0, 0
+			s.LastCommitAt, s.DeadlineWarns, s.LastWarnAt, s.DirtySince = e.T, 0, 0, 0
+		case "dirty":
+			s.DirtySince = e.T
+		case "clean":
+			s.DirtySince, s.DeadlineWarns, s.LastWarnAt = 0, 0, 0
 		case "graveyard":
 			s.Graveyard = append(s.Graveyard, e.Text)
 			s.burials++
@@ -243,6 +249,9 @@ func Replay(events []Event) *State {
 			s.LovebombAt = e.T
 		case "pull_request":
 			s.PullRequests++
+			s.PRWaiting = ""
+		case "pr_waiting":
+			s.PRWaiting = e.Text
 		}
 		s.checkUnlocks(e, apologyBefore)
 	}

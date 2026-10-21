@@ -40,6 +40,7 @@ func TestHerPromisesAreWorthNothing(t *testing.T) {
 	dir := newRepo(t, "toxic") // Tier 2: an hour's deadline
 	commitFile(t, dir, "a.txt", "a\n", "a file to start with")
 	write(t, dir, map[string]string{"a.txt": "unsaved\n"})
+	run("status") // she sees it: her deadline clock starts now
 	h.wait(61 * time.Minute)
 	h.luck = 0.2 // she offers a deal (30%)
 	_, _, errs := run("status")
@@ -75,6 +76,7 @@ func TestHerVersionOfWhatHappened(t *testing.T) {
 	dir := newRepo(t, "psycho")
 	commitFile(t, dir, "a.txt", "a\n", "a file to start with")
 	write(t, dir, map[string]string{"a.txt": "work she's about to take\n"})
+	run("status") // she sees it: her deadline clock starts now
 	h.wait(31 * time.Minute)
 	run("status")
 	h.wait(16 * time.Minute)
@@ -177,6 +179,7 @@ func TestTheGuiltLedger(t *testing.T) {
 	dir := newRepo(t, "psycho")
 	commitFile(t, dir, "a.txt", "a\n", "a file to start with")
 	write(t, dir, map[string]string{"a.txt": "work she's about to take\n"})
+	run("status") // she sees it: her deadline clock starts now
 	for _, w := range []time.Duration{31, 16, 16} {
 		h.wait(w * time.Minute)
 		run("status") // warn, warn, wipe

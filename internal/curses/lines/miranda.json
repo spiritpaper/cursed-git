@@ -173,6 +173,11 @@
     "Oh, {author} wants in. I'm merging it. Don't look at me like that.",
     "{author} opened a pull request. Let's find out if you two ever talk."
   ],
+  "pr_wait": [
+    "{author} sent you a pull request, and it touches {file}. The file you haven't committed. Commit, and I'll let them in.",
+    "{author} wants into {file}, but you're still in there. Commit first. I'm not doing this twice.",
+    "There's a pull request from {author} waiting on {file}. Commit it. Then we'll see if you two agree."
+  ],
   "pr_clean": [
     "Clean merge. You and {author} are actually in sync. You never sync with me like that.",
     "Not a single conflict. So you CAN communicate. Just not with me.",

@@ -26,7 +26,7 @@ func (e *Engine) randomPull(cmd string, tier int) {
 	if tier < 2 || noPullDuring[cmd] || !e.chance(0.02) {
 		return
 	}
-	e.pullRequest(tier)
+	e.pullRequest(tier, e.st.PRWaiting)
 }
 
 // pull brings upstream home without asking (her random pull, and boss fight phase 2).

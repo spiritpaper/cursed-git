@@ -53,7 +53,8 @@ cg push
 
 What keeps her calm is what makes you good at git:
 
-- **Commit often.** Uncommitted work makes her impatient (30 minutes at Tier 3).
+- **Commit often.** Changes left sitting uncommitted make her impatient (30 minutes at Tier 3,
+  counted from when she first sees them).
 - **Write real commit messages.** `fix` and `wip` get refused or rewritten.
 - **Pull before you push**, and keep in sync with your team (see pull requests, below).
 - **Don't go behind her back** with plain `git`. She reads the reflog.
@@ -89,7 +90,7 @@ has the clean version. Make any commit and it comes back.
 `cg cherry-pick <ref>` brings it back. (She only ever takes commits you haven't pushed.)
 
 **"She merged somebody's branch!"** A pull request from a teammate. If it went in clean,
-`cg reset --hard ORIG_HEAD` takes it back. If it conflicted, it's a boss fight: see below.
+`cg reset --keep ORIG_HEAD` takes it back (and keeps your uncommitted work). If it conflicted, it's a boss fight: see below.
 
 **"She's quiet."** She only plays at a real terminal. In an editor's output pane, a script,
 CI or Git Bash on Windows, `cg` is plain git.
@@ -138,7 +139,8 @@ you don't have, and merges it for you:
   (`cg merge origin/login`, while it's still small). At Tier 3 and up it's a boss fight
   against whoever wrote it.
 
-She never does this while you have uncommitted changes.
+Your uncommitted work is safe: if the pull request touches a file you're still editing, it
+waits and comes in right after your next commit. Work in other files is left alone.
 
 ## 8. Stopping, pausing, switching
 

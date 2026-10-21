@@ -12,6 +12,7 @@ func tier4Deadline(t *testing.T, h *her, dir string) string {
 	commitFile(t, dir, "a.txt", "a\n", "a file v1")
 	mustRun(t, "reset", "--hard") // +1 temper: Tier 4
 	write(t, dir, map[string]string{"a.txt": "unsaved work\n"})
+	run("status") // she sees it: her deadline clock starts now
 	h.wait(16 * time.Minute)
 	_, _, errs := run("status") // Tier 4: no warnings, straight to the wipe
 	return errs
@@ -72,6 +73,7 @@ func TestShutdownIsRealInDeathMarchOncePerDay(t *testing.T) {
 		t.Fatalf("Death March at Tier 4: one real shutdown, got %d", machine.shutdowns-before)
 	}
 	write(t, dir, map[string]string{"a.txt": "more unsaved work\n"})
+	run("status") // she sees it: her deadline clock starts now
 	h.wait(16 * time.Minute)
 	run("status")
 	if machine.shutdowns != before+1 {

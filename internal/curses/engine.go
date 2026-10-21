@@ -269,7 +269,7 @@ func (e *Engine) Before(cmd string, args []string) ([]string, bool) {
 	if !love && !e.inProgress() {
 		e.decay(now, tier, last)
 		e.randomPull(cmd, tier)
-		e.commitDeadline(now, tier)
+		e.commitDeadline(cmd, now, tier)
 	}
 	if !love {
 		if tier >= 1 && now.Unix()-e.st.LastRefusalAt > 600 && e.chance(0.03) {
@@ -326,6 +326,7 @@ func (e *Engine) After(cmd string, args []string, code int) {
 	case cmd == "commit" && code == 0:
 		e.afterCommit(now)
 		e.maybeSacrifice(now)
+		e.waitingRequest(now)
 	case cmd == "push" && code == 0 && !e.st.Lovebombing(now) && e.chance(0.3):
 		e.say("toxic_partner", nil)
 	}
@@ -646,20 +647,36 @@ func (e *Engine) HasCommits() bool {
 	return err == nil || e.st.Commits > 0
 }
 
-func (e *Engine) commitDeadline(now time.Time, tier int) {
+// The clock starts when she first sees uncommitted work, not at your last commit: one word
+// typed after a quiet afternoon is a fresh start, not an hour overdue. And never while you're
+// adding or committing: that's exactly what she asked for.
+func (e *Engine) commitDeadline(cmd string, now time.Time, tier int) {
 	limit := e.clocks().Deadline(tier)
-	lastCommit := e.LastCommitAt()
-	if limit == 0 || now.Unix()-lastCommit < int64(limit.Seconds()) {
+	if limit == 0 || cmd == "add" || cmd == "commit" {
+		return
+	}
+	if e.st.DirtySince == 0 {
+		if files, err := changedFiles(e.workTree); err == nil && len(files) > 0 {
+			e.log(Event{Type: "dirty"})
+		}
+		return
+	}
+	start := max(e.st.DirtySince, e.LastCommitAt())
+	if now.Unix()-start < int64(limit.Seconds()) {
 		return
 	}
 	if e.st.LastWarnAt != 0 && now.Unix()-e.st.LastWarnAt < int64(limit.Seconds()/2) {
 		return // she already said something recently
 	}
 	files, err := changedFiles(e.workTree)
-	if err != nil || len(files) == 0 {
+	if err != nil {
 		return
 	}
-	minutes := fmt.Sprint(int(now.Sub(time.Unix(lastCommit, 0)).Minutes()))
+	if len(files) == 0 {
+		e.log(Event{Type: "clean"}) // you put it all back yourself: the clock stops
+		return
+	}
+	minutes := fmt.Sprint(int(now.Sub(time.Unix(start, 0)).Minutes()))
 
 	if tier == 1 || (tier < 4 && e.st.DeadlineWarns < 2) {
 		e.log(Event{Type: "warning", Text: "commit deadline"})

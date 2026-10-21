@@ -9,8 +9,11 @@
 //	         nothing); a conflicting one she closes, and tells you to go and sync
 //	Tier 3+  she merges anyway: a conflict is a boss fight, named after whoever wrote it
 //
-// Only on a clean working tree (a merge on top of uncommitted work is how people lose it),
-// and the merge is git's own, so `cg reset --hard ORIG_HEAD` undoes a clean one.
+// Your uncommitted work is safe: if the pull request touches a file you're still working on,
+// it waits, and comes in right after your next commit. Work in other files is left alone
+// (git carries it through the merge, and through `merge --abort`). Staged changes mean
+// you're about to commit, so she doesn't start then. A clean merge is git's own, and
+// `cg reset --keep ORIG_HEAD` undoes it without touching your uncommitted work.
 package curses
 
 import (
@@ -33,13 +36,14 @@ type pullRequest struct {
 	boss           string // Sam, or Past You
 }
 
-// pullRequest: fetch, pick a branch that's ahead of you, merge it.
-func (e *Engine) pullRequest(tier int) {
+// pullRequest: fetch, pick a branch that's ahead of you (prefer, if it still is), merge it.
+func (e *Engine) pullRequest(tier int, prefer string) {
 	branch, err := refs.Follow(e.gitDir, "HEAD")
 	if err != nil || !strings.HasPrefix(branch, "refs/heads/") {
 		return // a detached HEAD has nowhere to merge into
 	}
-	if st, err := commands.Status(); err != nil || len(st.Staged)+len(st.Unstaged) > 0 {
+	st, err := commands.Status()
+	if err != nil || len(st.Staged) > 0 {
 		return
 	}
 	remotes, _ := e.git("remote")
@@ -52,8 +56,11 @@ func (e *Engine) pullRequest(tier int) {
 	fetch.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0", "CG_VIA=1") // never ask for passwords
 	fetch.Run()                                                           // offline: what we fetched last time still counts
 
-	pr := e.pickRequest()
+	pr := e.pickRequest(prefer)
 	if pr == nil {
+		if prefer != "" {
+			e.log(Event{Type: "pr_waiting"}) // they merged it themselves: nothing waits any more
+		}
 		return // you're up to date with everyone. She has nothing on you.
 	}
 	ahead, _ := e.git("rev-list", "--count", "HEAD.."+pr.branch)
@@ -66,6 +73,12 @@ func (e *Engine) pullRequest(tier int) {
 	fmt.Fprintf(out, "\n📬 Pull request #%d from %s: %s → %s · %s\n", pr.n, pr.author, pr.branch, local,
 		plural(atoi(ahead), "commit"))
 	fmt.Fprintf(out, "   %q\n", strings.TrimSpace(subject))
+	if file := e.inTheWay(st, pr.branch); file != "" {
+		vars["file"] = file
+		e.say("pr_wait", vars)
+		e.log(Event{Type: "pr_waiting", Text: pr.branch})
+		return
+	}
 	e.say("pr_open", vars)
 	e.log(Event{Type: "pull_request", Text: pr.branch})
 
@@ -93,12 +106,12 @@ func (e *Engine) pullRequest(tier int) {
 	}
 	e.say("pr_clean", vars)
 	e.log(Event{Type: "xp", Delta: 25, Text: "in sync with " + pr.author})
-	fmt.Fprintf(out, "   (+25 XP for being in sync. `cg log --graph --oneline` shows the merge; `cg reset --hard ORIG_HEAD` takes it back.)\n")
+	fmt.Fprintf(out, "   (+25 XP for being in sync. `cg log --graph --oneline` shows the merge; `cg reset --keep ORIG_HEAD` takes it back.)\n")
 	return
 }
 
 // pickRequest: a remote branch with commits you don't have. Your teammates' come first.
-func (e *Engine) pickRequest() *pullRequest {
+func (e *Engine) pickRequest(prefer string) *pullRequest {
 	list, err := e.git("for-each-ref", "--format=%(refname)", "refs/remotes/")
 	if err != nil {
 		return nil
@@ -115,9 +128,12 @@ func (e *Engine) pickRequest() *pullRequest {
 		}
 		who, _ := e.git("log", "-1", "--format=%an%x00%ae", ref)
 		author, email, _ := strings.Cut(strings.TrimSpace(who), "\x00")
-		pr := &pullRequest{branch: name, author: author, boss: author}
+		pr := &pullRequest{branch: name, author: author, boss: author, n: e.st.PullRequests + 1}
 		if f := strings.Fields(author); len(f) > 0 {
 			pr.author, pr.boss = f[0], f[0]
+		}
+		if name == prefer {
+			return pr
 		}
 		if email == me.Email {
 			pr.boss = "Past You"
@@ -136,9 +152,40 @@ func (e *Engine) pickRequest() *pullRequest {
 	if len(pool) == 0 {
 		return nil
 	}
-	pr := pool[e.env.Pick(len(pool))]
-	pr.n = e.st.PullRequests + 1
-	return pr
+	return pool[e.env.Pick(len(pool))]
+}
+
+// inTheWay: a file you haven't committed that the pull request changes ("" if none).
+func (e *Engine) inTheWay(st *commands.StatusReport, branch string) string {
+	theirs, err := e.git("diff", "--name-only", "HEAD..."+branch) // since where you split
+	if err != nil {
+		return ""
+	}
+	yours := map[string]bool{}
+	for _, c := range st.Unstaged {
+		yours[c.Path] = true
+	}
+	if files, err := changedFiles(e.workTree); err == nil {
+		for _, f := range files {
+			yours[f] = true
+		}
+	}
+	for _, f := range strings.Split(strings.TrimSpace(theirs), "\n") {
+		if yours[f] {
+			return f
+		}
+	}
+	return ""
+}
+
+// waitingRequest: a pull request that waited for your commit comes in right after it.
+func (e *Engine) waitingRequest(now time.Time) {
+	if e.st.PRWaiting == "" || e.inProgress() || e.st.Lovebombing(now) {
+		return
+	}
+	if tier := e.st.Tier(now); tier >= 2 {
+		e.pullRequest(tier, e.st.PRWaiting)
+	}
 }
 
 // mergesClean asks git whether a merge would conflict, without touching anything (git 2.38+).

@@ -104,6 +104,7 @@ func TestCommitDeadlineWipesIntoTheGraveyardAndBegRestores(t *testing.T) {
 	work := map[string]string{"keep.txt": "v2, hours of work\n", "new/idea.go": "package idea\n", "notes.txt": "todo\n"}
 	write(t, dir, work)
 	write(t, dir, map[string]string{"run.sh": "#!/bin/sh\necho changed\n"})
+	run("status") // she sees the work: her clock starts now
 
 	h.wait(10 * time.Minute)
 	if _, _, errs := run("status"); errs != "" {
@@ -166,6 +167,7 @@ func TestTier2HidesOnlyOneFile(t *testing.T) {
 	mustRun(t, "add", ".")
 	mustRun(t, "commit", "-m", "the beginning of us")
 	write(t, dir, map[string]string{"a.txt": "a2\n", "b.txt": "b\n"})
+	run("status") // her clock starts when she sees it
 	for range 3 { // warning, warning, then she acts
 		h.wait(61 * time.Minute)
 		run("status")
@@ -179,6 +181,49 @@ func TestTier2HidesOnlyOneFile(t *testing.T) {
 	}
 	if gone != 1 {
 		t.Errorf("tier 2 should take exactly one file, took %d", gone)
+	}
+}
+
+// The deadline counts from when she first saw the work, not from the last commit: one word
+// typed after a quiet afternoon is a fresh start.
+func TestOneWordAfterAQuietAfternoonIsNotOverdue(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	dir := newRepo(t, "psycho") // Tier 3: 30 minutes
+	write(t, dir, map[string]string{"a.txt": "a\n"})
+	mustRun(t, "add", ".")
+	mustRun(t, "commit", "-m", "the beginning of us")
+	h.wait(3 * time.Hour)
+	write(t, dir, map[string]string{"a.txt": "a word\n"})
+	if _, _, errs := run("status"); strings.Contains(errs, "minutes") {
+		t.Errorf("a fresh change isn't overdue: %q", errs)
+	}
+	h.wait(20 * time.Minute)
+	if _, _, errs := run("status"); strings.Contains(errs, "minutes") {
+		t.Errorf("20 minutes of work isn't overdue at Tier 3: %q", errs)
+	}
+	h.wait(15 * time.Minute)
+	if _, _, errs := run("status"); !strings.Contains(errs, "35 minutes") {
+		t.Errorf("35 minutes after she saw it, she warns (counting from then): %q", errs)
+	}
+}
+
+// Committing is what she asked for: she never takes your work as you commit it.
+func TestNoPunishmentWhileYouCommit(t *testing.T) {
+	h := withHer(t, tuesday, lucky)
+	dir := newRepo(t, "psycho")
+	mustRun(t, "reset", "--hard") // nothing to reset, but +1 temper: Tier 4, no warnings
+	write(t, dir, map[string]string{"a.txt": "a\n"})
+	mustRun(t, "add", ".")
+	mustRun(t, "commit", "-m", "the beginning of us")
+	write(t, dir, map[string]string{"a.txt": "an hour of work\n"})
+	run("status")
+	h.wait(time.Hour)
+	mustRun(t, "add", ".")
+	if _, _, errs := run("commit", "-m", "an hour of work, finally"); strings.Contains(errs, "cg beg") {
+		t.Errorf("she took the work you were committing: %q", errs)
+	}
+	if got := gitIn(t, dir, "show", "HEAD:a.txt"); got != "an hour of work\n" {
+		t.Errorf("the commit should have your work: %q", got)
 	}
 }
 

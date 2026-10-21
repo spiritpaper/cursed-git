@@ -123,7 +123,7 @@ One dial: her **tier**. The preset decides where she starts and how high she can
 | 0 Safe | `( ^_^ )` | Personality. Comments on your commits, never blocks you. |
 | 1 Annoying | `( -_- )` | Refuses lazy commit messages, gives you the silent treatment, gets jealous. Never touches files. |
 | 2 Hostile | `( ¬_¬ )` | Commit deadlines (she hides a file if you ignore her), pull requests from your teammates' branches. |
-| 3 Dangerous | `( ò_ó )` | Wipes uncommitted work after 30 minutes, lets old code rot, merge conflicts become boss fights. |
+| 3 Dangerous | `( ò_ó )` | Takes work you've left uncommitted for 30 minutes, lets old code rot, merge conflicts become boss fights. |
 | 4 Catastrophic | `(╬ ò_ó)` | Everything above, faster and with no warnings. Only if you push her there. |
 
 | Preset | Starts at | Never above | Feels like |

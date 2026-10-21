@@ -215,8 +215,11 @@ repeat herself.
 
 ### Tier 2: Hostile
 
-**🕰️ The commit deadline.** If you have uncommitted changes and haven't committed in a while
-(the clock table above), she starts counting:
+**🕰️ The commit deadline.** Her clock starts the first time she sees uncommitted changes (at
+any `cg` command), not at your last commit: one word typed after a quiet afternoon is a fresh
+start. When the changes have been sitting there longer than the deadline (the clock table
+above), she acts. Never while you're running `cg add` or `cg commit`, though: committing is
+exactly what she wanted. Commit, or undo your changes, and the clock stops.
 
 1. **Two warnings**, spaced out: *"{minutes} minutes. I'm not angry. I'm keeping a list."*
    Sometimes with a deal: *"Make 3 commits and I'll pause your deadline. Promise."* (Keep it
@@ -253,8 +256,12 @@ Just not with me."*
   to each other."* Go and fix it yourself while it's still small.
 - At Tier 3 and up she merges anyway, and the conflict is a **boss fight against Sam** (§4).
 
-She never does this on top of uncommitted work, and a clean merge is git's own:
-`cg reset --hard ORIG_HEAD` takes it back (she'll have something to say about that).
+**Your uncommitted work is safe.** If the pull request changes a file you're still working
+on, she doesn't merge it: *"Sam wants into core.go, but you're still in there. Commit
+first."* It waits, and comes in right after your next commit. Work in other files is left
+exactly where it is: git carries it through the merge (and through an aborted one). She
+doesn't start while you have staged changes, since you're about to commit. A clean merge is
+git's own, and `cg reset --keep ORIG_HEAD` takes it back without touching your uncommitted work.
 This is the curse that teaches the most real teamwork: pull often, push small, talk.
 
 **🔥 Force-push apologies.** `cg push --force` waits until you type, exactly, *"I am sorry I
