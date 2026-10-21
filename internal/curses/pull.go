@@ -1,8 +1,9 @@
 // internal/curses/pull.go
 //
-// Random pull ("bringing other guys home"): every now and then, at Tier 2+, she runs
-// `git pull` without asking. At Tier 2 only fast-forwards (nothing to merge, so no conflict).
-// At Tier 3+ she lets git merge, and if that conflicts, it's a boss fight.
+// Random pull ("bringing other guys home"): every now and then, at Tier 2+, she merges
+// something from your remotes without asking. Usually that's a pull request from one of your
+// teammates' branches (pr.go). After a Tier 4 win she pulls your own upstream right away, and
+// a conflict there is phase 2 (pull, below).
 package curses
 
 import (
@@ -25,7 +26,7 @@ func (e *Engine) randomPull(cmd string, tier int) {
 	if tier < 2 || noPullDuring[cmd] || !e.chance(0.02) {
 		return
 	}
-	e.pull(tier)
+	e.pullRequest(tier)
 }
 
 // pull brings upstream home without asking (her random pull, and boss fight phase 2).

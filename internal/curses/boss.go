@@ -194,6 +194,9 @@ func (e *Engine) startFight(now time.Time, tier int) {
 	f.Head, _ = refs.Resolve(e.gitDir, "HEAD")
 	f.Boss, f.Branch = e.opponent()
 	f.Remote = strings.HasPrefix(f.Boss, e.rival()+" from ")
+	if e.pr != nil {
+		f.Boss, f.Branch, f.Remote = e.pr.boss, e.pr.branch, true
+	}
 	f.Start = now.Unix()
 	f.HP = e.hpLeft(f)
 	f.Seconds = f.HP * int(e.clocks().Fight(tier).Seconds())

@@ -49,6 +49,7 @@ type Engine struct {
 	pre              commitInfo       // what Before learned about a commit, for After
 	gone             bool             // she left (breakup): write nothing more into the repo
 	phase2           bool             // the pull right after a Tier 4 win: a conflict is the rematch
+	pr               *pullRequest     // the pull request she's merging: a conflict is a fight with its author
 	ending           string           // set by a breakup, for her memory
 	achBefore        map[string]int64 // achievements when the command started
 	charmedNow       bool             // she was wonderful during this command (the pull comes later)

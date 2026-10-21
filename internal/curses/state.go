@@ -78,6 +78,7 @@ type State struct {
 	PullPending        bool             // ...and the withdrawal that follows it
 	Promise            *promise         // a deal she offered (she won't keep it)
 	Flags              map[string]bool  // red flags she's raised (Red Flag Bingo)
+	PullRequests       int              // pull requests she's opened for you (pr.go)
 }
 
 // RedFlags is how many kinds of red flag there are to spot (docs/MIRANDA.md §3).
@@ -240,6 +241,8 @@ func Replay(events []Event) *State {
 			s.LastRefusalAt = e.T
 		case "lovebomb":
 			s.LovebombAt = e.T
+		case "pull_request":
+			s.PullRequests++
 		}
 		s.checkUnlocks(e, apologyBefore)
 	}

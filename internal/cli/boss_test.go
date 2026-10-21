@@ -195,7 +195,9 @@ func TestRandomPullStartsAFightWithChad(t *testing.T) {
 	plainGit(t, other, "clone", "-q", remote, ".")
 	os.WriteFile(other+"/core.go", []byte("package core\n\nfunc Love() string { return \"never\" }\n"), 0644)
 	plainGit(t, other, "add", ".")
-	if out, err := exec.Command("git", "-C", other, "-c", "user.name=Chad", "-c", "user.email=chad@gym.io", "commit", "-q", "-m", "mine now").CombinedOutput(); err != nil {
+	chad := exec.Command("git", "-C", other, "commit", "-q", "-m", "mine now")
+	chad.Env = append(os.Environ(), "GIT_AUTHOR_NAME=Chad", "GIT_AUTHOR_EMAIL=chad@gym.io") // env beats pinIdentity's
+	if out, err := chad.CombinedOutput(); err != nil {
 		t.Fatalf("%v %s", err, out)
 	}
 	plainGit(t, other, "push", "-q")
@@ -207,7 +209,7 @@ func TestRandomPullStartsAFightWithChad(t *testing.T) {
 	h.luck = 0.01 // the pull fires
 	_, _, errs := run("ls-files")
 	h.luck = lucky
-	if !strings.Contains(errs, "BOSS FIGHT: Chad from origin") {
+	if !strings.Contains(errs, "BOSS FIGHT: Chad  ·  origin/main") {
 		t.Fatalf("a conflicting random pull should start a fight with Chad:\n%s", errs)
 	}
 	if _, err := os.Stat(dir + "/.git/MERGE_HEAD"); err != nil {

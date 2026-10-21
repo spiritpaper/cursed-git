@@ -167,6 +167,27 @@
     "I let {upstream} in while you weren't looking. {n} new commits. He's very attentive.",
     "{upstream} came by. We talked. {n} commits. Don't make it weird."
   ],
+  "pr_open": [
+    "{author} sent you a pull request. I already said yes for you. You're welcome.",
+    "{author} has been busy. {n} commits. Some people actually show up for this relationship.",
+    "Oh, {author} wants in. I'm merging it. Don't look at me like that.",
+    "{author} opened a pull request. Let's find out if you two ever talk."
+  ],
+  "pr_clean": [
+    "Clean merge. You and {author} are actually in sync. You never sync with me like that.",
+    "Not a single conflict. So you CAN communicate. Just not with me.",
+    "{author}'s work went in clean. Somebody on this team pulls regularly. Is it you? It's not you."
+  ],
+  "pr_closed": [
+    "I closed {author}'s pull request. You two changed the same lines. Talk to each other.",
+    "{author}'s pull request fights with your code. Not today. Closed. Next time I won't be this nice.",
+    "You and {author} aren't in sync. I sent it back. Pull before it turns into something."
+  ],
+  "fight_pr": [
+    "You didn't pull. {author} didn't pull. And now you both want the same lines.",
+    "{author}'s pull request touches YOUR lines. You weren't in sync. Now you fight.",
+    "This is what happens when you don't talk to your team. {author} is in your files now."
+  ],
 
   "beg": [
     "Fine. Here are your files. I will remember this.",
