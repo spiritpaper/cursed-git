@@ -102,7 +102,7 @@ func TestWeekendJamClocks(t *testing.T) {
 	}
 	commitFile(t, dir, "a.txt", "a\n", "a file to start with")
 	write(t, dir, map[string]string{"a.txt": "unsaved\n"})
-	run("status") // she sees it: her deadline clock starts now
+	run("status")            // she sees it: her deadline clock starts now
 	h.wait(11 * time.Minute) // 30m / speed 3 = 10m
 	if _, _, errs := run("status"); !strings.Contains(errs, "minutes") {
 		t.Errorf("speed 3: the deadline warning comes after 10 minutes:\n%s", errs)
