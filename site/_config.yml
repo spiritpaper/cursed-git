@@ -1,0 +1,28 @@
+# The docs website (https://spiritpaper.github.io/cursed-git/). site/build.sh gathers the
+# pages, the Pages workflow builds them with Jekyll and the Just the Docs theme.
+title: Cursed GIT
+description: "Like git, but she has feelings. A git-learning game you play on a real project."
+url: "https://spiritpaper.github.io"
+baseurl: "/cursed-git"
+
+remote_theme: just-the-docs/just-the-docs@v0.10.1
+plugins:
+  - jekyll-remote-theme
+  - jekyll-relative-links
+  - jekyll-seo-tag
+relative_links:
+  enabled: true
+  collections: false
+
+color_scheme: cursed
+search_enabled: true
+heading_anchors: true
+back_to_top: true
+back_to_top_text: "Back to top"
+aux_links:
+  "GitHub":
+    - "https://github.com/spiritpaper/cursed-git"
+  "Support":
+    - "https://spiritpaper.github.io/#support"
+aux_links_new_tab: true
+footer_content: 'Cursed GIT is made by spiritpaper. <a href="https://spiritpaper.github.io/#support">Support the project</a> · <a href="https://github.com/spiritpaper/cursed-git/issues">bugs and playtest stories</a> · MIT license'

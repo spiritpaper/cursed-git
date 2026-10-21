@@ -1,0 +1,49 @@
+# The docs website: https://spiritpaper.github.io/cursed-git/
+# site/build.sh gathers the pages (the repo's Markdown, the animations, the event tools),
+# then GitHub's own Jekyll builds them. Needs Settings → Pages → Source: GitHub Actions.
+name: docs site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "site/**"
+      - "tools/**"
+      - "cursed-git-video/*.html"
+      - "*.md"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Gather the pages
+        run: sh site/build.sh _site_src
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./_site_src
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v4
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
