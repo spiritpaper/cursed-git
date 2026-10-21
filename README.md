@@ -122,7 +122,7 @@ One dial: her **tier**. The preset decides where she starts and how high she can
 |---|---|---|
 | 0 Safe | `( ^_^ )` | Personality. Comments on your commits, never blocks you. |
 | 1 Annoying | `( -_- )` | Refuses lazy commit messages, gives you the silent treatment, gets jealous. Never touches files. |
-| 2 Hostile | `( ¬_¬ )` | Commit deadlines (she hides a file if you ignore her), random `git pull`s. |
+| 2 Hostile | `( ¬_¬ )` | Commit deadlines (she hides a file if you ignore her), pull requests from your teammates' branches. |
 | 3 Dangerous | `( ò_ó )` | Wipes uncommitted work after 30 minutes, lets old code rot, merge conflicts become boss fights. |
 | 4 Catastrophic | `(╬ ò_ó)` | Everything above, faster and with no warnings. Only if you push her there. |
 
@@ -132,6 +132,7 @@ One dial: her **tier**. The preset decides where she starts and how high she can
 | `toxic` | 2 | 3 | |
 | `psycho` (default) | 3 | 4 | the full experience |
 | `hackathon` | 3 | 4 | psycho, with goals scaled to the event (`--hours 24`) |
+| `gentle` | 0 | 0 | Juniper: nothing bad, ever |
 
 ![Code decay: a file you haven't touched rots in your working tree, and a commit brings it back](docs/media/code-decay.gif)
 
@@ -173,6 +174,18 @@ fight:
 Every conflict block is 1 HP. Fix the lines, `cg add` the file, and `cg commit` before the
 clock runs out. `cg status` shows his health. You can't run: `cg merge --abort` is refused.
 
+**Working in a team?** Once the repo has a remote, she now and then opens a **pull request**
+from a branch one of your teammates pushed, and merges it for you:
+
+```
+📬 Pull request #3 from Sam: origin/login → main · 2 commits
+   "add the login page"
+( ò_ó )  Sam sent you a pull request. I already said yes for you. You're welcome.
+```
+
+If you've been pulling and talking to each other, it goes in clean (+25 XP, and she's annoyed
+about it). If you both changed the same lines, it's a boss fight against Sam. Stay in sync.
+
 ## Breaking up
 
 You can't just leave her. You earn **closure XP** with real work: every committed line (paid
@@ -200,7 +213,7 @@ and hands it in, and the organizer drops the files onto [tools/leaderboard.html]
 everything in `.git/config`, under `[cursed]`, including how fast the clocks run for a short
 jam (`speed = 2`, or `deadline = 20m`, `fightTime = 2m`, `decay = 6h`): `breakupLevel`,
 `minBossFightsWon`, `minLinesCommitted`, `toxicThreshold`, `xpMaturity` (see
-[docs/CURSES.md §7](docs/CURSES.md)).
+[the settings](docs/CURSES.md#8-settings)).
 
 ## ☠ Death March
 
@@ -256,8 +269,11 @@ cg ls-files -s                   # the index, with stages during a conflict
 cg write-tree                    # turn the index into tree objects
 ```
 
-- [docs/GIT.md](docs/GIT.md): how git works inside, and what cg builds itself vs. hands to git
-- [docs/CURSES.md](docs/CURSES.md): everything she does, the tier math, the anti-cheat
+**All the docs, as a website: [spiritpaper.github.io/cursed-git](https://spiritpaper.github.io/cursed-git/)**
+(with search, and the animations playable in the browser).
+
+- [docs/CURSES.md](docs/CURSES.md): how the game works: everything she does and when, and why it's safe
+- [docs/GIT.md](docs/GIT.md): how cg and git share a repository, and how git works inside
 - [docs/CHARACTERS.md](docs/CHARACTERS.md): Miranda, Juniper, and how to write a character
 - [docs/lessons/writing-a-character.md](docs/lessons/writing-a-character.md): what makes a character unforgettable (the research behind Miranda)
 - [docs/ROADMAP.md](docs/ROADMAP.md): how it was built, phase by phase

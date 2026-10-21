@@ -12,7 +12,7 @@ var t0 = time.Date(2026, 10, 13, 14, 0, 0, 0, time.UTC)
 
 func at(d time.Duration) int64 { return t0.Add(d).Unix() }
 
-// The formula from docs/CURSES.md §2.1, chapter by chapter (the same story as her-tier.html).
+// The formula from docs/CURSES.md §2, chapter by chapter (the same story as her-tier.html).
 func TestTierFormula(t *testing.T) {
 	on := Event{T: at(0), Type: "on", Text: "psycho", Tier: 3, Max: 4}
 	cases := []struct {

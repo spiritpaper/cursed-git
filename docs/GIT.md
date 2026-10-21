@@ -1,51 +1,96 @@
-# Cursed GIT — The Git Part
+# How cg and git share a repository
 
-This document describes how `cg` stores data so that **real `git` and `cg` can work on the same repository without conflict**. That is the one hard rule: every byte `cg` writes inside `.git/` must be something real git would have written itself. If you follow it, anything `cg` doesn't implement (push, pull, rebase, …) can be handed off to `git`, and the two tools never fight.
+`cg` is two things at once: a game, and a small git written from scratch in Go. This page is
+about the second part: what cg does itself, what it hands to git, and how git stores
+everything on disk. It's also a decent tour of git's insides if you've always wondered what's
+in `.git/`.
 
-> **How to check your work:** after any `cg` operation, run `git fsck`, `git status`, `git cat-file -p <hash>` and `git ls-files --stage`. If git is happy, you're compatible. If your hashes differ from git's for the same input, you have a bug.
+## The one rule
+
+**Every byte cg writes inside `.git/` must be something real git would have written itself.**
+
+That's what lets you mix the two freely: `cg commit`, then `git log`, then `cg status`, then
+`git rebase`. Neither tool ever sees anything strange, because there's nothing strange to see.
+Anything cg doesn't do itself goes straight to git, so the two never fight.
+
+The test suite holds cg to it. Most tests build **twin repositories**, do the same thing in
+both (git in one, cg in the other) and then compare everything: the files, the modes, the
+index, the refs, the reflog, the hashes, the output. If cg's commit hash differs from git's
+for the same input, that's a bug.
+
+You can check by hand, too. After any cg command, `git fsck`, `git status`,
+`git cat-file -p <hash>` and `git ls-files --stage` should all be perfectly happy.
+
+## What cg does itself, and what it hands to git
+
+| cg does it itself | Handed to git (↪) |
+|---|---|
+| `init`, `add`, `commit`, `status`, `diff`, `log` | `push`, `pull`, `fetch`, `clone`, `remote` |
+| `branch`, `switch`, `checkout`, `restore`, `reset` | `merge`, `rebase`, `cherry-pick`, `revert`, `stash` |
+| plumbing: `hash-object`, `cat-file`, `ls-files`, `write-tree`, `commit-tree`, `update-ref`, `symbolic-ref`, `rev-parse` | `rm`, `mv`, `tag`, `show`, `blame`, `bisect`, … everything else |
+
+The rule for the left column: the common, everyday commands, and the ones that teach you
+how git works. The right column is git's: networking, and the big history-rewriting tools,
+which git already does perfectly.
+
+Handing over is simple. cg runs `git` with exactly your arguments, connects it to your
+terminal, and passes its exit code back. Any **option** cg doesn't know (say
+`cg log --graph`) is handed over the same way, so you never hit a wall.
+
+The game still runs around those commands. Miranda gets to look before and after
+`cg merge` or `cg pull`, which is how a conflict from git turns into a boss fight. She
+reacts to what git did; she never pretends to be git.
+
+**Finishing a merge** is the one place where the two meet in the middle. Git does the merge
+and leaves `MERGE_HEAD` and the conflict stages in the index (see below). cg's own `status`
+and `commit` understand both, so you can resolve and finish with either tool.
 
 ---
 
-## 1. The `.git` directory
+## 1. Inside `.git`
 
 ```
 .git/
-├── HEAD              "ref: refs/heads/master\n"  (a symbolic ref)
-├── config            INI-style settings
+├── HEAD              "ref: refs/heads/main\n": which branch you're on
+├── config            settings, INI style (her [cursed] section lives here too)
 ├── description
 ├── index             the staging area (binary, see §4)
-├── objects/          every blob/tree/commit, content-addressed
-│   ├── 2a/c9f1...    loose objects: first 2 hex chars = folder
+├── objects/          every file version, folder and commit, named by its hash
+│   ├── 2a/c9f1...    loose objects: the first 2 hex characters are the folder
 │   ├── info/
-│   └── pack/         packfiles (git creates these on gc/clone/pull)
+│   └── pack/         packfiles (git makes these on clone, fetch, pull and gc)
 ├── refs/
-│   ├── heads/        one file per branch, contains a commit hash
-│   └── tags/
-├── packed-refs       (optional) refs git has compacted into one file
+│   ├── heads/        one file per branch, holding a commit hash
+│   ├── tags/
+│   └── cursed/       hers: the graveyard, sacrificed commits, her heart (CURSES.md)
+├── packed-refs       refs git has compacted into one file
+├── logs/             the reflog: where every ref used to point
 ├── hooks/  info/
-└── cursed/           ← cg-only state (see CURSES.md). Git ignores unknown files here.
+└── cursed/           her diary and state. Git ignores files it doesn't know.
 ```
 
-**Finding the repo:** start at the current directory and walk up until you find a `.git` folder. Every command except `init` needs this. Real git does the same, which is why `git status` works from a subfolder.
+Git finds the repository by starting in the current folder and walking up until it finds a
+`.git`. cg does the same, which is why both work from any subfolder.
 
 ---
 
 ## 2. Objects
 
-Everything git stores is one of four object types: **blob** (file contents), **tree** (directory listing), **commit**, **tag**.
+Everything git stores is one of four kinds of object: a **blob** (a file's contents), a
+**tree** (a folder listing), a **commit**, or a **tag**.
 
-### Storage format
+### How an object is stored
 
 ```
-<type> <size-in-bytes>\0<raw content>
+<type> <size in bytes>\0<content>
 ```
 
-1. Build that header + content.
-2. **SHA-1 of the whole thing** (header included) is the object's ID.
-3. **zlib-compress** the whole thing.
-4. Write it to `.git/objects/<first 2 hex>/<remaining 38 hex>`.
+1. Put that header in front of the content.
+2. The **SHA-1 of the whole thing**, header included, is the object's name.
+3. Compress the whole thing with zlib.
+4. Save it as `.git/objects/<first 2 hex>/<other 38 hex>`.
 
-Test values, so you can check your hash function:
+Some values to check against:
 
 | Input | Command | Hash |
 |---|---|---|
@@ -53,162 +98,160 @@ Test values, so you can check your hash function:
 | `hello\n` | `echo hello \| git hash-object --stdin` | `ce013625030ba8dba906f756967f9e9ca394464a` |
 | empty tree | `git hash-object -t tree /dev/null` | `4b825dc642cb6eb9a060e54bf8d69288fbee4904` |
 
-Common mistake: hashing just the content and forgetting the `blob 6\0` header.
+The classic mistake is hashing just the content and forgetting the `blob 6\0` header.
 
-Go packages: `crypto/sha1`, `compress/zlib`, `encoding/hex`.
+Because the name *is* the content's hash, the same content is always the same object. Two
+identical files anywhere in your history are stored once. (Miranda uses that, too: XP is paid
+per blob, so re-committing the same content pays nothing.)
 
-Write objects safely by writing to a temp file in the same folder and then `os.Rename`ing it into place. If the object already exists, skip it: same hash means same content.
+cg writes objects safely: to a temporary file in the same folder, then renamed into place.
+If the object already exists, there's nothing to do; same hash, same content.
 
 ### Blob
-The content is the raw file bytes. There's no filename and no permissions. Two identical files anywhere in history are the same blob.
+The raw bytes of a file. No name, no permissions; those live in the tree.
 
 ### Tree
-The content is a sequence of **binary** entries, with no newlines between them:
+One folder, as a list of **binary** entries with nothing between them:
 
 ```
-<mode as ASCII> <space> <name> \0 <20 raw SHA-1 bytes>
+<mode in ASCII> <space> <name> \0 <20 raw SHA-1 bytes>
 ```
 
-- Modes: `100644` normal file, `100755` executable, `120000` symlink, `40000` subdirectory (**no leading zero**).
-- The hash is the **raw 20 bytes**, not the 40-character hex string.
-- Entries are **sorted by name**. The tricky rule is that directories sort as if their name ended in `/`. So `foo.txt` comes before the directory `foo`, because `.` (0x2E) sorts before `/` (0x2F). If you get this wrong, your tree hashes won't match git's.
-- A tree only covers one directory level. Subdirectories are separate tree objects, so you build them **bottom-up**.
+- Modes: `100644` a normal file, `100755` executable, `120000` a symlink, `40000` a folder
+  (**no leading zero**).
+- The hash is the **raw 20 bytes**, not the 40 hex characters.
+- Entries are **sorted by name**, with a twist: folders sort as if their name ended in `/`.
+  So the file `foo.txt` comes before the folder `foo`, because `.` (0x2E) sorts before `/`
+  (0x2F). Get that wrong and your tree hashes won't match git's.
+- A tree only describes one level. Each subfolder is its own tree object, so they're built
+  from the bottom up.
 
-`git cat-file -p <tree>` pretty-prints a tree. `git cat-file tree <tree> | xxd` shows the raw bytes.
+`git cat-file -p <tree>` shows a tree nicely; `git cat-file tree <tree> | xxd` shows the real bytes.
 
 ### Commit
 Plain text:
 
 ```
 tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904
-parent 3f1c...            (0 lines for first commit, 2+ for merges)
+parent 3f1c...            (none for the first commit, two or more for a merge)
 author Your Name <you@example.com> 1727712000 +0200
 committer Your Name <you@example.com> 1727712000 +0200
 
-Commit message here
+The commit message
 ```
 
-- The timestamp is Unix seconds followed by the timezone offset (`+0200`, not `+02:00`).
-- Name and email come from `.git/config`, falling back to `~/.gitconfig` (`[user] name = …`).
-- To test exactly, set `GIT_AUTHOR_DATE` / `GIT_COMMITTER_DATE` so that git and cg produce **identical** hashes.
+- The time is Unix seconds plus the time zone (`+0200`, not `+02:00`).
+- Your name and email come from the repository's config, then `~/.gitconfig`, and the
+  `GIT_AUTHOR_*` / `GIT_COMMITTER_*` environment variables beat both, as in git.
+- The parent's hash is *part of the commit*. Change any commit and every commit after it gets
+  a new hash. That's why Miranda's commit sacrifice changes the IDs of everything after the
+  victim, and why rewriting pushed history causes so much trouble.
 
 ### Tag (annotated)
-Rarely needed. Same idea as a commit, with `object`, `type`, `tag`, `tagger` headers. Lightweight tags are just refs (§3).
+Like a commit, with `object`, `type`, `tag` and `tagger` headers. A lightweight tag is just a
+ref (§3).
 
-### Packfiles, the compatibility trap
-When you hand `pull`, `fetch` or `clone` off to real git, git will usually store the new objects in `.git/objects/pack/*.pack` (with a `.idx`) instead of as loose files. **Your object reader will then fail to find objects that definitely exist.** You have two options:
-1. **Early:** if a loose object isn't found, fall back to `git cat-file -p <hash>`.
-2. **Later (great video episode):** implement a pack reader: `.idx` lookup, object headers, zlib streams, and OFS_DELTA/REF_DELTA reconstruction.
-
-You never need to *write* packs. Loose objects are always valid.
+### Packfiles
+When git fetches, clones or tidies up, it packs many objects into
+`.git/objects/pack/*.pack` (with an `.idx` index) instead of keeping one file each. cg reads
+loose objects itself, and for anything packed it asks git, through one long-running
+`git cat-file --batch` process per repository (starting git once per object would make `cg log`
+crawl). cg never needs to *write* packs: loose objects are always valid. Reading packs
+directly is on the roadmap as a stretch goal.
 
 ---
 
 ## 3. Refs and HEAD
 
-- A branch is a file: `.git/refs/heads/master` contains `<40 hex>\n`.
-- `HEAD` normally contains `ref: refs/heads/master\n`, which is a *symbolic ref*.
-- **Detached HEAD:** `HEAD` holds a raw hash instead.
-- **Unborn branch:** a fresh repo's HEAD points at `refs/heads/master`, but that file doesn't exist yet. The first commit creates it.
-- `packed-refs`: git may move refs into this single file (lines of `<hash> <refname>`). When resolving a ref, check the loose file first, then `packed-refs`.
-- To update a ref safely, write `refs/heads/x.lock` and then rename it over `refs/heads/x`. That's the same locking git uses, so the two tools won't clobber each other.
-- Optional: append to `.git/logs/HEAD` (the reflog) so `git reflog` shows your commits. Handy for curse recovery, see CURSES.md.
+- **A branch is a file.** `.git/refs/heads/main` holds a commit hash and a newline. That's it.
+  Creating a branch is creating a 41-byte file.
+- **HEAD** usually holds `ref: refs/heads/main`: a *symbolic ref*, pointing at a branch.
+- **Detached HEAD:** HEAD holds a commit hash directly instead of naming a branch.
+- **Unborn branch:** in a brand-new repository HEAD points at `refs/heads/main`, but that file
+  doesn't exist yet. The first commit creates it.
+- **`packed-refs`:** git may move refs into this one file (lines of `<hash> <name>`). To find
+  a ref, look for the loose file first, then in `packed-refs`.
+- **Safe updates:** write `refs/heads/x.lock`, then rename it over `refs/heads/x`. That's git's
+  own locking, so the two tools can't clobber each other.
+- **The reflog** (`.git/logs/`) records where every ref used to point. cg writes it the way
+  git does, so `git reflog` shows cg's commits. It's also how Miranda notices plain git
+  behind her back: a reflog line she didn't write.
 
 ---
 
-## 4. The index (staging area), `.git/index`
+## 4. The index (the staging area)
 
-This is the hardest file to get right, and it's where `cg` currently breaks (see ROADMAP Phase 0). It's a **binary file, all integers big-endian** (`encoding/binary.BigEndian`).
+`.git/index` is the list of what your next commit will contain: every tracked file, with its
+blob hash and enough file-system details to notice quickly when a file changes. It's binary,
+with **every number big-endian**.
 
 ### Header, 12 bytes
 | Bytes | Value |
 |---|---|
-| 4 | signature `DIRC` |
-| 4 | version, use `2` |
-| 4 | number of entries |
+| 4 | the signature `DIRC` |
+| 4 | the version, `2` |
+| 4 | the number of entries |
 
 ### Each entry
 | Bytes | Field |
 |---|---|
-| 4 | ctime seconds |
-| 4 | ctime nanoseconds |
-| 4 | mtime seconds |
-| 4 | mtime nanoseconds |
+| 4 + 4 | ctime: seconds, nanoseconds |
+| 4 + 4 | mtime: seconds, nanoseconds |
 | 4 | dev |
 | 4 | inode |
 | 4 | mode (`0o100644`, `0o100755`, `0o120000`) |
 | 4 | uid |
 | 4 | gid |
 | 4 | file size |
-| 20 | blob SHA-1 (raw bytes) |
-| 2 | flags: bit 15 assume-valid, bit 14 extended (0 in v2), bits 13–12 **stage**, bits 11–0 name length (max `0xFFF`) |
-| n | path, relative to repo root, `/`-separated, no leading `./` |
-| 1–8 | NUL padding so the **entry's total length is a multiple of 8** (always at least one NUL) |
+| 20 | the blob's SHA-1 (raw bytes) |
+| 2 | flags: bit 15 assume-valid, bit 14 extended (0 in v2), bits 13–12 the **stage**, bits 11–0 the name's length |
+| n | the path, from the repository root, with `/`, no leading `./` |
+| 1–8 | NUL bytes, so the **whole entry is a multiple of 8 bytes** (always at least one) |
 
-That's 40 bytes of stat data plus 20 hash bytes plus 2 flag bytes, which makes **62 fixed bytes**, then the path and padding. Note that the current `IndexEntry` struct in `add.go` has `StatData [62]byte` *plus* mode, hash and flags, so it double-counts.
-
-Get the stat fields from `os.Lstat(path)` and then `info.Sys().(*syscall.Stat_t)` on Linux.
+That's 62 fixed bytes, then the path and the padding. cg fills the file-system fields from
+the real file (Linux and macOS have their own code for it; other systems get a portable
+version), because git uses them to decide whether a file needs re-hashing.
 
 - Entries are sorted by path (byte order), then by stage.
-- **Stage** is 0 normally. During a merge conflict the same path appears up to three times: stage 1 = common ancestor, 2 = ours, 3 = theirs. This is how git knows a file is "unmerged".
-- The file may contain **extensions** after the entries (`TREE`, `REUC`, …). Each is a 4-byte signature, a 4-byte size, then data. When reading, skip the ones you don't understand. When writing, you can leave them out.
-- **Trailer:** the SHA-1 of everything above it, 20 raw bytes.
-- To write safely, write `.git/index.lock` and then rename it to `.git/index`. If `index.lock` already exists, another git process is running, so refuse to continue.
+- **The stage** is 0 normally. During a merge conflict the same path can appear three times:
+  stage 1 is the common ancestor, 2 is yours, 3 is theirs. That's what "unmerged" means to
+  git, and it's how Miranda detects a boss fight: by stages, not by looking for `=======` in
+  your files (a file can legitimately contain that).
+- **Extensions** may follow the entries (`TREE`, `REUC`, …): a 4-byte signature, a 4-byte
+  size, then data. cg skips the ones it doesn't use.
+- **The trailer** is the SHA-1 of everything above it.
+- **Safe writes:** `.git/index.lock`, then rename. If the lock already exists, another git is
+  running, and cg stops rather than guess.
 
-Check your work with `git ls-files --stage` and `git ls-files --debug`.
+`git ls-files --stage` and `git ls-files --debug` show you what's in it.
 
 ---
 
-## 5. Commands
+## 5. How `status` works
 
-Status legend: ✅ done · 🟡 started · ⬜ todo · ↪ passthrough to git
+It compares three snapshots:
 
-### Plumbing (build these first; porcelain is built on them)
-| Command | Does | Status |
-|---|---|---|
-| `cg hash-object [-w] [-t type] [--stdin] <file>` | print blob hash, `-w` also stores it | ✅ |
-| `cg cat-file -p\|-t\|-s\|-e\|<type> <hash>` | read and decompress an object (short hashes work) | ✅ |
-| `cg ls-files [-s]` | print the index (relative to the current folder) | ✅ |
-| `cg write-tree` | index → tree objects, prints root tree hash | ✅ |
-| `cg commit-tree <tree> [-p parent] -m msg` | create a commit object | ✅ |
-| `cg update-ref <ref> <hash> [<old>]` / `symbolic-ref` / `rev-parse <name>` | write and resolve refs (`HEAD~n` comes in Phase 4) | ✅ |
+- **HEAD's tree vs the index** → "Changes to be committed"
+- **The index vs your files** → "Changes not staged for commit". It compares the file-system
+  details first (size, mtime) and only re-hashes a file when they differ. That's why
+  `status` is fast even in a big project.
+- **Files the index doesn't know** → "Untracked", minus whatever `.gitignore` says to ignore.
 
-### Porcelain
-| Command | Built from | Status |
-|---|---|---|
-| `init [-q] [dir]` | directories + HEAD/config/description | ✅ |
-| `add [-f] <paths>` | hash-object -w + update index; folders, deletions, `.gitignore` | ✅ |
-| `commit -m` | write-tree + commit-tree + update-ref HEAD | ✅ |
-| `status [-s] [-b] [--porcelain]` | HEAD ↔ index ↔ working tree, untracked, ahead/behind | ✅ |
-| `log [--oneline] [-n N] [<rev>...]` | walk parents, newest first; same output as `git log` | ✅ |
-| `branch`, `switch`, `checkout` | refs + write tree to working dir + index; refuses to overwrite local work | ✅ |
-| `diff [--cached] [<a> [<b>]]` | Myers diff + git's compaction, unified format | ✅ |
-| `restore`, `reset --soft/--mixed/--hard` | index/working tree manipulation | ✅ (`rm` passes through to git) |
-| `push`, `pull`, `merge`, `fetch`, `clone`, `remote`, `rebase`, `cherry-pick`, `stash`, … | ↪ `git` | ✅ passthrough |
-| finishing a merge (`status`, `commit` with conflicts / `MERGE_HEAD`) | index stages 1/2/3 + `MERGE_HEAD` | ✅ |
-
-### How `status` works
-It compares three snapshots of the repo:
-- **HEAD tree vs index** → "Changes to be committed"
-- **index vs working tree** → "Changes not staged for commit". Compare the stat data first (mtime and size); only re-hash the file if the stat data differs.
-- **files not in the index** → "Untracked". Respect `.gitignore`, which is a simple version first and full glob rules later.
-
-### Passthrough
-Anything `cg` doesn't recognise runs `git` with the same arguments:
-
-```go
-cmd := exec.Command("git", args...)
-cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
-err := cmd.Run()
-// propagate the exit code: if exitErr, ok := err.(*exec.ExitError) → os.Exit(exitErr.ExitCode())
-```
-
-Curses still get to run before and after passthrough commands. For example, a `git pull` that *you* ran counts as "bringing someone home", see CURSES.md.
+`log` walks from a commit to its parents, newest first. `diff` uses the Myers algorithm with
+git's own clean-up pass, so its output matches `git diff` line for line.
 
 ---
 
 ## 6. Glossary
-- **Porcelain / plumbing:** user-facing commands vs low-level building blocks.
-- **Loose object:** one zlib file per object in `objects/xx/`.
-- **Merge base:** the most recent commit that two branches share.
-- **Unmerged path:** a path that has index entries at stage 1, 2 or 3.
+
+- **Porcelain / plumbing:** the friendly commands people type vs the small building blocks
+  they're made of (`hash-object`, `write-tree`, `commit-tree`, `update-ref`). `cg commit` is
+  literally the plumbing in a row.
+- **Loose object:** one zlib-compressed file per object, in `objects/xx/`.
+- **Merge base:** the newest commit two branches share. A merge compares both sides to it.
+- **Unmerged path:** a path with index entries at stage 1, 2 or 3: a conflict.
+- **Fast-forward:** a "merge" where your branch has nothing new, so it just moves forward.
+  No merge commit, no conflict possible.
+
+The animations `git-explained.html` and `git-internals.html` in `cursed-git-video/` show most
+of this moving.

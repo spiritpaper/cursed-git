@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Presets: where she starts (base) and how far she may ever go (max). See docs/CURSES.md §2.3.
+// Presets: where she starts (base) and how far she may ever go (max). See docs/CURSES.md §2.
 var Presets = map[string][2]int{
 	"clingy": {1, 2},
 	"toxic":  {2, 3},

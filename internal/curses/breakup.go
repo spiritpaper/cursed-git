@@ -1,6 +1,6 @@
 // internal/curses/breakup.go
 //
-// `cg breakup`: the final boss (docs/CURSES.md §5.3). How it ends depends on how you played:
+// `cg breakup`: the final boss (docs/CURSES.md §5). How it ends depends on how you played:
 //
 //	not enough level / wins / lines   ->  A "Too soon": a letter, and she leaves YOU (a shutdown)
 //	eligible, but as toxic as she is  ->  B "Toxic": archive, then she takes everything

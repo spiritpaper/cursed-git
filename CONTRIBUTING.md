@@ -13,7 +13,9 @@ characters, quests, docs, event tools, bug reports and playtest stories.
   with the name and the concept.
 - **Quests** that teach a piece of git (`internal/curses/quests.go`).
 - **Event tooling**: things that make a cg hackathon easier to run ([docs/EVENTS.md](docs/EVENTS.md)).
-- **Docs**: if something confused you, it'll confuse the next person.
+- **Docs**: if something confused you, it'll confuse the next person. Everything in `docs/` is
+  also the [website](https://spiritpaper.github.io/cursed-git/), rebuilt on every push to
+  `main`; a new page needs one line in `site/build.sh` (its title and place in the menu).
 - The [ROADMAP backlog](docs/ROADMAP.md#backlog) has more.
 
 For anything big, open an issue first so we can agree on the shape before you build it.

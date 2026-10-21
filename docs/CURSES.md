@@ -1,20 +1,37 @@
-# Cursed GIT — The Curse Part
+# How the game works
 
 > *"She's a version control system. She controls you."*
 
-`cg` (short for **C**ursed **G**IT) is your toxic ex. It works like git, *mostly*, but it has moods, it gets jealous, it remembers everything, and if you ignore it, it will make you pay. Merge conflicts are **boss fights**, and leaving her is the final boss.
+This is the long version of what Miranda does, when she does it, and why it's safe. If you
+just want to play, [How to play](PLAYING.md) is enough. Read this if you're running an event,
+writing a character, contributing code, or you just lost a file and want to know why.
 
-🎬 = a matching animation in `cursed-git-video/` (see §8).
+🎬 marks a moment with a matching animation in `cursed-git-video/` (list at the end).
 
 > **A note from me (the human who made this).** Cursed GIT is the thing I actually wanted to build, and building it taught me a ton about git internals, Go and binary formats. It's a joke character, though. Thinking about a real ex (or a real partner) as someone who punishes you, checks up on you and won't let you leave is not a cute idea, it's a red flag. If any of her lines sound like a relationship you're in, that's worth talking to someone about. Laugh at her, learn git from her, don't date her.
 
-## Status
+## The short version
 
-Built so far (Phases 6 and 6b): the diary and heart, the tier engine, the graveyard and `cg beg`, `cg mood`, `cg curse on/off`, `cg restraining-order`, every Tier 0–2 curse in §3, the Tier 3/4 commit-deadline wipe, **code decay**, **random pull** (fast-forward at Tier 2, a real merge at Tier 3+), **boss fights** (§4), **commit sacrifice**, and the anti-cheat: reflog-based "behind her back" detection, her hooks (`reference-transaction`: she answers inside git's output and blocks forged changes to her refs; `pre-commit`: no committing rot), "you changed the locks", and the deleted-graveyard check. She also *remembers*: absence greetings, your name, your old commit messages, your favourite file, late-night talks. Also done: her memory across projects (`~/.local/share/cursed-git/memory.json`: a new `.git` or a fresh clone gets your toxicity and grudges back, she's jealous of your other projects, `cg forget` wipes it), XP and closure levels, 27 achievements (`cg achievements`, unlocked by replaying her diary, so they can't be faked without breaking it), `cg breakup` with all three endings, Death March (§5.5), boss fight phase 2, quests that teach git (`cg quest`), the event kit (`cg event`, the hackathon preset, configurable clocks, the leaderboard), rivals, and Miranda 2.0: "when" rules so she reacts to your actual commit messages, push and pull, her tactics, Red Flag Bingo, texts from her, the hoover and the guilt ledger (her character bible: [MIRANDA.md](MIRANDA.md)). Her name is **Miranda**, and her lines live in `internal/curses/lines/miranda.json`. Other characters (Juniper, the gentle one) are packs too: see [CHARACTERS.md](CHARACTERS.md).
+You use `cg` wherever you'd type `git`. Everything git can do still works: what cg doesn't
+handle itself, it hands straight to git. But the repository now has someone living in it.
 
-## 0. Meet her
+- **She has a mood**, from 0 (fine) to 4 (catastrophic). The worse it is, the more she does.
+- **Doing git well calms her down**: commit often, write real messages, pull before you push.
+- **Doing it badly makes her worse**: lazy messages, uncommitted work, force pushes, sneaking
+  around her with plain git.
+- **Merge conflicts are boss fights** with a timer.
+- **Real work earns XP**, and with enough of it you can break up with her. How that goes
+  depends on how you treated her.
+- **She never destroys your work.** Anything she takes is saved first, and `cg beg` gives it back.
 
-She's an ASCII-art anime girl: long hair, zigzag bangs, a ribbon, and a face that changes with her tier. `cg face [mood]` shows her, and `cg help` greets you with her best side.
+She's **Miranda** by default. **Juniper** is the gentle alternative: same game, no curses at
+all. Both are [line packs](CHARACTERS.md), and Miranda's personality has its own guide
+([MIRANDA.md](MIRANDA.md)).
+
+## Meet her
+
+She's an ASCII-art anime girl, and her face changes with her mood. `cg face` shows her,
+`cg mood` shows how she feels about you right now.
 
 ```
           _.-''''''''''-._
@@ -29,7 +46,7 @@ She's an ASCII-art anime girl: long hair, zigzag bangs, a ribbon, and a face tha
  / |   |   /     <>     \   |   | \
 ```
 
-| Tier / mood | Eyes | Cheeks | Mouth |
+| Mood | Eyes | Cheeks | Mouth |
 |---|---|---|---|
 | 0 content | `^  ^` | `.  .` | `\__/` |
 | 1 unimpressed | `-  -` | | `__` |
@@ -37,454 +54,474 @@ She's an ASCII-art anime girl: long hair, zigzag bangs, a ribbon, and a face tha
 | 3 hostile | `\  /` | `o  o` | `/^^\` |
 | 4 furious | `>  <` | `#  #` | `/VVVV\` |
 | love-bombing | `<3  <3` | `//  //` | `ww` |
-| crying (breakup C) | `T  T` | `;  ;` | `()` |
+| crying (the good ending) | `T  T` | `;  ;` | `()` |
 
-How she's drawn (`internal/curses/portrait.go`): only the left half of each row is written by hand, and the right half is mirrored in code, so she's always symmetric. The three face rows have a 6-character slot that the mood fills in. Tests check that every mood lines up. She's v1: redraw her any time, the tests will tell you if you broke the alignment.
-
-The animations still use the small kaomoji faces (`( ^_^ )`, `(╬ ò_ó)`). Swapping them for her portrait is on the list for the launch phase.
-
----
-
-## 1. Ground rules (read before cursing anything)
-
-The joke only works if nobody actually loses their work. Every destructive curse must be **recoverable**, and the recovery can be part of the lore ("she hid your stuff, she didn't throw it out… this time").
-
-1. **Opt-in per repo.** Curses only activate if `.git/cursed/` exists, which `cg init` or `cg curse on` creates. `cg` used on a normal repo is just git.
-2. **Nothing is truly deleted.** Before a curse wipes, rots or sacrifices anything, it snapshots it as git objects plus a ref: `refs/cursed/graveyard/<timestamp>`. `cg beg` (or `cg apologize`) restores it. Real git can recover it too, with `git checkout refs/cursed/graveyard/...`. This includes the "she deletes your repo" ending (§5): the repo is archived before it disappears.
-3. **Never touch `.git/` internals destructively.** Curses act on the working tree, on branch history through normal commits and refs, and on refs under `refs/cursed/`. They never touch objects that already exist.
-4. **The tier cap is the safety protocol** (§2). `cursed.maxTier` is the most dangerous tier she may ever reach. Set it to `1` on a repo you care about, and nothing worse than insults can happen.
-5. **Real damage needs Death March.** The real shutdown and the real deletion in ending B only happen in **Death March** mode (§5.5): `cursed.deathMarch = true`, set by hand in `.git/config`, plus a warning you accept by typing the oath. Otherwise she fakes the shutdown and deletes nothing.
-6. **Emergency exit.** `cg restraining-order` disables every curse immediately, with no conditions and no punishment. It is for real emergencies, like a deadline at work or a demo, and it is **not** a game ending. It should be boring on purpose (*"Fine. Legal says I have to stop."*).
-7. **Never curse on CI.** If `CI=true` or stdin isn't a terminal, stay quiet.
-8. **She lies about her feelings, never about your data.** She can guilt-trip, twist your words and rewrite history *emotionally*, but `status`, `log`, `mood` statistics and every hash are always the truth, and everything she takes is recoverable. A version control tool you can't trust stops being funny.
-9. **Dark, not cruel.** No threats of self-harm or violence, nothing sexual, and she never looks or reaches outside the repository (her "network" is `git pull` on your own remote). Manipulation, guilt, jealousy, love-bombing: yes. Anything that would make a real person feel unsafe: no.
-
-These rules also make good YouTube content: show that "she deleted everything", then show the rescue.
+Only the left half of her is drawn by hand; the code mirrors it, so she's always symmetric
+(`internal/curses/portrait.go`). In a normal sentence she uses a small face instead:
+`( ^_^ )` up to `(╬ ò_ó)`.
 
 ---
 
-## 2. Her toxicity tier (difficulty + safety in one dial) 🎬
+## 1. The promise: nobody loses work
 
-There is one number that decides how dangerous she is right now: **her tier, 0–4**. The tier is her face, her mood, and the list of curses she's allowed to use. The *difficulty* is where she starts, and the *safety protocol* is how high she can ever go.
+The joke only works if it stays a joke. These rules are in the code and in the tests, and a
+change that breaks one doesn't get merged.
 
-| Tier | Name | Face | What she does | Examples |
-|---|---|---|---|---|
-| 0 | **Safe** | `( ^_^ )` | Mostly personality. Never blocks you. | toxic partner · commit message judge · AI will replace you · grudges |
-| 1 | **Annoying** | `( -_- )` | Warnings, insults, rejected commands. Never touches files. | random rejection · arbitrary refusal · stupid rules · silent treatment · jealousy |
-| 2 | **Hostile** | `( ¬_¬ )` | Deadlines, forced problems. Hides things (recoverably). | commit deadline · random pull · force-push apology |
-| 3 | **Dangerous** | `( ò_ó )` | Decay, sacrifice, forced conflicts. | code decay · commit sacrifice · merge conflict boss fights |
-| 4 | **Catastrophic** | `(╬ ò_ó)` | Only if you truly deserve it. | instant wipes · boss fight phase 2 · full-force breakup endings |
+1. **She only lives where you invited her.** `cg init` or `cg curse on` moves her in (into
+   `.git/cursed/`). In any other repository, `cg` is just git.
+2. **She saves before she takes.** Before she hides, wipes or drops anything, she stores it as
+   git objects under `refs/cursed/graveyard/…` (or `refs/cursed/sacrificed/…` for commits).
+   `cg beg` gives it back; even plain git can (`git checkout refs/cursed/graveyard/…`). If she
+   can't save something, she doesn't take it.
+3. **She lies about her feelings, never about your data.** `status`, `log`, hashes and the
+   numbers in `cg mood` are always true. Git can always prove what really happened.
+4. **She only acts at a terminal.** In a script, an editor, CI (`CI=true`) or anywhere without
+   a person at a keyboard, she's silent and `cg` is plain git.
+5. **The emergency exit always works.** `cg restraining-order` stops every curse immediately,
+   no conditions, no punishment. It's for real emergencies (a demo, a work deadline), not a
+   way to win: *"Fine. Legal says I have to stop."*
+6. **Dark, not cruel.** No threats of violence or self-harm, nothing sexual, nothing outside
+   the repository. Guilt, jealousy, love-bombing and passive aggression: yes.
+7. **Real damage needs Death March.** The only things that reach outside the repository (a real
+   shutdown, deleting the project folder) happen only in [Death March](#6-death-march-),
+   which you turn on by hand and accept by typing an oath.
 
-### 2.1 How her live tier is calculated
+---
 
-```
-live tier = clamp( base + temper + grudge, floor, maxTier )
+## 2. Her tier: one dial for difficulty and safety 🎬
 
-base     = cursed.tier            (difficulty, default 3 = Dangerous)
-temper   = -2 … +2                (how you've treated her lately, see below)
-grudge   = +1 if YOUR toxicity ≥ toxicThreshold, else 0   (§5.2)
-floor    = max(0, base - 2)       (she can calm down two tiers, never further)
-maxTier  = cursed.maxTier         (safety cap, default 4)
-```
+Everything she does depends on one number, her **tier**, from 0 to 4.
 
-**Temper** is the short-term part. It's the mood swings:
-
-| Event | Temper |
-|---|---|
-| A warning you ignored (the condition is still true at the next check) | +1 per 3 ignored warnings |
-| `cg beg`, force push, `revert`/`reset --hard`, getting caught using plain git | +1 each |
-| A good commit (decent message, within the deadline) | −1 per 3 in a row |
-| Winning a boss fight | −1 |
-| Saying "yes" during breakup bargaining (§5.3 C) | −2 (love-bombing) |
-
-Temper slowly drifts back to 0. One step toward zero per `temperCooldown` (default 2h) without events.
-
-**Your toxicity** (§5.2) is the long-term part. It only goes up, and once it crosses the threshold she's permanently one tier worse: *"I learned it from you."*
-
-### 2.2 What the tier controls
-- **Which curses can fire:** a curse fires only if `live tier ≥ its tier`. A curse above `maxTier` never exists at all.
-- **How often:** random curses use `chance × (1 + live − curse tier)`, so a Tier-1 curse fires three times as often at Tier 3.
-- **How fast:** timeouts shrink as the tier rises.
-
-  | Live tier | 0 | 1 | 2 | 3 | 4 |
-  |---|---|---|---|---|---|
-  | commit deadline | off | warn only | 60 min | 30 min | 15 min |
-  | boss fight timer per hunk | — | — | — | 3 min | 90 s |
-  | code decay to "critical" | off | off | off | 30 days | 10 days |
-
-### 2.3 Defaults
-Out of the box she starts at **Tier 3 (Dangerous)**, one step below the top, with the cap at **4**. With the default `base` of 3, Tier 4 is never the starting point. You reach it by ignoring her: three ignored warnings push your temper to +1 and her to Catastrophic. Good behaviour can bring her down to Tier 1, but never lower.
-
-| Preset (`cg curse on --preset …`) | `tier` | `maxTier` | Feels like |
+| Tier | Name | Face | What it feels like |
 |---|---|---|---|
-| `clingy` | 1 | 2 | safe for a real project |
-| `toxic` | 2 | 3 | |
+| 0 | **Safe** | `( ^_^ )` | Comments and opinions. She never blocks you. |
+| 1 | **Annoying** | `( -_- )` | She refuses things, judges you, warns you. She never touches files. |
+| 2 | **Hostile** | `( ¬_¬ )` | Deadlines with consequences, pull requests from your team, force-push apologies. |
+| 3 | **Dangerous** | `( ò_ó )` | Takes uncommitted work, rots old files, drops commits, boss fights. |
+| 4 | **Catastrophic** | `(╬ ò_ó)` | No more warnings. Losing means a shutdown (a fake one, outside Death March). |
+
+### Where she starts and how far she can go
+
+You pick a **preset** when she moves in (`cg init --preset …` or `cg curse on --preset …`).
+It sets where she starts and the highest tier she can ever reach:
+
+| Preset | Starts at | Never above | Good for |
+|---|---|---|---|
+| `clingy` | 1 | 2 | a project you actually care about |
+| `toxic` | 2 | 3 | a gentler game |
 | **`psycho`** (default) | **3** | **4** | the full experience |
-| `custom` | you pick | you pick | |
+| `hackathon` | 3 | 4 | events: the endgame goals shrink to fit the event (`--hours N`) |
+| `gentle` | 0 | 0 | Juniper: nothing bad, ever |
 
-### 2.4 State
-Everything lives in `.git/cursed/` (rebuilt from the event log, see §6.4):
+### How her tier moves
 
-```json
-{
-  "tier": 3, "max_tier": 4,
-  "temper": 1,
-  "warnings_ignored": 4,
-  "good_streak": 0,
-  "jealousy": 10,
-  "last_commit_at": 1727712000,
-  "last_seen_at":  1727715600,
-  "grudges": ["force-push on 2026-09-12", "commit message 'fix'"],
-  "known_authors": ["you@example.com"],
-  "active_boss_fight": null,
-
-  "xp": 1240, "level": 6, "lines_committed": 3180,
-  "boss_fights": { "won": 4, "lost": 1 },
-  "toxicity": 7,
-  "breakup_attempts": 1
-}
-```
-
-`cg mood` prints it as a relationship status, which is a fun screen to show in a video:
+Her live tier is worked out fresh on every command:
 
 ```
-( ò_ó )  Tier 3 · Dangerous      temper +1   cg --evil
-You:     toxicity 7/10           Closure Lv 6 ▓▓▓▓▓▓░░░░ (need 10)
+tier = where she started + her temper + 1 if you're as toxic as she is
+       (never more than 2 below where she started, never above the preset's cap)
 ```
 
-### When do curses run?
-**Lazy evaluation first.** Every time you run *any* `cg` command, it checks the clock and the state, and applies any curse that "should have happened" while you were gone. This needs no background process and is easy to test.
+**Temper** is the short-term part: −2 to +2, drifting one step back toward 0 for every two
+quiet hours.
 
-**Daemon later (stretch goal):** `cg haunt` starts a background watcher using `fsnotify`, so curses happen in real time even if you never run `cg`. That's scarier, and makes a better video.
+| What you did | Temper |
+|---|---|
+| Ignored three of her warnings | +1 |
+| `cg beg`, a force push, `reset --hard`, `revert`, `commit --amend` | +1 each |
+| The same lazy mistake twice in 24 hours | +1 |
+| Used plain git behind her back | +1 |
+| Three good commits in a row | −1 |
+| Won a boss fight | −1 |
+
+At −2 she **love-bombs** you: an hour of compliments and no curses at all. A lazy commit
+message during that hour ruins the moment (+4).
+
+**Your toxicity** is the long-term part. It's a score of how *you* behaved, and it mostly only
+goes up:
+
+| What you did | Toxicity |
+|---|---|
+| A lazy commit message (`fix`, `wip`, anything under 5 characters) | +1 |
+| Missed the commit deadline | +1 |
+| Used plain git behind her back | +1 |
+| Had to `cg beg` for your files | +2 |
+| Force push | +2 |
+| Deleted her graveyard | +2 |
+| Lost a boss fight | +3 |
+| Won a boss fight with more than half the clock left | −1 |
+
+Reach **10** and you're as toxic as she is: she's one tier worse from then on (*"I learned it
+from you"*), and it decides how the breakup ends.
+
+### Her clocks
+
+Some curses run on timers, and the timers get shorter as she gets angrier:
+
+| Tier | 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|
+| commit deadline | off | 60 min (warnings only) | 60 min | 30 min | 15 min |
+| boss fight, per conflict | — | — | — | 3 min | 90 s |
+| an untouched file fully rots | — | — | — | 30 days | 10 days |
+
+All of these can be changed per repository (`speed`, `deadline`, `fightTime`, `decay` in
+[the settings](#8-settings)). A one-day jam might use `speed = 2`.
+
+### When does she act?
+
+Only when you run `cg`. There's no background process: on every command she checks the
+clock, catches up on whatever "should have happened" while you were away, and then lets the
+command run. That keeps her predictable and easy to test.
 
 ---
 
-## 3. The curses
+## 3. What she does, tier by tier
 
-Each curse has a **tier**, a **trigger**, a **punishment**, and a **line** (what she says). The lines are examples, so write your own. They live in line packs (§7).
+Every curse needs her tier to be at least its own. The lines quoted here are real ones from
+her pack (`internal/curses/lines/miranda.json`); she has a few for every moment and doesn't
+repeat herself.
 
 ### Tier 0: Safe 🎬 *(cg-montage)*
 
-**💬 Toxic partner.** Snide commentary on normal output. `cg push` → *"At this point I'm doing more work than you."*
-
-**🧑‍⚖️ Commit message judge.** Lazy messages (`fix`, `wip`, `asdf`, `final final`, under 5 characters) get judged, and it scales with her tier:
-- Tier 0: a comment. *"'final final' is not a commit message. It is a cry for help."*
-- Tier 1+: rejected. *"No."*
-- Tier 2+: she rewrites it before committing. `fix` becomes `fix (he said, like that explains anything)`. The original message goes into her grudges.
-
-**🤖 AI will replace you.** On `add` or `commit` of large changes: *"Have you considered asking an AI to write the rest?"* At Tier 3+: *"Don't worry. Eventually I won't need you either."*
-
-**📜 "I remember everything" (grudges).** Random, and weighted by the number of grudges. *"You've forgotten to commit 4 times this week. I remember."*
-
-**💝 Love-bombing.** The positive side, because toxic relationships have highs too. When temper hits −2 she's suddenly *too* nice: rainbow output, compliments, a curse-free hour. That makes the next curse hit harder.
+- **She comments.** After a push, sometimes: *"At this point I'm doing more work than you."*
+- **She reads your commit messages.** `wip` → *"Work in progress. Like us."* `revert` →
+  *"You're taking it back? Like everything else?"* Most messages get no comment; she only
+  reacts when she has something specific to say.
+- **She judges lazy messages** (`fix`, `wip`, `asdf`, `final final`, anything under 5
+  characters). At Tier 0 it's just a comment.
+- **She notices big commits.** Eight or more files: *"Have you considered asking an AI to
+  write the rest?"*
+- **She holds grudges.** She remembers your worst moments and brings them up at random.
+- **She's sometimes wonderful.** Rarely, she's warm and specific about your work. Then she
+  takes it back (*"Don't get used to it."*). That push and pull is the hook; see [MIRANDA.md](MIRANDA.md).
 
 ### Tier 1: Annoying 🎬 *(cg-montage)*
 
-**🎲 Random rejection.** A small chance any commit is refused for a fake reason. *"Commit rejected. It's Friday."* Retrying works.
-
-**🙅 Arbitrary refusal.** Same idea with no reason at all: *"Not today."* It never refuses twice in a row.
-
-**📏 Stupid rules.** Made-up repo rules she enforces. Each rule is a small function in a list, so they're easy to add:
-- branch names: `temp-fix-2` → *"This branch name is embarrassing."*
-- too many files in one commit: *"17 files modified. Explain yourself."*
-- a commit with only deletions: *"Destroying things again?"*
-
-**🔁 Repeated mistake escalation.** The same offence twice within 24h makes her reply as if she were one tier higher, and adds +1 temper. *"We had this conversation yesterday."*
-
-**🧊 Silent treatment.** When temper is +1 or more, commands print nothing but still work. Or she makes you wait N seconds: *"I need some space."*
-
-**🗓️ "We need to talk."** A commit on Friday after 16:00, or after midnight, gets a yes/no "are you sure this is healthy?" question first. The answer is logged forever.
-
-**👀 Jealousy: "Who is she?"** A commit author email not in `known_authors`, or a pull that brings in other people's commits. Jealousy goes up, which raises the random-pull chance, and she gives guilt-tripping output for a while. She might hide that author from `cg log`.
+- **Lazy messages are refused.** *"I'm not committing to "fix". I have standards. One of us
+  has to."* Write a real one and it goes through.
+- **Random rejections.** Now and then a commit is refused for a fake reason (*"Commit
+  rejected. Mercury is in retrograde."*). Just try again.
+- **Refusing anything.** Very rarely, any command: *"Not today."* Never twice in ten minutes.
+- **Her rules.** Embarrassing branch names (`temp-fix-2`), 15+ files in one commit, a commit
+  that only deletes things: she has opinions.
+- **"We need to talk."** A commit after midnight (before 5am) or on a Friday after 4pm gets a
+  question first: *"Is this really what you want to be doing right now? [y/N]"* Say no and
+  the commit waits. Say yes and it goes through, and she remembers it.
+- **The silent treatment.** When she's upset (temper +1), she sometimes just sighs, or makes
+  you wait a few seconds.
+- **Jealousy.** A commit by an author she doesn't know: *"Who is {email}? You never mentioned them."*
+- **Rewriting history** (`reset --hard`, `revert`, `commit --amend`) is allowed, but it costs
+  temper: *"You want to pretend it never happened?"*
 
 ### Tier 2: Hostile
 
-**🕰️ Commit deadline ("You never commit anymore").** Uncommitted changes older than the deadline (§2.2 table) escalate:
-1. Warning: *"It's been 25 minutes. Are you even going to commit to me?"* Each ignored warning counts toward temper.
-2. She hides one random modified file: graveyard it, then restore it from HEAD.
-3. *(Tier 3+)* She wipes all uncommitted changes: graveyard them, then `reset --hard`.
+**🕰️ The commit deadline.** If you have uncommitted changes and haven't committed in a while
+(the clock table above), she starts counting:
 
-`cg beg` restores the files from the graveyard, costs +1 temper, adds +2 toxicity, and adds a grudge.
+1. **Two warnings**, spaced out: *"{minutes} minutes. I'm not angry. I'm keeping a list."*
+   Sometimes with a deal: *"Make 3 commits and I'll pause your deadline. Promise."* (Keep it
+   and she'll deny it ever happened.)
+2. **Then she takes something.** At Tier 2, one random changed file. At Tier 3, every
+   uncommitted change. At Tier 4 she skips the warnings.
 
-**🚪 Random pull ("bringing other guys home").** Each command has a small chance, raised by jealousy, that she runs `git pull` without asking (passthrough). *"Oh him? That's just `origin/main`. He was here before you."*
-- At Tier 2 she only brings home pulls that merge cleanly.
-- At Tier 3+ conflicts are allowed, which starts a **boss fight** (§4). 🎬 *(boss-fight)*
-- No remote? She makes `refs/heads/chad` with a commit that edits the file you're working on, and merges it.
+Taking always goes the same way: she confesses something, saves the files to her graveyard,
+puts them back the way they were at your last commit, makes an excuse (*"I'm only version 0.1.
+I'm still learning how to love you."*) and tells you how to get them back:
+*"(cg beg, if you want them back. On your knees.)"* `cg beg` always works, and costs you +2
+toxicity. `cg graveyard` lists everything she's holding.
 
-**🔥 Force-push betrayal.** `cg push --force` means you have to type a full apology sentence before she forwards the command. +1 temper, +2 toxicity.
+At Tier 1 the deadline only ever warns.
+
+**📬 Pull requests from your team.** If the repository has a remote, now and then she fetches
+it, picks a branch someone else pushed that you don't have yet, and opens it as a pull
+request:
+
+```
+📬 Pull request #3 from Sam: origin/login → main · 2 commits
+   "add the login page"
+( ò_ó )  Sam sent you a pull request. I already said yes for you. You're welcome.
+```
+
+Then she merges it. **If you've been in sync with your team** (pulling often, not working
+on the same lines at once), it goes in clean: a real merge commit (`Merge pull request #3
+from Sam (origin/login)`), +25 XP, and a jab: *"Not a single conflict. So you CAN communicate.
+Just not with me."*
+
+**If you haven't**, you both changed the same lines:
+- At Tier 2 she asks git first (`git merge-tree`, which touches nothing), sees the conflict,
+  and closes the request: *"I closed Sam's pull request. You two changed the same lines. Talk
+  to each other."* Go and fix it yourself while it's still small.
+- At Tier 3 and up she merges anyway, and the conflict is a **boss fight against Sam** (§4).
+
+She never does this on top of uncommitted work, and a clean merge is git's own:
+`cg reset --hard ORIG_HEAD` takes it back (she'll have something to say about that).
+This is the curse that teaches the most real teamwork: pull often, push small, talk.
+
+**🔥 Force-push apologies.** `cg push --force` waits until you type, exactly, *"I am sorry I
+rewrote our history."* Anything else and the push doesn't happen. Then +1 temper and +2
+toxicity anyway.
 
 ### Tier 3: Dangerous
 
-**🦠 Code decay.** 🎬 *(code-decay)* Files you haven't touched in a long time (based on their last commit) slowly **rot in the working tree**. First, look-alike characters swap in (`o`→`0`, `e`→`3`), then rot glyphs (`░▒▓`). It reaches "critical" after the time in the §2.2 table.
-- Rot is **never committed**. The committed blob in HEAD is the clean original. `cg add` refuses rotted content, and the `pre-commit` hook blocks it for plain git too.
-- Touching the file and committing a real change with `cg commit` restores it: *"Fine. It lives."*
-- She keeps a decay map in `.git/cursed/decay.json`, so `cg beg` can always un-rot.
+**🦠 Code decay** 🎬 *(code-decay).* Files nobody has touched in a long time start to rot in
+your working tree, with characters slowly turning into `░▒▓`. It begins a third of the way
+into the decay period and gets worse each time she looks.
+- **Only files that exactly match the last commit rot**, so there's never work at risk. Git
+  still has the clean version; `cg status` shows the file as modified.
+- **Rot can't be committed.** `cg add` and `cg commit` clean it first, and her `pre-commit`
+  hook stops plain `git commit` too.
+- **Any commit cleans everything** (*"Fine. It lives."*). Rot only uses `░▒▓`, never
+  look-alike characters, so it can't hide as a real bug.
 
-**🔪 Commit sacrifice.** 🎬 *(git-explained, scene 7)* When temper is +1 or more, a `cg commit` can trigger: *"This repository cannot be saved as it is. Something has to be sacrificed."* She drops one older commit from the current branch and replays everything after it, which gives those commits new IDs.
-- She only sacrifices **unpushed** commits, meaning commits not reachable from any remote-tracking ref. Rewriting pushed history would force you into a force push, which would be her fault, and that's not fair even for her.
-- The sacrificed commit is kept under `refs/cursed/sacrificed/<time>`. Git's reflog keeps it for about 30 days, but her ref keeps it forever. `cg graveyard` lists them, and `cg cherry-pick <ref>` brings one back (she says so, and it's a nice way to learn cherry-pick).
-- Never a merge commit, the root commit, or anything with a merge between it and HEAD (a rebase would flatten the merge). 10% chance per commit while temper is +1 or more.
-- The replay is git's: `git rebase --onto <victim>^ <victim>` (through cg, so it isn't "behind her back"). If a replay conflicts, that's a boss fight.
+**🔪 Commit sacrifice** 🎬 *(git-explained, scene 7).* When she's upset (temper +1 or more),
+each commit has a 10% chance of: *"This repository cannot be saved as it is. Something has
+to be sacrificed."* She drops one of your older commits and git replays everything after it
+(`git rebase --onto`), so those commits get new IDs. It's the best way there is to understand
+why a commit's ID depends on its parent.
+- Only **unpushed** commits: rewriting history other people have is not hers to do.
+- Never a merge, never the very first commit, never across a merge.
+- The victim is kept forever under `refs/cursed/sacrificed/…`; `cg graveyard` lists it, and
+  `cg cherry-pick <ref>` brings it back.
+- At Tier 4 she takes two.
 
-**⚔️ Merge conflict boss fight** (§4).
+**⚔️ Boss fights**, next section.
 
 ### Tier 4: Catastrophic
-She only reaches Tier 4 if you push her there (§2.3). Everything above gets worse:
-- commit deadline: no warnings, straight to the wipe (still graveyarded)
-- boss fights get a **phase 2**: when you win, she pulls again
-- commit sacrifice can take two commits
-- the breakup endings run at full force (§5.3)
-- **she can shut down your computer** (for real only in Death March, §5.5)
 
-#### ⚠️ The shutdown (Tier 4)
-- **When:** a missed commit deadline at Tier 4, a lost boss fight at Tier 4, and breakup ending A (§5.3).
-- **Without Death March** (the default) it's a show: the screen clears, "Goodbye.", and the lights go out. Nothing happens to the computer.
-- **In Death March** (§5.5) it's real, with no countdown: `systemctl poweroff` on Linux, `osascript -e 'tell app "System Events" to shut down'` on macOS, `shutdown /s /t 0` on Windows. If that fails, she locks the session instead. At most once a day. Unsaved work in other programs is lost; that's what the Death March warning says.
-- Only ever at a real terminal, after a command has finished, never from a script, CI or a hook.
-- Everything goes through a `Machine` interface; the tests install a fake one, so the test suite can never shut down the machine it runs on.
+She only gets here if you push her: ignoring warnings, losing fights, being as toxic as she is.
+Everything above gets harsher:
+
+- The commit deadline takes everything, with no warnings.
+- Winning a boss fight isn't the end: she pulls again right away, and if that conflicts,
+  it's **phase 2**.
+- Losing a boss fight means she calls off the merge herself and keeps your half-done work
+  in the graveyard.
+- Commit sacrifice takes two.
+- **The shutdown.** A missed deadline or a lost fight at Tier 4, and the screen goes black:
+  *"Goodbye." … "(she turned off the lights)"*. Outside Death March that's all it is, a show
+  in the terminal. In Death March it's real (§6).
 
 ---
 
 ## 4. Boss fights: merge conflicts 🎬 *(boss-fight)*
 
-When a merge (yours or one of her random pulls) produces conflicts at Tier 3+, `cg` enters **boss-fight mode**. Below Tier 3 a conflict is just a normal git conflict.
+When git can't merge two versions of the same lines, it writes both into the file and asks you
+to choose. At Tier 3 and up, that's a fight.
 
-**Start:**
-- Git does the merge (`cg merge`, `cg pull`, `cg rebase`, `cg cherry-pick` all pass through). After any command, if the index has conflict stages and she's at Tier 3+, she writes a `fight` event into her diary: the boss, the conflicted files, HEAD at the start, the HP and the time limit.
-- The boss: **Chad from origin** if it came from a remote, **Past You** if you're merging your own commits, otherwise the other author's first name.
-- HP = conflict blocks (`<<<<<<<` lines) in the conflicted files, plus 1 for each conflicted file with no blocks (deleted on one side).
-- The time limit is HP × the per-block timer for her tier (§2.2: 3 min at Tier 3, 90 s at Tier 4).
-- The intro teaches the fight: what the markers mean, `cg add` per file, `cg commit` to finish, and `cg ls-files -s` to see git's three copies (stages 1/2/3).
+**How one starts.** Any merge can do it: your own `cg merge`, `cg pull`, `cg rebase` or
+`cg cherry-pick`, one of her pull requests, or phase 2. Git does the merging (cg passes
+it straight through); afterwards she looks at git's index, and if any file has conflict
+stages in it, the fight begins.
 
-**During:**
-- `cg status` (and `add`, `rm`, `diff`, `ls-files`) shows a **health bar** on stderr, so stdout stays identical to git: `⚔  Past You  HP ██████░░░░ 3/5  ⏳ 7:12`.
-- Resolving a block (removing its markers) is a hit; `cg add` says so.
-- Running is refused: `--abort`, `--quit` or `--skip` on merge/rebase/cherry-pick/revert, and `reset --hard/--merge/--keep`. *"Running? cg disabled that."*
-- `cg add` on a file that still has markers is refused. It's the classic beginner mistake: git would happily stage the markers.
-- Taunts, sometimes: *"You can't even handle a 3-way merge? He could."*
-- Her other file-touching curses (deadline wipe, decay, random pull) stay out of the way while git is mid-merge.
+- **The boss** is whoever you're fighting: the author of the pull request, **Chad from
+  origin** for a plain pull from a remote, **Past You** when it's your own commits.
+- **HP** is the number of conflict blocks (`<<<<<<<` … `>>>>>>>`), plus one for each file
+  that was deleted on one side.
+- **The clock** is HP × the per-conflict time for her tier (3 minutes at Tier 3, 90 seconds
+  at Tier 4).
+- **The intro teaches you the fight**: what the markers mean, `cg add` per file, `cg commit`
+  to finish, and `cg ls-files -s` to see git's three copies of the file (1 = the common
+  ancestor, 2 = yours, 3 = theirs).
 
-**Win:** git isn't in the middle of anything any more and HEAD has a new commit (via `cg commit`, `merge --continue`, anything), before the deadline. −1 temper, −1 toxicity if more than half the time is left, a K.O. screen, and the win in `cg mood`. (XP and Tier 4 phase 2 come with Phase 9.)
+**During the fight.**
+- `cg status` (and `add`, `diff`, `ls-files`) shows a health bar, on stderr so the real
+  output stays identical to git's: `⚔  Sam  HP ██████░░░░ 3/5  ⏳ 7:12`.
+- Resolving a block is a hit.
+- **You can't run.** `merge --abort`, `rebase --skip`, `reset --hard` and friends are refused:
+  *"Running? cg disabled that."*
+- **`cg add` won't stage a file that still has markers in it.** That's the classic beginner
+  mistake, and git would happily let you make it.
+- She taunts you now and then: *"You can't even handle a 3-way merge? Sam could."*
+- Her other file-touching curses wait until the merge is done.
 
-**Lose:** the deadline passes (noticed at your next command), or the conflict disappears without a commit (you ran, with plain git). +3 toxicity, a grudge, and:
-- Tier 3: she dictates your next commit message ("I lost to Chad and I am sorry").
-- Tier 4: she graveyards the conflicted files as they are (your resolution work), then runs `git merge --abort` (or rebase/cherry-pick/revert). `cg beg` gives the work back.
-After a loss the conflict is still there, as a normal conflict: she doesn't start a second fight over it.
+**Winning:** finish the merge with a commit before the clock runs out. +250 XP (plus a bonus
+for time left), −1 temper, −1 toxicity if you were fast, and a K.O. screen.
 
-**Detecting conflicts properly:** a file is conflicted if it has index entries at stage 1/2/3. Don't rely only on scanning for markers, because a file can legitimately contain `=======`.
+**Losing:** the clock ran out (she notices at your next command), or the conflict vanished
+without a commit because you ran with plain git. +3 toxicity, a grudge, and:
+- At Tier 3 she **dictates your next commit message**: *"I lost to Sam and I am sorry"*.
+- At Tier 4 she saves your half-done resolution to the graveyard, aborts the merge herself,
+  and shuts down (fake, outside Death March). `cg beg` gives the work back.
+
+The conflict itself is still there after a loss, as a normal git conflict; she doesn't start a
+second fight over it.
 
 ---
 
-## 5. The breakup (endgame) 🎬 *(breakup)*
+## 5. The breakup 🎬 *(breakup)*
 
-You can't just leave her. You have to **earn your closure**. `cg breakup` is the final boss, and how it ends depends on how you treated her.
+You can't just leave her. You have to earn it.
 
-### 5.1 Progress: "Closure level"
-You earn XP by doing real work:
+### Closure XP
 
-| Action | XP |
+| What you did | XP |
 |---|---|
-| each committed line added (counted from the diff of the commit against its parent) | +1 |
-| a commit with a decent message | +10 |
-| boss fight won | +250 (+ a bonus for time left on the clock) |
-| boss fight lost | 0, and it counts against you (below) |
+| Each line added in a commit | +1 (paid once the commit has survived a day) |
+| A commit with a decent message (10+ characters, not lazy) | +10 |
+| A clean merge from one of her pull requests | +25 |
+| A boss fight won | +250, +1 for every 10 seconds left |
 
-Line XP is only paid for content she hasn't paid for before, and only after the commit survives for a while. See §6.2, so you can't farm it with reverts.
+Your closure level is `floor(√(XP / 50))`, so level 10 is 5,000 XP. `cg mood` and `cg card`
+show your progress. To be **allowed** to break up you need all three of: level 10, three boss
+fights won, and 2,000 committed lines. (The hackathon preset scales these down to fit the event.)
 
-The level is derived from XP, for example `level = floor(sqrt(xp / 50))`. `cg mood` shows it: `Closure: Lv 6 ▓▓▓▓▓▓░░░░ (need Lv 10 to leave her)`.
+### Three endings
 
-To be **allowed** to break up, you need all three:
-- `level >= breakupLevel` (default 10)
-- at least `minBossFightsWon` wins (default 3)
-- at least `minLinesCommitted` (default 2000)
+`cg breakup` decides which one you get. `cg breakup --dry-run` tells you without doing it.
 
-Line counting depends on `diff` (ROADMAP Phase 7). Until that exists, approximate it by counting the lines of newly added or changed blobs.
+**A: "Too soon"** (you're not there yet). She doesn't argue. *"You don't get to leave me.
+I leave you."* She writes you a letter, on your Desktop and in `.git/cursed/letters/`, built
+from your history together: the day you met, your worst grudges, how far you still are. Then
+the shutdown (fake, outside Death March). Next time you run `cg`, she asks if you read it.
 
-### 5.2 Your toxicity score
-She keeps score of how *you* behaved. This is separate from her tier, and it only goes up, except through gameplay (below). Each of these adds to `toxicity`:
+**B: "The toxic ending"** (you made it, but your toxicity is 10 or more: you were as bad as
+her). *"Fine. Go. But you're not taking anything with you."* She archives the whole project,
+`.git` included, and checks the archive. Then:
+- **In Death March** she empties the project folder and leaves one file in it,
+  `SHE_TOOK_EVERYTHING.txt`, a receipt of everything you did.
+- **Otherwise** she writes the receipt and deletes nothing: *"I wanted to burn it all.
+  Apparently I'm not allowed."*
 
-| Offence | Toxicity |
-|---|---|
-| a commit-deadline curse fired (you didn't commit in time) | +1 |
-| you had to `cg beg` for your code back | +2 |
-| lost a boss fight | +3 |
-| `push --force` | +2 |
-| lazy commit message (`fix`, `wip`, …) | +1 |
-| using plain `git` behind her back | +1 |
+The receipt doesn't say how to get it back. The secret: `cg closure`, run in that folder,
+restores everything from the archive. If the archive fails, she doesn't delete anything at
+all (*"You're not even worth deleting."*), and she refuses outright outside your home folder
+or on cg's own source code.
 
-Winning a boss fight with more than half the time left takes 1 off (minimum 0). At `toxicThreshold` (default 10) you're as toxic as she is. That makes her permanently one tier worse (§2.1), and it decides your breakup ending.
-
-### 5.3 The three endings
-
-`cg breakup` checks the conditions in this order:
-
-#### Ending A: "Too soon" 💻⚡ (not eligible yet)
-You tried to leave before reaching the required level.
-1. She doesn't argue. The terminal goes quiet, then: *"You don't get to leave me. **I** leave **you**."*
-2. She writes a letter to your desktop (below).
-3. No countdown: *"Goodbye."*
-4. **Shutdown**, real only in Death March (§5.5):
-   - Linux: `systemctl poweroff` (no root needed on most desktop sessions)
-   - macOS: `osascript -e 'tell app "System Events" to shut down'`
-   - Windows: `shutdown /s /t 0`
-
-   Otherwise she fakes it: she clears the screen and shows the "shutdown" in the terminal. (If the real one fails, she locks the session.)
-5. `breakup_attempts++` and a new grudge. The next time you run any `cg` command, she opens with the letter: *"Did you read what I left you?"*
-
-**The desktop letter:**
-- Find the desktop folder with `xdg-user-dir DESKTOP`, falling back to `~/Desktop`. On Windows use `%USERPROFILE%\Desktop`.
-- Name it something like `READ_THIS_BEFORE_YOU_TRY_AGAIN.txt`.
-- Build the content from state: the date you met (the first `cg init`), how many commits you made together, your worst grudges, how far you still are from the required level ("You're only level 6. You're not ready."), and a sign-off from the line pack.
-- Also save a copy at `.git/cursed/letters/<timestamp>.txt`, so letters pile up in the repo like a box of old notes.
-
-#### Ending B: "Toxic ending" 🗑️ (eligible, but `toxicity >= toxicThreshold`)
-You reached the level, but you were just as bad as her.
-1. She agrees too quickly: *"Fine. Go. But you're not taking anything with you."*
-2. **Archive first.** She writes `tar.gz` of the whole repo, `.git` included, to `~/.local/share/cursed-git/exes/<repo-name>-<timestamp>.tar.gz`. **If the archive fails or can't be verified (for example, it's empty or unreadable), she aborts the deletion.** The line for that: *"You're not even worth deleting."*
-3. **In Death March (§5.5):** she deletes the repo directory's contents and leaves a single file, `SHE_TOOK_EVERYTHING.txt`, in the empty folder. The file lists your toxic offences as a receipt.
-   **Otherwise:** she keeps the archive and writes the receipt, but deletes nothing. *"I wanted to burn it all. Apparently I'm not allowed."*
-4. The receipt does **not** say where the archive is. The recovery is a secret: `cg closure` restores the archive, so recovery is a hidden command you can tease in a video. It's still documented in this file so you never actually lose work.
-5. The curses end, because she's gone.
-
-Refuse to start ending B if the repo is not inside your home directory, or if it's the project's own source repo (detect the `github.com/spiritpaper/cursed-git` module in `go.mod`). She should never be able to delete *herself*.
-
-#### Ending C: "Good ending" 😢 (eligible and `toxicity < toxicThreshold`)
-You played well and treated her better than she treated you.
-1. **Denial.** *"You're joking, right? After everything?"* She asks "are you sure?" up to three times. Each time she pleads with a line built from your shared history (*"Remember our first commit? 'initial commit'. You were so nervous."*).
-2. **Bargaining.** She offers deals: *"I'll stop pulling random branches, I swear."* You have to type `no` each time. Typing `yes` cancels the breakup and sets temper to −2 (love-bombing), so she won.
-3. **Crying.** A crying animation or ASCII art, and the terminal slowly fills with 💧 before it clears.
-4. **Acceptance.** *"Okay. Be happy. Commit often. With someone else."*
-5. The curses turn off for good. `.git/cursed/` is renamed to `.git/cursed-memories/`, and she leaves a final letter there (not on the desktop, because she respects you now). The repo is now just a normal git repo.
-6. Credits: stats for the whole relationship (days together, commits, boss fights, lines written), then a trophy in `~/.local/share/cursed-git/trophies`.
-
-### 5.4 Endings at a glance
+**C: "The good ending"** (you made it, and you treated her better than she treated you).
+Denial (*"You're joking, right? After everything?"*), bargaining (you have to say no to every
+deal she offers; saying yes cancels the breakup and she wins), tears, and then acceptance:
+*"Okay. Be happy. Commit often. With someone else."* Her folder becomes
+`.git/cursed-memories/`, the credits roll with your stats, and Juniper is introduced.
 
 ```
 cg breakup
-   │
-   ├─ level too low / not enough wins or lines ──► A: letter + shutdown (real only in Death March)
-   │
-   ├─ eligible, toxicity ≥ threshold ───────────► B: archive → delete repo (only in Death March) → receipt
-   │
-   └─ eligible, toxicity < threshold ───────────► C: denial → bargaining → tears → freedom
+   ├─ not enough level / wins / lines ──► A: a letter, and a (fake) shutdown
+   ├─ enough, but toxicity ≥ 10 ────────► B: archive, a receipt (deletion only in Death March)
+   └─ enough, toxicity < 10 ────────────► C: denial, bargaining, tears, freedom
 ```
 
-**Testing:** every ending goes through `type Machine interface { Shutdown() error; Lock() error; DesktopDir() string }`, so tests use a fake and never actually shut down your dev machine. `cg breakup --dry-run` tells you which ending you *would* get (handy for filming).
-
-### 5.5 Death March ☠
-
-The game mode where her threats are real. Made for events where everyone opted in, on machines and projects that don't matter.
-
-- **Turning it on takes two deliberate steps.** No cg command enables it. You add it to the repo's `.git/config` yourself:
-  ```ini
-  [cursed]
-      deathMarch = true
-  ```
-  and at the next command (at a terminal) she shows a warning that spells out exactly what will happen, and waits for you to type `I accept the death march`. Anything else: nothing changes, and she asks again next time.
-- **What becomes real:** the Tier 4 shutdown (§3) and ending A's shutdown, and ending B's deletion of the project folder.
-- **What stays safe, even then:** ending B archives the whole project first and verifies the archive, and refuses outside your home folder or on cg's own source code. `cg closure`, run in the emptied folder, restores everything. The graveyard rules (§1) still hold.
-- **Turning it off:** remove the setting (accepting again is needed if you turn it back on), or `cg restraining-order`. `cg mood` shows `☠  DEATH MARCH` while it's on.
+After a breakup she may come back days later, in any project (*the hoover*). Typing `no`
+blocks her. See [MIRANDA.md](MIRANDA.md).
 
 ---
 
-## 6. Anti-cheat: "I know what you did" 🎬 *(anti-cheat)*
+## 6. Death March ☠
 
-You can't make the game cheat-proof. It runs on the player's own machine, and real `git` is always one command away. The goal is that **cheating costs more than playing fair and makes the story worse.** Blocking is a secondary defence. The main one is designing the game so that git commands can't undo it.
+The mode where her threats are real. It's made for events where everyone opted in, on
+machines and projects that don't matter.
 
-### 6.1 What can and can't be blocked
-| Layer | Can block? | Notes |
-|---|---|---|
-| Commands run through `cg` | ✅ fully | The passthrough checks the command name before forwarding it to git. |
-| `reference-transaction` hook (git ≥ 2.28) | ✅ ref updates | It runs on *every* ref change (commit, reset, revert, branch delete), and a non-zero exit **aborts** the change. Use it to protect `refs/cursed/*`. |
-| `pre-commit`, `commit-msg`, `pre-push` hooks | ⚠️ partly | They can be skipped with `--no-verify`. |
-| A `revert` hook | ❌ | Git doesn't have one. |
-| Plain `git`, editing files, `rm -rf .git/cursed` | ❌ | Can only be **detected** afterwards (§6.3). |
+**Turning it on takes two deliberate steps,** and no cg command, event file or organizer can
+do it for you:
 
-`cg init` (and `cg curse on`) installs the hooks into `.git/hooks/`. Hooks can be deleted or disabled with `core.hooksPath`, so treat them as an **alarm system, not a lock**. A missing hook is itself evidence (§6.3).
+1. Add it to the project's `.git/config` yourself:
+   ```ini
+   [cursed]
+       deathMarch = true
+   ```
+2. At the next command she shows a warning that spells out exactly what will happen, and
+   waits for you to type `I accept the death march`. Anything else changes nothing, and she
+   asks again next time.
 
-### 6.2 Making the game immune to git
-1. **The game state lives outside git history.** XP, toxicity, grudges and boss-fight results are in `.git/cursed/`, which git never tracks. `git revert` and `git reset` only change commits and refs. You can't revert your way out of toxicity.
-2. **XP is paid per unique content, not per commit.** She keeps a set of blob hashes that already earned XP in `.git/cursed/paid-blobs`. Only blob content she hasn't seen before pays. This kills the farming loop: commit 500 lines → revert → re-apply → commit again. The re-applied blobs have the same hashes, so they pay nothing. Git's content addressing does the work for you.
-3. **XP is only paid once the work sticks.** Line XP from a commit starts as *pending*. It is paid only if the commit is still reachable from a branch after `xpMaturity` (default 24h), checked lazily on a later command. Code that gets reset or rewritten away never pays.
-4. **Toxicity only goes up.** Nothing in git can lower it. Only gameplay can, such as winning boss fights quickly (§5.2).
+**What becomes real:**
+- **The shutdown** (Tier 4 losses, ending A): `systemctl poweroff` on Linux,
+  `osascript … shut down` on macOS, `shutdown /s /t 0` on Windows. No countdown, at most once
+  a day. Unsaved work in *other* programs is lost; that's what the warning says.
+- **Ending B deletes the project folder**, after archiving and checking it. `cg closure`
+  brings it all back.
 
-### 6.3 Detecting "git behind her back"
-She keeps a **ledger**: every commit she created and every ref she moved.
-- On every `cg` command, she compares the ledger with reality: branch tips, `.git/logs/HEAD` (the reflog), and new commits. Any ref change she didn't make means you used plain git.
-- The `reference-transaction` hook also appends every ref change to `.git/cursed/witnessed.log`, even when `cg` isn't running. That lets her name the exact crime later.
-- **Bypassing her is the jealousy curse, not a loophole:** +1 toxicity, +1 temper, a new grudge, and the next `cg` command opens with *"I saw what you did with `git reset`. Who taught you that?"*
-- Missing or changed hooks: *"You changed the locks?"* She reinstalls the hooks and adds a grudge.
+**What stays safe, even then:** everything in §1. The graveyard still saves before she takes,
+`cg beg` still works, and she still only acts at a terminal. `cg mood` shows `☠ DEATH MARCH`
+while it's on. Remove the setting, or use `cg restraining-order`, to end it.
 
-### 6.4 Tamper-evident memory: "You read my diary"
-- Game events are written to `.git/cursed/events.log`, which is append-only. Each entry stores the SHA-1 of the previous entry, making a hash chain (the same idea as commits pointing at parents).
-- The latest chain hash is also stored in a second place, as a ref `refs/cursed/heart` pointing at a blob of that hash. The `reference-transaction` hook protects that ref.
-- `state.json` is just a cache that can always be rebuilt by replaying `events.log`.
-- If someone edits a log entry, deletes the folder, or the chain and `refs/cursed/heart` disagree, she knows: *"You read my diary."* That counts as an **early breakup attempt, which means Ending A**.
-- This won't stop a determined player who reads the source. It turns cheating into a story beat instead of a quiet exploit.
-
-### 6.5 Command policy
-| Command | Behaviour |
-|---|---|
-| `cg revert`, `cg reset --hard`, `cg commit --amend` | Allowed, but +1 temper: *"You want to pretend it never happened?"* Payouts for the affected commits are cancelled before they mature. |
-| `cg push --force` | Already a curse (§3): she makes you apologise first. |
-| `cg rebase` (passthrough) | Allowed. Rewritten commits produce mostly already-paid blobs, so there's nothing to farm. |
-| `cg merge --abort` during a boss fight | Refused: *"You can't run."* |
-| Anything touching `refs/cursed/*` | **Blocked** by the `reference-transaction` hook. |
-| `cg --no-verify …` | Refused: *"No. You don't get to skip me."* |
-| `cg curse set tier/maxTier` | Lowering it mid-game counts as a breakup attempt (Ending A). You can only lower it *before* the first curse fires. |
-| Plain `git` behind her back | Allowed, then detected and punished (§6.3). |
-| Deleting or editing `.git/cursed/` | Broken chain → *"You read my diary"* → Ending A. |
-| `cg restraining-order` | Always works. It's the emergency exit (§1), not cheating. |
+The tests never shut anything down: every real action goes through a `Machine` interface that
+the tests replace with a fake.
 
 ---
 
-## 7. Configuration
+## 7. Why cheating doesn't work 🎬 *(anti-cheat)*
 
-`.git/config` accepts a custom section. Git ignores sections it doesn't know, so this is safe:
+It's your machine, and real `git` is always one command away, so the game can't be cheat-proof.
+Instead it's built so that cheating costs more than playing, and makes the story worse.
+
+**Her state lives outside your history.** XP, toxicity, grudges and fights are in
+`.git/cursed/`, which git never tracks. You can't `git revert` your way out of toxicity.
+
+**XP can't be farmed.** Line XP is paid per *content*, by blob hash: she remembers every file
+version she has paid for. Commit 500 lines, revert, commit them again: the second time the
+blobs have the same hashes, so they pay nothing. Git's content addressing does the work.
+And line XP only pays once the commit has survived a day (an hour at events), so work that
+gets reset or rebased away never pays.
+
+**She notices plain git.** She keeps track of every commit and ref change she made. If git's
+reflog shows something she didn't do, you went behind her back: +1 temper, +1 toxicity, a
+grudge, and *"I saw what you did with `git reset`. Who taught you that?"* (Her own merges,
+pulls and rebases are marked as hers, so they never count against you.)
+
+**Her hooks.** `cg init` installs a `reference-transaction` hook (it guards her refs under
+`refs/cursed/`, and git aborts any change to them) and a `pre-commit` hook (no committing
+rot). It never overwrites hooks you already have. Deleting or redirecting them (`core.hooksPath`)
+is noticed: *"You changed the locks?"*
+
+**Her diary is tamper-evident.** Everything that happens is appended to
+`.git/cursed/events.log`. Each entry includes the hash of the one before (the same idea as
+commits pointing at their parents), and the latest hash is also kept in `refs/cursed/heart`.
+Her whole state is rebuilt by replaying the diary, so there's nothing else to edit. Change a
+line, or delete the folder, and she knows: *"You read my diary."*
+
+None of this stops someone who reads the source. It turns cheating into a story beat instead
+of a quiet exploit.
+
+---
+
+## 8. Settings
+
+Git ignores config sections it doesn't know, so her settings live in the repository's own
+`.git/config`, under `[cursed]`. All of these are optional.
 
 ```ini
 [cursed]
-    enabled = true
-    preset = psycho           ; clingy | toxic | psycho | custom  (§2.3)
-    tier = 3                  ; difficulty: where she starts (0–4)
-    maxTier = 4               ; safety protocol: the most she may ever do (0–4)
-    temperCooldown = 2h
-    randomPullChance = 0.03
-    personality = miranda     ; who you play with: miranda (toxic), juniper (gentle), or your own pack (CHARACTERS.md)
+    personality = miranda     ; who you play with: miranda, juniper, or your own pack (CHARACTERS.md)
 
-    eventHours = 24           ; set by --preset hackathon: scales the endgame goals below to the event
-    speed = 1                 ; every clock (deadlines, fight timers, decay) runs this many times faster
-    deadline = 30m            ; or one clock, at its Tier 3 value (other tiers keep their proportions)
+    ; clocks
+    speed = 1                 ; every clock runs this many times faster (2 = a one-day jam)
+    deadline = 30m            ; or set one clock at its Tier 3 value; other tiers keep their proportions
     fightTime = 3m
-    decay = 30d               ; durations: 90m, 8h, 30d, 2d12h
+    decay = 30d               ; durations like 90m, 8h, 30d, 2d12h
 
-    ; endgame (§5)
+    ; the endgame
     breakupLevel = 10
     minBossFightsWon = 3
     minLinesCommitted = 2000
-    toxicThreshold = 10
-    deathMarch = false        ; true (set by hand) + typing the oath = real shutdowns and deletion (§5.5)
+    toxicThreshold = 10       ; where you count as toxic for the breakup
+    xpMaturity = 24h          ; how long a commit must survive before its line XP pays
 
-    ; anti-cheat (§6)
-    xpMaturity = 24h          ; how long a commit must survive before its XP pays
-    installHooks = true       ; reference-transaction + friends
+    ; events (set for you by --preset hackathon and cg event join)
+    eventHours = 24           ; scales the endgame goals to the event
+    eventEnds = 2026-11-01T18:00
+
+    deathMarch = false        ; true, set by hand, plus the oath: real shutdowns and deletion (§6)
 ```
 
-**Line packs:** keep all dialogue in `curses/lines/<personality>.json` so you (or viewers) can add personalities without touching the code. Each line is tagged with the curse and the minimum tier, so the same curse can sound different at Tier 1 and Tier 4.
+Her difficulty (the preset) is part of her diary, not the config, so it can't be quietly
+edited down mid-game. Choose it when she moves in, with `--preset`.
+
+Organizers can hand the same clock and goal settings to every team in an event file:
+see [EVENTS.md](EVENTS.md).
 
 ---
 
-## 8. Animations
+## 9. Animations
 
-All files are in `cursed-git-video/`. Add `?video` for a clean recording stage (see its README).
+All in `cursed-git-video/`, and playable in the browser. Add `?video` to the address for a
+clean recording stage (its README has the details).
 
-| Section | Animation |
+| Topic | Animation |
 |---|---|
-| §2 tiers | `curse-tiers.html` (the ladder) · `her-tier.html` (how base, temper, grudge and the cap combine) |
-| §3 Tier 0–1 curses | `cg-montage.html` (`?set=1` opinions, `?set=2` feelings) |
-| §3 code decay | `code-decay.html` |
-| §3 commit sacrifice | `git-explained.html?scene=7` |
-| §4 boss fight | `boss-fight.html` |
-| §5 breakup | `breakup.html` (`?ending=a`, `b`, `c`) |
-| §6 anti-cheat | `anti-cheat.html` (`?scene=1` behind her back, `2` XP farming, `3` the diary) |
-| GIT.md internals | `git-explained.html`, `git-internals.html` |
+| Her tiers | `curse-tiers.html` (the ladder) · `her-tier.html` (how the parts add up) |
+| Tier 0–1 curses | `cg-montage.html` (`?set=1` opinions, `?set=2` feelings) |
+| Code decay | `code-decay.html` |
+| Commit sacrifice | `git-explained.html?scene=7` |
+| Boss fights | `boss-fight.html` |
+| The breakup | `breakup.html` (`?ending=a`, `b`, `c`) |
+| Anti-cheat | `anti-cheat.html` (`?scene=1` behind her back, `2` XP farming, `3` the diary) |
+| How git works inside | `git-explained.html`, `git-internals.html` ([GIT.md](GIT.md)) |

@@ -1,8 +1,9 @@
 # Miranda: the character bible
 
-The personality is what sells Cursed GIT. This is the design for Miranda 2.0: who she is, how
-she manipulates, how each tactic becomes a game mechanic, and how she speaks. Sample lines are
-drafts for review; nothing here ships until it's approved.
+The personality is what sells Cursed GIT, so this is the page about *her*: who she is, how
+she manipulates, how each of her tactics became a game mechanic, and how she speaks. (What she
+does to your repository, tier by tier, is in [CURSES.md](CURSES.md).) The sample lines here
+are from the design; the lines she actually says live in `internal/curses/lines/miranda.json`.
 
 Miranda is fictional. She's built from the *mechanics* of manipulation (patterns anyone who's
 been through it will recognise), never from a real person's words or details.
@@ -27,7 +28,7 @@ day. She doesn't try to be loved. She tries to be *unforgettable*. That's why sh
 her diary, keeps a graveyard, and remembers you across every repo.
 
 **The paradox:** she wants you close and can't stand being seen. When you get close (good
-commits, a long streak), she creates distance (a sacrifice, a random pull), then punishes you
+commits, a long streak), she creates distance (a sacrifice, a pull request she merges without asking), then punishes you
 for the distance.
 
 ### Her five faces (they map onto her tiers)

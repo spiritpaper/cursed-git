@@ -1,6 +1,6 @@
 // internal/curses/xp.go
 //
-// Closure XP (docs/CURSES.md §5.1, §6.2): to be allowed to leave her, you have to do real work.
+// Closure XP (docs/CURSES.md §5, §7): to be allowed to leave her, you have to do real work.
 //
 //	every line you add in a commit     +1   (paid later, see below)
 //	a commit with a decent message     +10
@@ -40,7 +40,7 @@ func Level(xp int) int { return int(math.Sqrt(float64(xp) / 50)) }
 // XPForLevel is the XP a level starts at.
 func XPForLevel(lv int) int { return lv * lv * 50 }
 
-// Rules are the endgame numbers, from [cursed] in .git/config (docs/CURSES.md §7).
+// Rules are the endgame numbers, from [cursed] in .git/config (docs/CURSES.md §8).
 type Rules struct {
 	BreakupLevel, MinWins, MinLines, ToxicThreshold int
 	Maturity                                        time.Duration

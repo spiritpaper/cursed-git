@@ -173,6 +173,8 @@ In order. Pick the top one, plan it, ship it.
 8b. ✅ **Configurable clocks:** `cursed.speed`, `deadline`, `fightTime`, `decay` (and in event files), for one-day weekend jams. *(Done 2026-10-18: `internal/curses/clocks.go`.)*
 9. ✅ **Launch polish (Phase 10):** the animations in the README, a boss-fight GIF on top. *(Done 2026-10-18: `docs/media/` hero, boss fight and decay GIFs from the renders; the nine animations committed in `cursed-git-video/`, toolchain and renders ignored.)*
 9b. ✅ **More ways to install:** .deb and .rpm on every release (nfpm), a Nix flake, and a Docker image that doubles as a playground (`ghcr.io/spiritpaper/cursed-git`). *(Done 2026-10-18; CI installs each one for real.)*
+9c. ✅ **The docs website:** every doc, the animations and the event tools at [spiritpaper.github.io/cursed-git](https://spiritpaper.github.io/cursed-git/), with search, built from `docs/` on every push (`site/build.sh`, `.github/workflows/pages.yml`). Plus a player's guide, [PLAYING.md](PLAYING.md), and CURSES.md and GIT.md rewritten for someone new to the project. *(Done 2026-10-21.)*
+9d. ✅ **Pull requests from your team:** with a remote set, she merges a teammate's branch for you; in sync it's clean (+25 XP), out of sync it's a boss fight against its author. *(Done 2026-10-21: `internal/curses/pr.go`.)*
 10. **Plain mode:** `NO_COLOR` and an ASCII-only fallback for terminals and projectors that mangle unicode.
 
 **More of the cast**

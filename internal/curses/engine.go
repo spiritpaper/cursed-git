@@ -758,7 +758,7 @@ func contains(list []string, s string) bool {
 	return false
 }
 
-// rewriting names commands that rewrite or throw away history (docs/CURSES.md §6.5).
+// rewriting names commands that rewrite or throw away history (docs/CURSES.md §7).
 func rewriting(cmd string, args []string) string {
 	has := func(flag string) bool { return contains(args, flag) }
 	switch {
