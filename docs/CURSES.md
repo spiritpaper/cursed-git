@@ -30,8 +30,10 @@ all. Both are [line packs](CHARACTERS.md), and Miranda's personality has its own
 
 ## Meet her
 
-She's an ASCII-art anime girl, and her face changes with her mood. `cg face` shows her,
-`cg mood` shows how she feels about you right now.
+She's an ASCII-art anime girl, and her face changes with her mood. She shows her portrait (a
+big braille picture) once, when she arrives at `cg init`. After that, `cg face` shows her,
+and `cg mood` shows how she feels about you right now. Any mood can get its own picture
+instead of the little face below: see [CHARACTERS.md](CHARACTERS.md#art-and-portraits).
 
 ```
           _.-''''''''''-._

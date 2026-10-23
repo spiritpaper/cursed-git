@@ -178,7 +178,8 @@ In order. Pick the top one, plan it, ship it.
 10. **Plain mode:** `NO_COLOR` and an ASCII-only fallback for terminals and projectors that mangle unicode.
 
 **More of the cast**
-11. **Juniper's portrait:** her own ASCII art for `cg face` and `cg mood`.
+10b. ✅ **Text art and portraits:** a gallery (`cg art`, add your own), a portrait when she arrives at `cg init`, and a picture per mood for `cg mood` and `cg face` (`miranda-furious`), falling back to the little ASCII face. *(Done 2026-10-23: `internal/curses/art.go`, CHARACTERS.md "Art and portraits".)*
+11. **Pictures for the cast:** mood pictures for Miranda, and Juniper's portrait and moods. Now just art files: `internal/curses/art/juniper-content.txt` and friends.
 12. **The toxic ex-boyfriend:** once the author picks his name and his rival's (see [CHARACTERS.md](CHARACTERS.md)).
 13. **Community packs:** a folder of character packs people send in, installable with one command.
 

@@ -472,8 +472,12 @@ func (e *Engine) goodEnding(v Verdict, now time.Time) int {
 	}
 	// tears
 	out := e.env.Out
-	for _, l := range Portrait(Crying) {
-		fmt.Fprintln(out, l)
+	if art, ok := MoodArt(Personality(e.gitDir), Crying); ok {
+		fmt.Fprintln(out, art)
+	} else {
+		for _, l := range Portrait(Crying) {
+			fmt.Fprintln(out, l)
+		}
 	}
 	for i := 1; i <= 6; i++ {
 		e.env.Sleep(400 * time.Millisecond)

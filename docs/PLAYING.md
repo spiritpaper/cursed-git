@@ -71,7 +71,8 @@ hour: compliments and no curses at all. (Don't ruin it with a lazy message.)
 | `cg achievements` | 27 to collect |
 | `cg quest` | a git lesson to do next, checked against your repo and paid in XP |
 | `cg rivals` | in a team repo: everyone who commits, and her favourite |
-| `cg face` | her |
+| `cg face` | her (`cg face furious`: one of her moods) |
+| `cg art` | the gallery: her portrait, and text art you add. Name it `miranda-furious` and it becomes her furious face ([how](CHARACTERS.md#art-and-portraits)) |
 
 ## 5. When things go wrong
 

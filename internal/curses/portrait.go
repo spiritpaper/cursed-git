@@ -37,6 +37,17 @@ const (
 
 var moodNames = []string{"content", "unimpressed", "judging you", "hostile", "furious", "in love (for now)", "crying"}
 
+// moodSlugs name mood art files: miranda-furious.txt
+var moodSlugs = []string{"content", "unimpressed", "judging", "hostile", "furious", "love", "crying"}
+
+// Slug is the mood's short name, as in art file names ("" if it has none).
+func (m Mood) Slug() string {
+	if m < 0 || int(m) >= len(moodSlugs) {
+		return ""
+	}
+	return moodSlugs[m]
+}
+
 func (m Mood) String() string {
 	if m < 0 || int(m) >= len(moodNames) {
 		return fmt.Sprintf("mood(%d)", int(m))

@@ -60,6 +60,43 @@ After Miranda's good ending, the credits introduce Juniper.
 
 Pick one with `cg partner <name>`, or by hand: `git config cursed.personality <name>`.
 
+## Art and portraits
+
+Text art (ASCII, or braille pictures like the ones on emojicombos.com) lives in a gallery:
+
+```
+cg art                        list the pictures
+cg art miranda                show one
+cg art add cat cat.txt        keep your own (or leave out the file, paste it, press Ctrl-D)
+cg art rm cat                 throw yours away
+```
+
+Pictures ship in `internal/curses/art/<name>.txt`, and yours go to
+`$CURSED_GIT_HOME/art/<name>.txt` (`~/.local/share/cursed-git/art/`). Yours wins if both
+exist, so `cg art add miranda my-miranda.txt` gives her a new look, and `cg art rm miranda`
+brings the old one back. Names are lowercase letters, digits, `-` and `_`. A picture is at
+most 64 KB, and anything that could talk to the terminal (escape codes, carriage returns) is
+stripped.
+
+The file name decides where a picture shows up:
+
+| Name | Shown |
+|---|---|
+| `miranda` | her portrait, once, when she arrives (`cg init`) |
+| `miranda-content`, `-unimpressed`, `-judging`, `-hostile`, `-furious` | her mood at Tier 0 to 4: `cg mood`, and `cg face <mood>` |
+| `miranda-love` | while she's love-bombing you |
+| `miranda-crying` | the good ending of the breakup |
+| anything else | only in the gallery (`cg art <name>`) |
+
+Swap `miranda` for any character's pack name (`juniper-content`, `rex-furious`). A mood
+without a picture shows the little ASCII face, and the help screen always does. So one
+picture is enough to start: `cg art add miranda-furious angry.txt` and only her worst mood
+changes.
+
+Miranda's portrait is braille art from
+[emojicombos.com](https://emojicombos.com/anime-ascii-art), 93 columns wide, so give your
+terminal room. She has no mood pictures yet.
+
 ## Adding a character (the plan)
 
 1. **Name and concept, from the author.** Names are a creative call: the author picks them.
@@ -81,7 +118,5 @@ Pick one with `cg partner <name>`, or by hand: `git config cursed.personality <n
 
 ## Ideas for later
 
-- A portrait per character (`cg face`, `cg mood`): today everyone shares Miranda's ASCII art,
-  and gentle characters show a small face instead.
 - Per-character rules: a pack could ask for a preset (Juniper always means `gentle`).
 - Community packs: a folder of packs people send in, installable with one command.

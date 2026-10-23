@@ -224,7 +224,7 @@ func (e *Engine) speak(key, line string) {
 
 // commands that are about her, not about git: no curses on those
 var exempt = map[string]bool{"breakup": true, "forget": true, "card": true, "achievements": true, "quest": true, "rivals": true, "partner": true, "event": true, "mood": true, "curse": true, "restraining-order": true, "beg": true,
-	"graveyard": true, "face": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
+	"graveyard": true, "face": true, "art": true, "help": true, "version": true, "--version": true, "-h": true, "--help": true}
 
 func (e *Engine) awake() bool { return e != nil && e.env.Interactive }
 

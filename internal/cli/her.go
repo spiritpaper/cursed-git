@@ -285,7 +285,7 @@ func printMood(w io.Writer, her *curses.Engine, now time.Time) {
 		fmt.Fprintf(w, "Achievements: %d/%d\n", len(her.Unlocked()), len(curses.Achievements))
 		return
 	}
-	printFace(w, m)
+	printMoodFace(w, m)
 	if !st.On {
 		fmt.Fprintln(w, "She's under a restraining order in this repo. `cg curse on` to undo it.")
 		return

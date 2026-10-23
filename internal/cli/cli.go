@@ -47,6 +47,7 @@ commands:
   restraining-order  emergency off switch, no questions asked
   forget [--all]   wipe her memory of this project (or of every project)
   face [mood]  look at her (0–4, love, crying)
+  art [<name> | add <name> [<file>] | rm <name>]  the gallery: show pictures, or keep your own
 
 everything else (push, pull, merge, fetch, clone, stash, rebase, ...)
 and any option cg doesn't know is handed to real git, unchanged.
@@ -137,6 +138,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 				return 1
 			}
 			if !quiet {
+				her.Introduce()
 				her.Say("curse_on", nil)
 				printHowToPlay(stderr, her)
 				her.AnnounceNew()
@@ -158,8 +160,11 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 				return 1
 			}
 		}
-		printFace(stdout, m)
+		printMoodFace(stdout, m)
 		return 0
+
+	case "art":
+		return artCmd(args[1:], os.Stdin, stdout, stderr)
 
 	case "hash-object":
 		o := commands.HashObjectOptions{}
